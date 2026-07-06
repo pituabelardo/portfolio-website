@@ -36,6 +36,10 @@ html {
      marquee + any decorative overhang made mobile browsers lay the page
      out wider than device-width and render it zoomed out + pannable. */
   overflow-x: clip;
+  /* v8.1: ios safari text autosizing was inflating blocks of text (the
+     captain's bubble most visibly) to ~2.5x. we size our own type. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -200,10 +204,11 @@ body:not(.mode-sea) #hud { display: none; }
 }
 #hint.fade { transition: opacity 1s; opacity: 0; }
 /* v8: on narrow screens the 3-line hint chip and the beach button share the
-   bottom lane — when a beach prompt (or the edge cta) is up, the hint yields */
+   bottom lane — when a beach prompt (or the edge cta) is up, the hint yields.
+   v8.1: class toggled from world.js — :has() invalidation is unreliable in
+   ios safari (see the case-overlay bug), so no :has anywhere. */
 @media (max-width: 640px) {
-  #hud:has(#dock-btn:not([hidden])) #hint,
-  #hud:has(#edge-cta:not([hidden])) #hint {
+  #hud.prompt-up #hint {
     opacity: 0;
     transition: opacity .4s;
   }
@@ -259,6 +264,11 @@ body:not(.mode-sea) #hud { display: none; }
   opacity: 0;
   transition: opacity .35s, transform .35s cubic-bezier(.2, .9, .3, 1.3);
   pointer-events: none;
+  /* v8.1: width:max-content escapes abs-pos shrink-to-fit — with left:50%
+     the available width is only HALF the viewport, which on phones crushed
+     the bubble to ~140px and stacked the captain's lines 1-2 words tall.
+     desktop never noticed (half of a laptop > the 460px cap). */
+  width: max-content;
   max-width: min(88vw, 460px);
 }
 #island-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -314,6 +324,14 @@ body:not(.mode-sea) #hud { display: none; }
   font-weight: 700;
   font-size: clamp(.95rem, 2.6vw, 1.2rem);
   line-height: 1.25;
+}
+/* v8.1: on phones the bubble reads like a chat message, not a headline —
+   wider lane (≈78vw incl. avatar) and a fixed, calm type size so lines
+   carry 4+ words. same treatment as the hud chips: we own the sizing. */
+@media (max-width: 640px) {
+  #island-toast { max-width: 80vw; }
+  .cap-bubble p { font-size: 1rem; }
+  .cap-bubble { padding: 8px 14px 10px; }
 }
 
 /* ---------- controls card ---------- */
@@ -966,8 +984,12 @@ body.mode-sea .case.open {
   from { transform: translateY(60px) scale(.96); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
-body.mode-sea #content:has(.case.open) { display: block; }
-body.mode-sea #content:has(.case.open) > *:not(.open) { display: none; }
+/* v8.1: was `#content:has(.case.open)` — ios safari failed to invalidate
+   :has() for a class change inside this display:none subtree, so the case
+   opened logically (hud hid, world paused) but never painted. openCase()
+   already sets body.case-open: use that. no :has() in this stylesheet. */
+body.mode-sea.case-open #content { display: block; }
+body.mode-sea.case-open #content > *:not(.open) { display: none; }
 body.mode-sea #content { padding: 0; max-width: none; }
 
 .case .close-case {

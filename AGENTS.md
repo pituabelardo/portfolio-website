@@ -207,6 +207,30 @@ create such a skill, note its name here so the next model finds it.
 - after any deploy: cold smoke test the LIVE url (title, robots, sitemap,
   og image, one js file's cache header) — see §6 last bullet.
 
+## 8.5 · ios safari field lessons (v8.1 — real-device bugs headless never saw)
+
+- **never use `:has()` in this stylesheet.** ios safari failed to invalidate
+  `#content:has(.case.open)` for a class change inside the display:none
+  subtree — cases opened logically (hud hid, world paused) but never painted.
+  the fix pattern: toggle a body/parent class from js (`body.case-open`,
+  `#hud.prompt-up`) and select on that.
+- **never size the renderer from `window.inner*` alone.** after reload
+  (pull-to-refresh especially) ios hands out stale dimensions and settles
+  the viewport later, sometimes without a resize event → canvas smaller than
+  screen, html background stripes right/bottom. current scheme: measure the
+  `#stage` box, listen to resize + orientationchange + visualViewport.resize,
+  delayed re-checks after init, and a self-heal in stepFrame every 120 frames.
+  keep all of it.
+- **`-webkit-text-size-adjust: 100%` on html is load-bearing** — ios text
+  autosizing inflated the captain's bubble ~2.5x.
+- **abs-pos + `left:50%` caps shrink-to-fit width at HALF the containing
+  block.** any centered overlay with real text needs `width: max-content`
+  (+ max-width) or phones will stack it 1-2 words per line. desktop never
+  shows this (half a laptop > the max-width cap).
+- verify on a real iphone (or at least real webkit) after any change to
+  overlays, viewport sizing or input — chromium touch emulation proved all
+  three of these bugs invisible.
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts

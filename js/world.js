@@ -156,7 +156,7 @@
   var WIND = { lo: 0.15, hi: 1.1, amp: 0.16, speed: 1.6 };
 
   /* ---------- state ---------- */
-  var renderer, scene, camera, clock;
+  var renderer, scene, camera, clock, stageEl;
   var water, waterUniforms;
   var canoe, paddle, paddler, hullGroup;
   var armL, armR, headMesh;
@@ -426,6 +426,7 @@
     tier = opts.tier || "high";
     onDockCb = opts.onDock || function () {};
     var container = opts.container;
+    stageEl = container;
 
     renderer = new THREE.WebGLRenderer({
       antialias: tier !== "low",
@@ -433,7 +434,10 @@
     });
     var dpr = Math.min(window.devicePixelRatio || 1, tier === "high" ? 2 : 1.5);
     renderer.setPixelRatio(dpr);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // v8.1: size from the #stage box, not window.inner* — ios lies after reload
+    var w0 = container.clientWidth || window.innerWidth;
+    var h0 = container.clientHeight || window.innerHeight;
+    renderer.setSize(w0, h0);
     container.appendChild(renderer.domElement);
     W._renderer = renderer;   // exposed for perf audits
 
@@ -441,7 +445,7 @@
     scene.background = new THREE.Color(COL.horizon);
     scene.fog = new THREE.Fog(COL.horizon, 110, tier === "low" ? 200 : 255);
 
-    camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.5, 900);
+    camera = new THREE.PerspectiveCamera(55, w0 / h0, 0.5, 900);
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       // no aerial swoop: start right behind the canoe
@@ -484,6 +488,13 @@
 
     clock = new THREE.Clock();
     window.addEventListener("resize", onResize);
+    // v8.1: ios emits these when it won't emit resize — take every signal,
+    // plus delayed re-checks for the post-reload viewport settle
+    window.addEventListener("orientationchange", function () { setTimeout(onResize, 250); });
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
+    setTimeout(onResize, 350);
+    setTimeout(onResize, 1200);
+    setTimeout(onResize, 3000);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) clock.stop(); else clock.start();
     });
@@ -3548,8 +3559,9 @@
   /* ============================================================
      hud: compass 2.0 + joystick + counter
      ============================================================ */
-  var ctaBtn = null;
+  var ctaBtn = null, hudEl = null;
   function bindHud() {
+    hudEl = document.getElementById("hud");
     // the conversion buoy: a dock-style chip that opens a mail draft.
     // subject pre-filled — the fifth island starts as an email.
     ctaBtn = document.createElement("a");
@@ -3694,7 +3706,11 @@
     renderer.render(scene, camera);
   }
 
+  var sizeCheckN = 0;
   function stepFrame(dt, t) {
+    // v8.1: self-heal the canvas size every ~2s — catches every ios case
+    // where the viewport settled without firing any event we listen to
+    if ((sizeCheckN = (sizeCheckN + 1) % 120) === 0) onResize();
     waterUniforms.uTime.value = t;
     for (var wsI = 0; wsI < windShaders.length; wsI++) {
       windShaders[wsI].uniforms.uTime.value = t;
@@ -3966,6 +3982,8 @@
     } else {
       dockBtn.hidden = true;
     }
+    // v8.1: css hook (no :has — ios) so the hint yields to any bottom prompt
+    if (hudEl) hudEl.classList.toggle("prompt-up", !dockBtn.hidden || !!(ctaBtn && !ctaBtn.hidden));
   }
 
   /* v4: the HUD borrows the island's color while you're in its waters.
@@ -4311,9 +4329,22 @@
     });
   }
 
+  /* v8.1 · sizing that survives ios safari. after a reload (esp. pull-to-
+     refresh) ios can hand us a stale innerWidth/innerHeight and settle the
+     real viewport later WITHOUT a resize event — the canvas was left
+     smaller than the screen (dark html background showing right + bottom).
+     the truth is the #stage box itself (fixed, inset:0 → tracks the
+     dynamic viewport), so we measure it, listen to every signal ios does
+     emit, and self-heal periodically from the frame loop. */
+  var lastW = 0, lastH = 0;
   function onResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    var w = (stageEl && stageEl.clientWidth) || window.innerWidth;
+    var h = (stageEl && stageEl.clientHeight) || window.innerHeight;
+    if (!w || !h) return;                       // stage display:none (menu mode)
+    if (w === lastW && h === lastH) return;
+    lastW = w; lastH = h;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(w, h);
   }
 })();
