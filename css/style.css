@@ -981,7 +981,21 @@ footer {
   opacity: .65;
 }
 
-/* ---------- case overlay (3d mode) ---------- */
+/* ---------- case overlay (3d mode) ----------
+   v8.2.2 · ios paint hardening. jorge's iphone showed the open case IN
+   LAYOUT (display:block, correct rect, no js errors) yet invisible. two
+   ios-specific traps addressed here:
+   1. visibility must NEVER depend on the entry animation. the old rule
+      animated from opacity:0 in the same style update as display:none→
+      block — if webkit doesn't start (or freezes) that animation, the
+      element stays at its reveal base (.case is opacity:0 for the scroll
+      reveal). now the open state IS the final state (opacity:1, no
+      reveal transform), and the animation rides on a .surfacing class
+      that main.js adds on a double requestAnimationFrame AFTER the
+      display flip has been committed. if the animation never runs, the
+      card is simply there.
+   2. translateZ(0) promotes the card to its own compositing layer —
+      ios's paint order over a webgl canvas layer is not chrome's. */
 body.mode-sea .case.open {
   display: block;
   position: fixed;
@@ -990,11 +1004,15 @@ body.mode-sea .case.open {
   overflow-y: auto;
   margin: 0;
   overscroll-behavior: contain;
+  opacity: 1;
+  transform: translateZ(0);
+}
+body.mode-sea .case.open.surfacing {
   animation: surface .45s cubic-bezier(.2, .9, .3, 1.2);
 }
 @keyframes surface {
-  from { transform: translateY(60px) scale(.96); opacity: 0; }
-  to { transform: none; opacity: 1; }
+  from { transform: translate3d(0, 60px, 0) scale(.96); opacity: 0; }
+  to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
 }
 /* v8.1: was `#content:has(.case.open)` — ios safari failed to invalidate
    :has() for a class change inside this display:none subtree, so the case

@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.2.1";
+  var BUILD = "8.2.2";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -55,9 +55,17 @@
       var caseTxt = "none";
       if (openEl) {
         var cs = getComputedStyle(openEl), r = openEl.getBoundingClientRect();
-        caseTxt = openEl.id + " display:" + cs.display + " " + Math.round(r.width) + "×" + Math.round(r.height) + " @" + Math.round(r.x) + "," + Math.round(r.y);
+        caseTxt = openEl.id + " display:" + cs.display + " " + Math.round(r.width) + "×" + Math.round(r.height) + " @" + Math.round(r.x) + "," + Math.round(r.y) +
+          "\n  case op:" + cs.opacity + " vis:" + cs.visibility + " z:" + cs.zIndex +
+          " tf:" + (cs.transform === "none" ? "none" : cs.transform.slice(0, 28)) +
+          " anim:" + (cs.animationName || "none").slice(0, 12) +
+          " surfacing:" + openEl.classList.contains("surfacing");
       }
-      var contentCs = getComputedStyle(document.getElementById("content")).display;
+      var ccs = getComputedStyle(document.getElementById("content"));
+      var contentCs = ccs.display + " op:" + ccs.opacity + " z:" + ccs.zIndex +
+        " tf:" + (ccs.transform === "none" ? "none" : ccs.transform.slice(0, 22));
+      var bcs = getComputedStyle(document.body);
+      contentCs += " | body op:" + bcs.opacity + " tf:" + (bcs.transform === "none" ? "none" : "SET");
       var cvs = document.querySelector("#stage canvas");
       var nearest = "";
       if (st && cfg.ISLANDS) {
@@ -79,7 +87,8 @@
         "body: " + body.className + "\n" +
         "world: " + (st ? JSON.stringify(st) : "not started") + "\n" +
         "nearest: " + nearest + "\n" +
-        "#content display:" + contentCs + " · case: " + caseTxt + "\n" +
+        "#content: " + contentCs + "\n" +
+        "case: " + caseTxt + "\n" +
         "openCase log: " + (window.__ocLog || "never") + "\n" +
         (dbgErrs.length ? "ERRORS:\n" + dbgErrs.join("\n") : "no js errors") + "\n" +
         "ua: " + navigator.userAgent.slice(0, 90);
@@ -181,13 +190,23 @@
     openCaseEl = el;
     el.classList.add("open");
     body.classList.add("case-open");
+    /* v8.2.2: the entry animation is applied only after the browser has
+       committed display:block (double rAF) — ios can refuse or freeze an
+       animation started in the same frame as a display flip, and the
+       card's visibility must never hang on it. */
+    el.classList.remove("surfacing");
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (openCaseEl === el) el.classList.add("surfacing");
+      });
+    });
     el.scrollTop = 0;
     if (window.WORLD) window.WORLD.setPaused(true);
   }
   function closeCase() {
     var wasOpen = !!openCaseEl;
     if (openCaseEl) {
-      openCaseEl.classList.remove("open");
+      openCaseEl.classList.remove("open", "surfacing");
       openCaseEl = null;
     }
     body.classList.remove("case-open");
