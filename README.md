@@ -3,6 +3,8 @@
 web 3d navegable: remas en canoa, descubres 4 islas, cada isla abre un case.
 todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, vercel, github pages…).
 
+> para modelos/agentes: lee `AGENTS.md` antes de tocar nada — anatomía de una isla, recetas, presupuesto, harness de verificación y política de deploy.
+
 ## dónde meter cada cosa
 
 ### (a) link de youtube de "capullos"
