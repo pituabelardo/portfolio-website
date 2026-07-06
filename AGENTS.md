@@ -176,6 +176,11 @@ if missing — it is NOT committed to the repo):
   with touch alone.
 - **production smoke test**: point the same harness at the live vercel url to
   catch cdn/caching/absolute-path issues that never show locally.
+- **known artifact**: in swiftshader screenshots, the fixed case overlay (and
+  sometimes the menu cards) can render semi-transparent over the 3d canvas.
+  verified opaque in real chrome (v8) — do NOT "fix" it, and do not remove
+  `body.mode-content #content { transform: translateZ(0) }` which handles the
+  related real compositing quirk.
 
 ## 7 · skills policy (standing instruction, not history)
 
