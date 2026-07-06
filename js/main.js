@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.2.2";
+  var BUILD = "8.3";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -60,6 +60,15 @@
           " tf:" + (cs.transform === "none" ? "none" : cs.transform.slice(0, 28)) +
           " anim:" + (cs.animationName || "none").slice(0, 12) +
           " surfacing:" + openEl.classList.contains("surfacing");
+        /* v8.3: the definitive compositing probe — what does hit-testing
+           actually find at the card's center? a descendant of the card
+           means ios is compositing it; #stage/canvas/body means it isn't. */
+        var hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        caseTxt += "\n  hit@center:" + (hit
+          ? hit.tagName.toLowerCase() + (hit.id ? "#" + hit.id : "") +
+            (hit.classList && hit.classList.length ? "." + hit.classList[0] : "") +
+            (openEl.contains(hit) ? " (in card ✓)" : " (NOT in card ✗)")
+          : "null");
       }
       var ccs = getComputedStyle(document.getElementById("content"));
       var contentCs = ccs.display + " op:" + ccs.opacity + " z:" + ccs.zIndex +
@@ -67,6 +76,16 @@
       var bcs = getComputedStyle(document.body);
       contentCs += " | body op:" + bcs.opacity + " tf:" + (bcs.transform === "none" ? "none" : "SET");
       var cvs = document.querySelector("#stage canvas");
+      /* v8.3: computed compositing inputs of the webgl layer itself */
+      var stageEl0 = document.getElementById("stage");
+      var scs = getComputedStyle(stageEl0);
+      var stageTxt = "z:" + scs.zIndex + " vis:" + scs.visibility +
+        " tf:" + (scs.transform === "none" ? "none" : "SET") + " wc:" + scs.willChange;
+      if (cvs) {
+        var kcs = getComputedStyle(cvs);
+        stageTxt += " | cv z:" + kcs.zIndex +
+          " tf:" + (kcs.transform === "none" ? "none" : "SET") + " wc:" + kcs.willChange;
+      }
       var nearest = "";
       if (st && cfg.ISLANDS) {
         var best = 1e9, name = "-";
@@ -88,6 +107,7 @@
         "world: " + (st ? JSON.stringify(st) : "not started") + "\n" +
         "nearest: " + nearest + "\n" +
         "#content: " + contentCs + "\n" +
+        "#stage: " + stageTxt + "\n" +
         "case: " + caseTxt + "\n" +
         "openCase log: " + (window.__ocLog || "never") + "\n" +
         (dbgErrs.length ? "ERRORS:\n" + dbgErrs.join("\n") : "no js errors") + "\n" +
@@ -158,8 +178,19 @@
   var tier = deviceTier();
   window.DEVICE_TIER = tier;
 
+  /* v8.3: the loader ships visible in the initial html (loader-first boot,
+     no menu flash). every path that doesn't keep it up must hide it. */
+  function hideLoader() {
+    if (loader.hidden) return;
+    loader.classList.add("out");                 // opacity fade (css)
+    setTimeout(function () {
+      loader.hidden = true;
+      loader.classList.remove("out");            // clean state for re-shows
+    }, 520);
+  }
+
   /* no webgl → stay in content mode forever, no toggle */
-  if (tier === "none") return;
+  if (tier === "none") { loader.hidden = true; return; }
 
   toggleBtn.hidden = false;
 
@@ -357,6 +388,7 @@
       return;
     }
     worldStarted = true;
+    loader.classList.remove("out");
     loader.hidden = false;
     var msgs = ["inflating the sea…", "waxing the canoe…", "bribing the seagulls…", "planting the capullos…", "hiding the easter eggs…"];
     var mi = 0;
@@ -378,7 +410,7 @@
       })
       .then(function () {
         worldReady = true;
-        loader.hidden = true;
+        hideLoader();   // v8.3: fade, not pop — the world is already rendering under it
         // cinematic title card over the intro swoop, first time only
         var tc = document.getElementById("title-card");
         if (tc && !tc.dataset.shown) {
@@ -392,7 +424,7 @@
       })
       .catch(function (err) {
         console.error("3d failed, staying on dry land:", err);
-        loader.hidden = true;
+        hideLoader();
         toggleBtn.hidden = true;
         setModeFallback();
       });
@@ -430,8 +462,14 @@
      land directly on the case. */
   var hasHash = location.hash && document.querySelector(location.hash);
   if (!hasHash && (tier === "high" || tier === "mobile")) {
+    /* auto-entering the sea: the loader (already on screen since first
+       paint) simply stays up until the world is ready. */
     window.addEventListener("load", function () {
       setTimeout(function () { setMode("sea"); }, 350);
     });
+  } else {
+    /* v8.3: destination is the content view (deep link or low tier) —
+       drop the loader now, synchronously, before/at first paint. */
+    loader.hidden = true;
   }
 })();
