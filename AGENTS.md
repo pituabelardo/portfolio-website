@@ -204,6 +204,15 @@ create such a skill, note its name here so the next model finds it.
   domain on purpose).
 - `vercel.json` sets cache headers only (immutable assets, 1-day js/css). no
   rewrites: single page, hash-based deep links.
+- **cache busting (v8.2.1, load-bearing)**: js/css are cached for a day on
+  devices, so every deploy that touches them MUST bump the `?v=` stamps in
+  index.html AND the matching `BUILD` constant in js/main.js (world.js is
+  loaded as `js/world.js?v=BUILD`). skipping this ships your fix to the
+  server but not to anyone's phone — this exact miss masked the ios case
+  bug for two deploys.
+- **remote debugging**: any page + `?debug=1` shows a live overlay (build,
+  viewport, state machine, nearest island, case paint state, js errors).
+  ask for a screenshot of it before guessing at device-only bugs.
 - after any deploy: cold smoke test the LIVE url (title, robots, sitemap,
   og image, one js file's cache header) — see §6 last bullet.
 

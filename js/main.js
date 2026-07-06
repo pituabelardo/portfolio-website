@@ -5,6 +5,11 @@
 (function () {
   "use strict";
 
+  /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
+     but can never serve a stale bundle after a deploy. bump it on EVERY
+     deploy that touches js or css (index.html tags + this constant). */
+  var BUILD = "8.2.1";
+
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
   var toggleBtn = document.getElementById("view-toggle");
@@ -15,6 +20,71 @@
 
   document.getElementById("year").textContent = new Date().getFullYear();
   body.classList.add("js");
+
+  /* ============================================================
+     v8.2.1 · field debug — open /?debug=1 on any device and the
+     overlay shows build, viewport, state machine and every js
+     error, live. exists because a real iphone failed in ways no
+     emulation reproduced; screenshot the panel and diagnosis is
+     remote. pointer-events: none — it never eats input.
+     ============================================================ */
+  var DEBUG = /[?&]debug=1/.test(location.search);
+  var dbgErrs = [];
+  window.__ocLog = "";   // stamped by openCase
+  if (DEBUG) {
+    window.addEventListener("error", function (e) {
+      dbgErrs.push((e.message || "script error") + " @" +
+        String(e.filename || "").split("/").pop().split("?")[0] + ":" + e.lineno);
+      if (dbgErrs.length > 4) dbgErrs.shift();
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      dbgErrs.push("promise: " + String(e.reason).slice(0, 140));
+      if (dbgErrs.length > 4) dbgErrs.shift();
+    });
+    var dbgEl = document.createElement("div");
+    dbgEl.setAttribute("style",
+      "position:fixed;top:64px;left:8px;max-width:88vw;z-index:99999;" +
+      "background:rgba(0,0,0,.84);color:#7dffa8;font:10px/1.55 monospace;" +
+      "padding:8px 10px;border-radius:8px;pointer-events:none;" +
+      "white-space:pre-wrap;word-break:break-all;text-transform:none;");
+    body.appendChild(dbgEl);
+    setInterval(function () {
+      var W = window.WORLD, st = null;
+      try { st = W && W.getState ? W.getState() : null; } catch (err) { st = { err: String(err) }; }
+      var openEl = document.querySelector(".case.open");
+      var caseTxt = "none";
+      if (openEl) {
+        var cs = getComputedStyle(openEl), r = openEl.getBoundingClientRect();
+        caseTxt = openEl.id + " display:" + cs.display + " " + Math.round(r.width) + "×" + Math.round(r.height) + " @" + Math.round(r.x) + "," + Math.round(r.y);
+      }
+      var contentCs = getComputedStyle(document.getElementById("content")).display;
+      var cvs = document.querySelector("#stage canvas");
+      var nearest = "";
+      if (st && cfg.ISLANDS) {
+        var best = 1e9, name = "-";
+        for (var i = 0; i < cfg.ISLANDS.length; i++) {
+          var dx = st.x - cfg.ISLANDS[i].pos[0], dz = st.z - cfg.ISLANDS[i].pos[1];
+          var d = Math.sqrt(dx * dx + dz * dz);
+          if (d < best) { best = d; name = cfg.ISLANDS[i].id; }
+        }
+        nearest = name + " d=" + Math.round(best);
+      }
+      var vv = window.visualViewport;
+      dbgEl.textContent =
+        "build " + BUILD + " · tier " + (window.DEVICE_TIER || "?") + "\n" +
+        "vp " + window.innerWidth + "×" + window.innerHeight +
+        (vv ? " · vv " + Math.round(vv.width) + "×" + Math.round(vv.height) + " s" + vv.scale.toFixed(2) : "") +
+        " · dpr " + (window.devicePixelRatio || 1) + "\n" +
+        "canvas " + (cvs ? cvs.style.width + " " + cvs.style.height : "none") + "\n" +
+        "body: " + body.className + "\n" +
+        "world: " + (st ? JSON.stringify(st) : "not started") + "\n" +
+        "nearest: " + nearest + "\n" +
+        "#content display:" + contentCs + " · case: " + caseTxt + "\n" +
+        "openCase log: " + (window.__ocLog || "never") + "\n" +
+        (dbgErrs.length ? "ERRORS:\n" + dbgErrs.join("\n") : "no js errors") + "\n" +
+        "ua: " + navigator.userAgent.slice(0, 90);
+    }, 500);
+  }
 
   /* scroll reveals on dry land */
   if ("IntersectionObserver" in window) {
@@ -104,8 +174,9 @@
 
   var openCaseEl = null;
   function openCase(id) {
+    window.__ocLog = id + " @" + new Date().toISOString().slice(11, 19);
     var el = document.getElementById(id);
-    if (!el) return;
+    if (!el) { window.__ocLog += " NO-EL"; return; }
     closeCase();
     openCaseEl = el;
     el.classList.add("open");
@@ -277,7 +348,7 @@
       loaderP.textContent = msgs[mi];
     }, 1300);
     loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js")
-      .then(function () { return loadScript("js/world.js"); })
+      .then(function () { return loadScript("js/world.js?v=" + BUILD); })
       .then(function () {
         return window.WORLD.init({
           container: document.getElementById("stage"),
