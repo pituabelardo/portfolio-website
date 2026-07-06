@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=8.2.2">
+  <link rel="stylesheet" href="css/style.css?v=8.3">
 
   <!-- structured data -->
   <script type="application/ld+json">
@@ -98,8 +98,11 @@
     <div id="compass" aria-hidden="true"></div>
   </div>
 
-  <!-- loading -->
-  <div id="loader" hidden>
+  <!-- loading — visible by default in the initial html so it is ALWAYS the
+       first thing painted (no menu flash before it). main.js hides it
+       synchronously when the destination is the content view, or after the
+       world is ready when auto-entering the sea. noscript kills it. -->
+  <div id="loader">
     <div class="loader-inner">
       <div class="loader-mark">jorge antolín<em>.</em></div>
       <div class="loader-line"></div>
@@ -292,12 +295,12 @@
   </footer>
 
   <noscript>
-    <style>#view-toggle{display:none}</style>
+    <style>#view-toggle{display:none}#loader{display:none}</style>
   </noscript>
 
   <!-- ?v= must match BUILD in js/main.js — bump both on every js/css deploy -->
-  <script src="js/config.js?v=8.2.2"></script>
-  <script src="js/main.js?v=8.2.2"></script>
-  <script src="js/dryland.js?v=8.2.2" defer></script>
+  <script src="js/config.js?v=8.3"></script>
+  <script src="js/main.js?v=8.3"></script>
+  <script src="js/dryland.js?v=8.3" defer></script>
 </body>
 </html>
