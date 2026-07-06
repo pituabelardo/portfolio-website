@@ -600,6 +600,11 @@ body:not(.mode-sea) #hud { display: none; }
   justify-content: center;
 }
 #loader[hidden] { display: none; }
+/* v8.3: loader-first boot — it ships visible in the html and leaves with a
+   fade (opacity transition on an already-visible element: safe on ios,
+   unlike animations armed in the same frame as a display flip). */
+#loader { transition: opacity .5s ease; }
+#loader.out { opacity: 0; pointer-events: none; }
 .loader-inner { text-align: center; }
 .loader-inner .loader-mark {
   font-family: var(--font-display);
@@ -1010,6 +1015,18 @@ body.mode-sea .case.open {
 body.mode-sea .case.open.surfacing {
   animation: surface .45s cubic-bezier(.2, .9, .3, 1.2);
 }
+/* v8.2.3 · the endgame for the ios invisible-case bug: with every computed
+   style verified correct on the device (op:1, vis:visible, z:70, rect in
+   viewport), ios STILL refused to composite html above the webgl layer.
+   so while a case is open we remove the webgl layer from the equation
+   entirely — the world is paused anyway, and a hidden canvas also stops
+   burning battery. scoped to ios/ipadOS via -webkit-touch-callout (the
+   webkit-touch-only property), so desktop keeps the world peeking around
+   the card edges. visibility (not display) keeps clientWidth alive for
+   the resize self-heal. */
+@supports (-webkit-touch-callout: none) {
+  body.mode-sea.case-open #stage { visibility: hidden; }
+}
 @keyframes surface {
   from { transform: translate3d(0, 60px, 0) scale(.96); opacity: 0; }
   to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
@@ -1018,7 +1035,18 @@ body.mode-sea .case.open.surfacing {
    :has() for a class change inside this display:none subtree, so the case
    opened logically (hud hid, world paused) but never painted. openCase()
    already sets body.case-open: use that. no :has() in this stylesheet. */
-body.mode-sea.case-open #content { display: block; }
+body.mode-sea.case-open #content {
+  display: block;
+  /* v8.3 · belt-and-braces for the ios compositing bug: while a case is
+     open, the content layer becomes its own fixed, isolated stacking
+     context well above the (hidden) stage, so the card's paint order can
+     never depend on the webgl layer. NO transform/filter here — either
+     would become the containing block for the fixed .case.open inside. */
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  isolation: isolate;
+}
 body.mode-sea.case-open #content > *:not(.open) { display: none; }
 body.mode-sea #content { padding: 0; max-width: none; }
 
