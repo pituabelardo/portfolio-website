@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>jorge antolín — creative director & brand strategist | liga u, acb</title>
+  <meta name="description" content="jorge antolín is a creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u, spain's u22 national basketball league, at the acb. row a canoe, discover the work.">
+  <meta name="author" content="jorge antolín">
+  <link rel="canonical" href="https://jorgeantolin.com/">
+
+  <!-- open graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="jorge antolín — creative director & brand strategist">
+  <meta property="og:description" content="creative direction, brand strategy and communication for liga u at the acb. a portfolio you row through: grab a canoe, find four islands, dock at the work.">
+  <meta property="og:url" content="https://jorgeantolin.com/">
+  <meta property="og:image" content="https://jorgeantolin.com/assets/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+
+  <!-- twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="jorge antolín — creative director & brand strategist">
+  <meta name="twitter:description" content="a portfolio you row through: grab a canoe, find four islands, dock at the work.">
+  <meta name="twitter:image" content="https://jorgeantolin.com/assets/og.jpg">
+
+  <meta name="theme-color" content="#101b52">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://jorgeantolin.com/#jorge",
+        "name": "jorge antolín",
+        "jobTitle": "creative director & brand strategist",
+        "description": "creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u, spain's u22 national basketball league, at the acb.",
+        "worksFor": [
+          { "@type": "Organization", "name": "Liga U" },
+          { "@type": "Organization", "name": "ACB" }
+        ],
+        "alumniOf": { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" },
+        "knowsAbout": ["creative direction", "brand strategy", "brand design", "communication strategy", "community management", "basketball marketing"],
+        "url": "https://jorgeantolin.com/",
+        "sameAs": []
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "capullos — liga u video campaign",
+        "creator": { "@id": "https://jorgeantolin.com/#jorge" },
+        "about": "video campaign for liga u, spain's u22 national basketball league. 'capullos' means both 'flower buds' and 'little punks' in spanish: young players everyone doubts, blooming into the real thing.",
+        "url": "https://jorgeantolin.com/#capullos"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "liga u — brand & communication strategy",
+        "creator": { "@id": "https://jorgeantolin.com/#jorge" },
+        "about": "brand strategy, branding and online communication strategy for liga u, led by jorge antolín as creative director.",
+        "url": "https://jorgeantolin.com/#liga-u-strategy"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "talens x pantone — color is art, not a barrier",
+        "creator": { "@id": "https://jorgeantolin.com/#jorge" },
+        "about": "concept print campaign for royal talens x pantone turning color from a border issue into an art statement.",
+        "url": "https://jorgeantolin.com/#talens-pantone"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "ministerie van justitie — un-usual suspects",
+        "creator": { "@id": "https://jorgeantolin.com/#jorge" },
+        "about": "concept awareness campaign for the dutch ministry of justice and security about online scams: think before you click.",
+        "url": "https://jorgeantolin.com/#ministerie"
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="mode-content">
+
+  <!-- 3d layer -->
+  <div id="stage" aria-hidden="true"></div>
+
+  <!-- hud -->
+  <div id="hud" hidden>
+    <div id="hint" class="chip">row with ↑←→ or wasd · or tap the compass and let the canoe do the work</div>
+    <button id="dock-btn" class="dock" hidden>dock here ⏎</button>
+    <div id="compass" aria-hidden="true"></div>
+  </div>
+
+  <!-- loading -->
+  <div id="loader" hidden>
+    <div class="loader-inner">
+      <div class="loader-mark">jorge antolín<em>.</em></div>
+      <div class="loader-line"></div>
+      <p>inflating the sea…</p>
+    </div>
+  </div>
+
+  <!-- cinematic title card (first entry to the sea) -->
+  <div id="title-card" aria-hidden="true">
+    <h2>jorge antolín</h2>
+    <p>creative director & brand strategist — row to the work</p>
+  </div>
+
+  <!-- controls card, shown once after the title card -->
+  <div id="controls-card" aria-hidden="true">
+    <div class="controls-inner">
+      <p class="controls-title">how to sail</p>
+      <div class="controls-keys" data-mode="keys">
+        <div class="krow"><kbd>↑</kbd></div>
+        <div class="krow"><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div>
+        <p>row & steer · <b>enter</b> to dock</p>
+      </div>
+      <div class="controls-keys" data-mode="touch" hidden>
+        <div class="touch-icon" aria-hidden="true"><span></span></div>
+        <p>drag anywhere to row</p>
+      </div>
+      <p class="controls-alt">or tap an island on the compass — the captain rows for you</p>
+    </div>
+  </div>
+
+  <header id="topbar">
+    <a class="brand" href="#top">jorge antolín<span class="role"> — creative director & brand strategist</span></a>
+    <nav>
+      <button id="view-toggle" class="chip btn" data-mode="content" hidden>enter the sea 🌊</button>
+    </nav>
+  </header>
+
+  <main id="content">
+    <section id="top" class="hero">
+      <h1>jorge antolín <span class="h1-role">— creative director & brand strategist</span></h1>
+      <p class="lede">i run creative direction, brand strategy and communication for <strong>liga u</strong> — spain's u22 national basketball league — at the <strong>acb</strong>. i live by the sea in gijón, so this portfolio works like home does: you get in a canoe, you row, you find things.</p>
+      <p class="lede-sub">four islands. four projects. no lorem ipsum, no stock handshakes.</p>
+      <p class="scroll-hint" aria-hidden="true">or just scroll — the water can wait ↓</p>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>creative direction · brand strategy · liga u · communication · community management · basketball · gijón · </span><span>creative direction · brand strategy · liga u · communication · community management · basketball · gijón · </span>
+      </div>
+    </div>
+
+    <!-- island 1: capullos -->
+    <article id="capullos" class="case" data-island="capullos" data-num="01" style="--dot:#3ec46d">
+      <div class="case-head">
+        <span class="case-tag" style="--tag:#3ec46d">island 01 · video campaign · liga u</span>
+        <h2>capullos</h2>
+        <p class="case-claim">in spanish, "capullos" means flower buds. it also means little punks. that's the whole campaign.</p>
+      </div>
+      <div class="case-body">
+        <div class="video-wrap" id="capullos-video">
+          <!-- YOUTUBE_EMBED: replace data-yt with the video id (the part after v= in the url) -->
+          <div class="video-placeholder" data-yt="">
+            <p>video case — youtube embed goes here</p>
+            <span class="mono">(waiting for the link, see readme)</span>
+          </div>
+        </div>
+        <div class="case-text">
+          <p>young players get doubted for a living. too green, too cocky, too soon. <em>capullos</em> flips the insult: buds are exactly what blooms. the campaign frames liga u's under-22 talent as flowers about to open — and dares you to keep calling them capullos when they do.</p>
+          <p>launch campaign made at liga u, where i lead creative direction, communication and strategy.</p>
+          <ul class="case-meta">
+            <li><span>role</span>creative direction, concept, copy</li>
+            <li><span>for</span>liga u (acb)</li>
+            <li><span>format</span>video campaign</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- island 2: liga u strategy -->
+    <article id="liga-u-strategy" class="case" data-island="strategy" data-num="02" style="--dot:#ffd23f">
+      <div class="case-head">
+        <span class="case-tag" style="--tag:#ffd23f">island 02 · case study · liga u</span>
+        <h2>liga u — brand & communication strategy</h2>
+        <p class="case-claim">a league nobody had heard of, a voice everybody under 22 recognizes. built from zero.</p>
+      </div>
+      <div class="case-body">
+        <!-- CASE_PLACEHOLDERS: swap each .case-slot below for the real content (see readme, point b) -->
+        <div class="poster-grid">
+          <div class="case-slot">
+            <p>brand strategy — coming right up</p>
+            <span class="mono">(the full deck is in the oven)</span>
+          </div>
+          <div class="case-slot">
+            <p>identity & voice — coming right up</p>
+            <span class="mono">(the logos are still drying)</span>
+          </div>
+          <div class="case-slot">
+            <p>community engine — coming right up</p>
+            <span class="mono">(the fans got here early)</span>
+          </div>
+        </div>
+        <div class="case-text">
+          <p>liga u is spain's u22 national basketball league — a league that didn't exist two seasons ago. building it meant deciding what it sounds like before deciding what it looks like: a brand strategy that treats under-22 players as protagonists (not prospects), an identity that survives a phone screen at full speed, and an online communication engine that publishes like a fan and thinks like a league.</p>
+          <p>the full case study — positioning, brand system and the community playbook — is being written up. the placeholders above hold its seat.</p>
+          <ul class="case-meta">
+            <li><span>role</span>creative direction, brand strategy, community management</li>
+            <li><span>for</span>liga u (acb)</li>
+            <li><span>format</span>case study — brand & communication strategy</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- island 3: talens x pantone -->
+    <article id="talens-pantone" class="case" data-island="talens" data-num="03" style="--dot:#ff5a3c">
+      <div class="case-head">
+        <span class="case-tag" style="--tag:#ff5a3c">island 03 · print concept · royal talens x pantone</span>
+        <h2>talens x pantone</h2>
+        <p class="case-claim">color is art. not a barrier.</p>
+      </div>
+      <div class="case-body">
+        <div class="poster-grid">
+          <img src="assets/talens-1.webp" alt="talens x pantone poster: 'we don't give a fuck about color' over a black and white photo of migrants climbing the morocco-spain border fence in melilla, framed like a pantone color chip" loading="lazy" width="1000" height="1415">
+          <img src="assets/talens-2.webp" alt="talens x pantone poster: 'no time to care about color' over a black and white photo of people clinging to a capsized boat south of lampedusa, framed like a pantone color chip" loading="lazy" width="1000" height="1415">
+          <img src="assets/talens-3.webp" alt="talens x pantone poster: 'colors kill, forget about color' over a black and white photo of migrants by a freight train in the chihuahua desert, framed like a pantone color chip" loading="lazy" width="1000" height="1415">
+        </div>
+        <div class="case-text">
+          <p>two brands that live off color, going black and white on purpose. the campaign takes real border photography — melilla, lampedusa, chihuahua — and strips the color out, because when color means skin, nobody's admiring the palette. the only color left is the pantone chip: <em>color is art. not a barrier.</em></p>
+          <p>concept campaign for royal talens x pantone, developed during my brand design specialization at hogeschool utrecht.</p>
+          <ul class="case-meta">
+            <li><span>role</span>concept, art direction, copy</li>
+            <li><span>for</span>royal talens x pantone (concept)</li>
+            <li><span>format</span>print / ooh</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- island 4: ministerie van justitie -->
+    <article id="ministerie" class="case" data-island="ministerie" data-num="04" style="--dot:#2b47d9">
+      <div class="case-head">
+        <span class="case-tag" style="--tag:#2b47d9; color:#f6eedd">island 04 · awareness concept · ministerie van justitie en veiligheid</span>
+        <h2>ministerie van justitie</h2>
+        <p class="case-claim">un-usual suspects. think before you click.</p>
+      </div>
+      <div class="case-body">
+        <div class="poster-grid">
+          <img src="assets/justitie-1.webp" alt="dutch ministry of justice poster: an elderly person in a black balaclava, headline 'unexpected transfers' with a red handwritten 'un', quote from ruth, 82, convicted of draining a bank account in seconds" loading="lazy" width="1000" height="1415">
+          <img src="assets/justitie-2.webp" alt="dutch ministry of justice poster: an elderly person in a black balaclava, headline 'unnoticed hackers', quote from willem, 89, convicted of blackmailing victims with stolen private photos" loading="lazy" width="1000" height="1415">
+          <img src="assets/justitie-3.webp" alt="dutch ministry of justice poster: an elderly person in a black balaclava, headline 'unusual suspects', quote from annie, 84, convicted of stealing 1200 euros with a single click" loading="lazy" width="1000" height="1415">
+        </div>
+        <div class="case-text">
+          <p>online scammers don't look like movie hackers. they look like anyone — even like ruth, 82, asking you to hold her bags. the campaign puts grandmas and grandpas in balaclavas to make one point stick: on the internet you never know who's on the other side, so <em>think before you click.</em></p>
+          <p>concept awareness campaign for the dutch ministerie van justitie en veiligheid, developed during my brand design specialization at hogeschool utrecht.</p>
+          <ul class="case-meta">
+            <li><span>role</span>concept, art direction, copy</li>
+            <li><span>for</span>ministerie van justitie en veiligheid (concept)</li>
+            <li><span>format</span>print / ooh</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- about -->
+    <section id="about" class="about">
+      <div class="stamp" aria-hidden="true">
+        <svg viewBox="0 0 120 120" width="104" height="104">
+          <defs><path id="circ" d="M 60,60 m -44,0 a 44,44 0 1,1 88,0 a 44,44 0 1,1 -88,0"/></defs>
+          <circle cx="60" cy="60" r="57" fill="none" stroke="#14120f" stroke-width="1.5" stroke-dasharray="3 4"/>
+          <text font-family="'Space Mono', monospace" font-size="12.5" letter-spacing="2.5" fill="#14120f">
+            <textPath href="#circ">gijón · north coast · spain · est. by the sea ·</textPath>
+          </text>
+          <path d="M45 62 Q60 50 75 62 L72 66 Q60 57 48 66 Z" fill="#ff5a3c"/>
+          <path d="M38 70 Q49 64 60 70 T82 70 L82 76 Q71 70 60 76 T38 76 Z" fill="#2b47d9"/>
+        </svg>
+      </div>
+      <h2>about the guy in the canoe</h2>
+      <p>jorge antolín. creative director and brand strategist at the <strong>acb</strong> and <strong>liga u</strong>, spain's u22 national basketball league — where i run communication, strategy and creative as creative director: the creative direction of liga u, its brand and communication strategy, and its community management. yes, all of it. no, i don't sleep much during playoffs.</p>
+      <p>i specialized in <strong>brand design at hogeschool utrecht</strong> (netherlands), and i publish <strong>textball</strong>, my own line of children's books about basketball — because kids should fall in love with the game before the algorithm gets them.</p>
+      <p>based in gijón, on spain's northern coast. hence the canoe.</p>
+      <div id="social" class="social">
+        <!-- SOCIAL_LINKS: add <a> tags here, e.g. <a href="https://linkedin.com/in/...">linkedin</a> -->
+      </div>
+      <p class="contact mono">say hi → <a href="mailto:jantolin@acb.es">jantolin@acb.es</a></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year">2026</span> jorge antolín · handmade, low-poly, slightly salty</p>
+  </footer>
+
+  <noscript>
+    <style>#view-toggle{display:none}</style>
+  </noscript>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/dryland.js" defer></script>
+</body>
+</html>

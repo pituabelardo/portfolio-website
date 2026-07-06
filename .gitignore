@@ -1,0 +1,16 @@
+# os cruft
+.DS_Store
+Thumbs.db
+
+# tooling
+node_modules/
+.vercel/
+.env
+.env.*
+
+# scratch exports (only assets/og.jpg is referenced by the site)
+assets/og-tmp*.png
+
+# jorge's prompt history for this project — project lore, not site code.
+# it lives in this folder for convenience but stays out of git history.
+PROMPT-FABLE5*.md
