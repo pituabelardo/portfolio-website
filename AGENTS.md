@@ -218,6 +218,23 @@ create such a skill, note its name here so the next model finds it.
 
 ## 8.5 · ios safari field lessons (v8.1 — real-device bugs headless never saw)
 
+- **(v8.3) ios can refuse to composite html over the webgl canvas even with a
+  perfect CSSOM** (case card: display:block, op:1, vis:visible, z:70, rect in
+  viewport — still not painted; chrome never reproduces). the fix is to remove
+  the webgl layer from the equation: `body.mode-sea.case-open #stage
+  { visibility: hidden }` scoped to ios via `@supports (-webkit-touch-callout:
+  none)` (visibility, NOT display — keeps clientWidth alive for the resize
+  self-heal, which runs even while paused). belt-and-braces: in case-open,
+  `#content` is position:fixed / z-index:65 / isolation:isolate (NO transform —
+  it would become the containing block of the fixed card). the `?debug=1`
+  overlay now prints `#stage` computed z/vis/transform/will-change and
+  `elementFromPoint` at the card center — screenshot answers any recurrence.
+- **(v8.3) loader-first boot**: `#loader` ships visible in the initial html
+  (never mounted/unhidden from js after first paint — that's how the menu
+  flash happened). main.js hides it synchronously when the destination is the
+  content view (deep link / low tier / no webgl), or fades it (`#loader.out`)
+  after world-ready. noscript kills it via the `<noscript>` style block. any
+  new boot path MUST hide the loader or the site stays black.
 - **never use `:has()` in this stylesheet.** ios safari failed to invalidate
   `#content:has(.case.open)` for a class change inside the display:none
   subtree — cases opened logically (hud hid, world paused) but never painted.
@@ -252,6 +269,11 @@ create such a skill, note its name here so the next model finds it.
   are suggested with widened bases, not the real concave arc.
 - (v7) the muro's arcades and the náutico plaza don't exist; the muro is
   slab + balustrade.
+- (v8.3) at ultrawide desktop (2560×1080, tier high) worst-case panorama views
+  framing the whole archipelago measure ~153-156 draw calls — over the 150
+  ceiling, but that budget is defined for tier mobile @390×844 (worst there:
+  ~105 calls / 59k tris). pre-existing since v8.2.x, not a regression; trim
+  here first if desktop perf ever becomes a complaint.
 - (v8) production url is the auto-assigned vercel domain until jorge buys and
   attaches jorgeantolin.com; canonical/og/sitemap urls intentionally already
   point at jorgeantolin.com and will be correct the moment the domain lands.
