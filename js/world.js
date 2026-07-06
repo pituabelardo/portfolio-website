@@ -445,7 +445,8 @@
     scene.background = new THREE.Color(COL.horizon);
     scene.fog = new THREE.Fog(COL.horizon, 110, tier === "low" ? 200 : 255);
 
-    camera = new THREE.PerspectiveCamera(55, w0 / h0, 0.5, 900);
+    baseFov = fovForAspect(w0 / h0);
+    camera = new THREE.PerspectiveCamera(baseFov, w0 / h0, 0.5, 900);
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       // no aerial swoop: start right behind the canoe
@@ -3697,7 +3698,21 @@
      ============================================================ */
   var camTarget = new THREE.Vector3(0, 2.5, 140);
   var camPos = new THREE.Vector3();
+  /* v8.2 · aspect-aware framing. 55° vertical fov was tuned for phones and
+     laptops; at extreme aspects it breaks both ways: ultrawide (21:9/32:9)
+     blows the horizontal fov past 100° (fisheye edges), and skinny-tall
+     windows squeeze it under 20° (the canoe fills the whole width). we keep
+     55° in the comfortable band and clamp the HORIZONTAL fov to [26°, 96°]
+     outside it, solving the vertical fov per aspect. baseFov is re-derived
+     on every resize; updateCamera eases camera.fov toward it as always. */
   var baseFov = 55;
+  var D2R = Math.PI / 180;
+  function fovForAspect(a) {
+    var h = 2 * Math.atan(Math.tan(55 * 0.5 * D2R) * a) / D2R;
+    if (h > 96) return 2 * Math.atan(Math.tan(48 * D2R) / a) / D2R;
+    if (h < 26) return 2 * Math.atan(Math.tan(13 * D2R) / a) / D2R;
+    return 55;
+  }
 
   function tick() {
     var dt = Math.min(clock.getDelta(), 0.05);
@@ -4344,6 +4359,11 @@
     if (w === lastW && h === lastH) return;
     lastW = w; lastH = h;
     camera.aspect = w / h;
+    // v8.2: re-derive the framing for the new proportions, applied
+    // immediately (choreography cameras don't touch fov) and then eased
+    // by updateCamera during normal sailing
+    baseFov = fovForAspect(camera.aspect);
+    camera.fov = baseFov;   // a resize is already a jump — snap, then ease
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }

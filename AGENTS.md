@@ -223,6 +223,12 @@ create such a skill, note its name here so the next model finds it.
   keep all of it.
 - **`-webkit-text-size-adjust: 100%` on html is load-bearing** — ios text
   autosizing inflated the captain's bubble ~2.5x.
+- **framing is aspect-driven (v8.2)**: `fovForAspect()` in world.js keeps the
+  55° vertical fov in the comfortable band and clamps the HORIZONTAL fov to
+  [26°, 96°] on skinny-tall / ultrawide windows, re-derived in `onResize`.
+  never hardcode a fov or assume portrait/16:9; if you add camera moves,
+  read `baseFov`, don't write 55. verified matrix: 320×568 → 5120×1440
+  (32:9), 400×1200 (1:3), hot-resize mid-flow with a case open.
 - **abs-pos + `left:50%` caps shrink-to-fit width at HALF the containing
   block.** any centered overlay with real text needs `width: max-content`
   (+ max-width) or phones will stack it 1-2 words per line. desktop never
