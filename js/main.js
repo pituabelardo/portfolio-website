@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.3";
+  var BUILD = "8.4";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;

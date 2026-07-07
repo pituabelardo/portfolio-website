@@ -182,7 +182,10 @@
   var onDockCb = null;
   var introT = 0;
 
-  var input = { throttle: 0, turn: 0, touching: false, tx: 0, ty: 0 };
+  var input = { throttle: 0, turn: 0, touching: false, tx: 0, ty: 0, manual: false };
+  /* v8.4 · one-finger rowing "arms" after a short window (time or travel) so
+     planting two fingers for a pinch never rows and never cancels autosail */
+  var rowT0 = 0, rowMoved = 0;
   var paddlePh = 0;   // v6.1: stroke phase accumulator (cadence ∝ speed)
   var boat = { x: 0, z: 160, heading: Math.PI, vx: 0, vz: 0, speed: 0, roll: 0 };
   var nearIsland = null;
@@ -444,6 +447,7 @@
     scene = new THREE.Scene();
     scene.background = new THREE.Color(COL.horizon);
     scene.fog = new THREE.Fog(COL.horizon, 110, tier === "low" ? 200 : 255);
+    fogN0 = scene.fog.near; fogF0 = scene.fog.far;   // v8.4: chart-view scales these
 
     baseFov = fovForAspect(w0 / h0);
     camera = new THREE.PerspectiveCamera(baseFov, w0 / h0, 0.5, 900);
@@ -987,6 +991,7 @@
   W.getState = function () {
     return {
       x: boat.x, z: boat.z, speed: boat.speed, paused: paused, throttle: input.throttle,
+      zoom: Math.round(camUser.zoom * 100) / 100,
       mode: dive ? "dive" : board ? "board" : land ? "land" : launch ? "launch" : beached ? "beached" : "sail",
     };
   };
@@ -3496,35 +3501,95 @@
 
     var el = renderer.domElement;
     var startX = 0, startY = 0;
-    el.addEventListener("pointerdown", function (e) {
-      input.touching = true;
-      autopilot = null;
-      startX = e.clientX; startY = e.clientY;
-      input.tx = 0; input.ty = 0;
-      el.setPointerCapture(e.pointerId);
-      if (joyBase) {
-        joyBase.hidden = false;
-        joyBase.style.left = startX + "px";
-        joyBase.style.top = startY + "px";
-        joyNub.style.transform = "translate(-50%,-50%)";
-      }
-    });
-    el.addEventListener("pointermove", function (e) {
-      if (!input.touching) return;
-      input.tx = clamp((e.clientX - startX) / 70, -1, 1);
-      input.ty = clamp((e.clientY - startY) / 70, -1, 1);
-      if (joyNub) {
-        var nx = clamp(e.clientX - startX, -44, 44);
-        var ny = clamp(e.clientY - startY, -44, 44);
-        joyNub.style.transform = "translate(calc(-50% + " + nx + "px), calc(-50% + " + ny + "px))";
-      }
-    });
-    function up() {
+    /* v8.4 · multitouch, unambiguous by construction: pointers are tracked
+       by id. ONE finger rows (readInput arms it after ~130ms or 8px so a
+       two-finger plant never rows). TWO fingers NEVER row: they pinch
+       (zoom OUT only — default framing is the max close-up) and pan the
+       chart. a finger left over from a pinch does not row until lifted
+       and pressed again. autosail survives camera gestures. */
+    var pts = new Map(), rowId = null, pinch = null;
+    function stopRow() {
+      rowId = null;
       input.touching = false; input.tx = 0; input.ty = 0;
       if (joyBase) joyBase.hidden = true;
     }
+    function pinchGeom() {
+      var it = pts.values(), a = it.next().value, b = it.next().value;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      return { d: Math.max(24, Math.sqrt(dx * dx + dy * dy)),
+               cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 };
+    }
+    function stepPinch(pn) {
+      var g = pinchGeom();
+      setZoomT(pn.zoom0 * pn.d0 / g.d);   // fingers together → dolly out
+      // two-finger drag pans the look-point, grab-the-map feel, exact at
+      // the target's depth: world units per screen px from fov + distance
+      var hpx = (stageEl && stageEl.clientHeight) || window.innerHeight;
+      var camD = camera.position.distanceTo(camTarget);
+      var kk = 2 * Math.tan(camera.fov * 0.5 * D2R) * camD / Math.max(1, hpx);
+      var dx = g.cx - pn.cx, dy = g.cy - pn.cy;
+      pn.cx = g.cx; pn.cy = g.cy;
+      var fx = Math.sin(boat.heading), fz = Math.cos(boat.heading);
+      camUser.panX += (-dx * fz + dy * fx) * kk;
+      camUser.panZ += (dx * fx + dy * fz) * kk;
+      clampPan();
+    }
+    el.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      if (pts.size === 1) {
+        rowId = e.pointerId;
+        input.touching = true;
+        rowT0 = performance.now(); rowMoved = 0;
+        startX = e.clientX; startY = e.clientY;
+        input.tx = 0; input.ty = 0;
+        if (joyBase) {
+          joyBase.hidden = false;
+          joyBase.style.left = startX + "px";
+          joyBase.style.top = startY + "px";
+          joyNub.style.transform = "translate(-50%,-50%)";
+        }
+      } else if (pts.size === 2) {
+        stopRow();
+        var g = pinchGeom();
+        pinch = { d0: g.d, cx: g.cx, cy: g.cy, zoom0: camUser.zoomT };
+      } else {
+        pinch = null;   // 3+ fingers: nobody rows, nobody zooms
+      }
+    });
+    el.addEventListener("pointermove", function (e) {
+      var p = pts.get(e.pointerId);
+      if (p) { p.x = e.clientX; p.y = e.clientY; }
+      if (pinch && pts.size === 2) {
+        if (!(paused || dive || board || land || launch || beached)) stepPinch(pinch);
+        return;
+      }
+      if (!input.touching || e.pointerId !== rowId) return;
+      input.tx = clamp((e.clientX - startX) / 70, -1, 1);
+      input.ty = clamp((e.clientY - startY) / 70, -1, 1);
+      var mdx = e.clientX - startX, mdy = e.clientY - startY;
+      rowMoved = Math.max(rowMoved, Math.sqrt(mdx * mdx + mdy * mdy));
+      if (joyNub) {
+        var nx = clamp(mdx, -44, 44);
+        var ny = clamp(mdy, -44, 44);
+        joyNub.style.transform = "translate(calc(-50% + " + nx + "px), calc(-50% + " + ny + "px))";
+      }
+    });
+    function up(e) {
+      pts.delete(e.pointerId);
+      if (pinch && pts.size < 2) pinch = null;
+      if (e.pointerId === rowId || pts.size === 0) stopRow();
+    }
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
+    /* v8.4 · desktop: wheel/trackpad dollies the chart, same floor (no
+       zoom-in past the default framing) and same ceiling as the pinch */
+    el.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      if (paused || dive || board || land || launch || beached) return;
+      setZoomT(camUser.zoomT * Math.exp(e.deltaY * 0.0016));
+    }, { passive: false });
   }
 
   function readInput() {
@@ -3533,12 +3598,15 @@
     if (keys["arrowdown"] || keys["s"]) { throttle = -0.4; manual = true; }
     if (keys["arrowleft"] || keys["a"]) { turn = 1; manual = true; }
     if (keys["arrowright"] || keys["d"]) { turn = -1; manual = true; }
-    if (input.touching) {
+    // v8.4: armed after 130ms or 8px of travel — a two-finger plant (pinch)
+    // never rows through its first frames and never kills the autosail
+    if (input.touching && (rowMoved > 8 || performance.now() - rowT0 > 130)) {
       throttle = Math.max(throttle, Math.min(1, Math.max(0.35, -input.ty + 0.5)));
       turn = -input.tx;
       manual = true;
     }
     if (manual) autopilot = null;
+    input.manual = manual;
 
     if (autopilot) {
       var dx = autopilot.group.position.x - boat.x;
@@ -3644,8 +3712,30 @@
     joyBase.appendChild(joyNub);
     document.getElementById("hud").appendChild(joyBase);
 
+    /* v8.4 · chart zoom for non-touch pointers: two discreet chips,
+       bottom-left (the compass owns bottom-right). wheel does the same;
+       on touch the pinch owns it and the chips stay out of the frame. */
+    var touchDev = navigator.maxTouchPoints > 1 || "ontouchstart" in window;
+    if (!touchDev) {
+      var zc = document.createElement("div");
+      zc.id = "zoom-ctl";
+      var mkZoom = function (label, aria, k) {
+        var b = document.createElement("button");
+        b.className = "chip btn zoom-btn";
+        b.textContent = label;
+        b.setAttribute("aria-label", aria);
+        b.title = aria;
+        b.addEventListener("click", function () { setZoomT(camUser.zoomT * k); });
+        zc.appendChild(b);
+        return b;
+      };
+      mkZoom("+", "zoom back in", 1 / 1.5);
+      mkZoom("−", "zoom out to the chart", 1.5);
+      document.getElementById("hud").appendChild(zc);
+    }
+
     var hintEl = document.getElementById("hint");
-    if (hintEl && (navigator.maxTouchPoints > 1 || "ontouchstart" in window)) {
+    if (hintEl && touchDev) {
       hintEl.textContent = "drag anywhere to row · or tap the compass to autosail";
     }
     setTimeout(function () {
@@ -3698,6 +3788,34 @@
      ============================================================ */
   var camTarget = new THREE.Vector3(0, 2.5, 140);
   var camPos = new THREE.Vector3();
+  /* v8.4 · user chart-view: pinch (touch) / wheel + corner chips (desktop)
+     dolly the sailing rig OUT — never in: the default framing IS the max
+     close-up (low-poly assets don't survive closer). zoom is a dolly (not
+     fov — fov stays aspect/speed-driven) whose ceiling roughly matches the
+     aerial intro, so the zoomed-out look is already art-directed. two-finger
+     drag pans the look-point; rowing/autosail eases the pan back to the
+     canoe, and every choreography (dive/board/land/launch/beached) reclaims
+     the composed framing instantly. fog is pushed out proportionally so the
+     chart stays readable without losing the golden haze. */
+  var camUser = { zoom: 1, zoomT: 1, panX: 0, panZ: 0 };
+  var ZOOM_MAX = 4.2;     // budget-capped: re-measure §6 if you raise it
+  var PAN_MAX = 130;      // world units of look-point offset from the canoe
+  var fogN0 = 110, fogF0 = 255;
+  var rmQ = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  function setZoomT(z) { camUser.zoomT = clamp(z, 1, ZOOM_MAX); }
+  W.setZoom = setZoomT;   // harness/debug hook
+  function clampPan() {
+    var pl = Math.sqrt(camUser.panX * camUser.panX + camUser.panZ * camUser.panZ);
+    if (pl > PAN_MAX) { var s = PAN_MAX / pl; camUser.panX *= s; camUser.panZ *= s; }
+    // the look-point never leaves the chart
+    var tx = boat.x + camUser.panX, tz = boat.z + camUser.panZ;
+    var td = Math.sqrt(tx * tx + tz * tz);
+    if (td > BOUND_R) {
+      var s2 = BOUND_R / td;
+      camUser.panX = tx * s2 - boat.x;
+      camUser.panZ = tz * s2 - boat.z;
+    }
+  }
   /* v8.2 · aspect-aware framing. 55° vertical fov was tuned for phones and
      laptops; at extreme aspects it breaks both ways: ultrawide (21:9/32:9)
      blows the horizontal fov past 100° (fisheye edges), and skinny-tall
@@ -4281,12 +4399,32 @@
   }
 
   function updateCamera(dt) {
+    /* v8.4 · every choreography reclaims the composed framing: their cams
+       ignore zoom/pan, and sailing resumes at the default close-up */
+    if (dive || board || land || launch || beached) {
+      camUser.zoom = camUser.zoomT = 1; camUser.panX = 0; camUser.panZ = 0;
+    }
+    if (scene.fog) {
+      var fogK = 1 + 0.7 * (camUser.zoom - 1) / (ZOOM_MAX - 1);
+      scene.fog.near = fogN0 * fogK;
+      scene.fog.far = fogF0 * fogK;
+    }
     if (dive) { updateDiveCamera(dt); return; }
     if (board) { updateBoardCamera(dt); return; }
     if (land) { updateLandCamera(dt); return; }
     var spdK = boat.speed / MAX_SPEED;
     var fx = Math.sin(boat.heading), fz = Math.cos(boat.heading);
     var rx = fz, rz = -fx;
+
+    // ease the dolly; rowing/autosail recenters the pan on the canoe
+    var zEase = (rmQ && rmQ.matches) ? 1 : Math.min(1, dt * 3.2);
+    camUser.zoom += (camUser.zoomT - camUser.zoom) * zEase;
+    if (input.manual || autopilot) {
+      var pEase = (rmQ && rmQ.matches) ? 1 : Math.min(1, dt * 2.4);
+      camUser.panX -= camUser.panX * pEase;
+      camUser.panZ -= camUser.panZ * pEase;
+    }
+    var uz = camUser.zoom;
 
     /* v4: when you get close to an island the camera eases back and
        tilts up, so crowns (the eye, the frame, the hoop) stay in shot */
@@ -4296,14 +4434,14 @@
     }
     var nearK = 1 - smoothstep(46, 95, nd);
 
-    var back = 19 + spdK * 5 + nearK * 4;
-    var height = 10.5 + spdK * 2.5 + nearK * 2.2;
+    var back = (19 + spdK * 5 + nearK * 4) * uz;
+    var height = (10.5 + spdK * 2.5 + nearK * 2.2) * Math.pow(uz, 1.35);
     var side = input.turn * -2.2 * spdK;
 
     var want = new THREE.Vector3(
-      boat.x - fx * back + rx * side,
+      boat.x + camUser.panX - fx * back + rx * side,
       height,
-      boat.z - fz * back + rz * side
+      boat.z + camUser.panZ - fz * back + rz * side
     );
 
     if (introT > 0) {
@@ -4315,7 +4453,7 @@
     }
     camera.position.copy(camPos);
 
-    camTarget.lerp(new THREE.Vector3(boat.x + fx * 11, 2.5 + nearK * 6.5, boat.z + fz * 11), Math.min(1, dt * 3.2));
+    camTarget.lerp(new THREE.Vector3(boat.x + camUser.panX + fx * 11, 2.5 + nearK * 6.5, boat.z + camUser.panZ + fz * 11), Math.min(1, dt * 3.2));
     camera.lookAt(camTarget);
 
     var wantFov = baseFov + spdK * 7;
