@@ -104,6 +104,42 @@ placement rules (hard-won in v7 — don't rediscover them):
 - if you need per-frame shader time, push the shader into `windShaders` from
   an `onBeforeCompile` — never add a second clock.
 
+## 3.5 · the chart view (v8.4) — user camera zoom/pan
+
+sailing gained a user-controlled camera layer, all in world.js (`camUser`,
+`ZOOM_MAX=4.2`, `PAN_MAX=130`, the gesture code in `bindInput`, application
+in `updateCamera`'s sail branch). the contract:
+
+- **zoom is a dolly, never fov** (fov stays aspect/speed-driven), and it only
+  goes OUT: the default framing IS the max close-up — low-poly assets don't
+  survive closer, so zoom-in past 1 is structurally impossible (`setZoomT`
+  clamps to [1, ZOOM_MAX]). the ceiling roughly matches the aerial intro, so
+  the zoomed-out look is already art-directed. fog near/far scale up with
+  zoom (`fogN0/fogF0 × up-to-1.7`) so the chart stays readable in the haze.
+- **touch**: pointers tracked by id in `bindInput`. ONE finger rows; a lone
+  touch only "arms" as rowing after 130ms or 8px of travel (`rowT0`/
+  `rowMoved` checked in `readInput`) so planting two fingers never rows and
+  never cancels the compass autosail. TWO fingers NEVER row: pinch zooms,
+  two-finger drag pans (grab-the-map, scaled from fov+cam distance so it is
+  exact at the look-point's depth). a finger left over from a pinch is dead
+  until lifted and re-pressed. 3+ fingers do nothing.
+- **desktop**: wheel/trackpad on the canvas (preventDefault'd), plus two
+  `.zoom-btn` chips (`#zoom-ctl`, bottom-left, non-touch devices only —
+  guarded by the same maxTouchPoints check as the hint copy).
+- **return to the frame**: pan eases back to the canoe whenever the boat is
+  driven (manual input or autopilot — `input.manual` is set by readInput);
+  zoom PERSISTS while sailing (navigating from the chart is the point) and
+  every choreography (dive/board/land/launch/beached) resets zoom+pan
+  instantly at the top of `updateCamera` — their composed cams ignore it and
+  sailing resumes at the default close-up. pan is clamped to PAN_MAX and the
+  look-point never leaves BOUND_R. gestures are inert while `paused` or any
+  choreography runs (guarded in the handlers too). reduced motion snaps the
+  easing instead of animating it.
+- `getState()` reports `zoom` (the `?debug=1` overlay prints it for free).
+  `W.setZoom(z)` exists for the harness.
+- budget (v8.4, tier mobile): worst case at zoom 4.2 @390×844 is ~100 calls
+  / 61k tris — inside 150/150k. raise ZOOM_MAX only with a fresh §6 sweep.
+
 ## 4 · design (not built): a portal to a second sea
 
 jorge wants a future option: something like a black hole in the water that
@@ -176,6 +212,12 @@ if missing — it is NOT committed to the repo):
   with touch alone.
 - **production smoke test**: point the same harness at the live vercel url to
   catch cdn/caching/absolute-path issues that never show locally.
+- **headless pointermove quirk (v8.4)**: without free-running BeginFrames,
+  chromium holds the LATEST touchMove-derived pointermove in a queue and only
+  delivers it when the next input event arrives — single moves after a pause
+  look "lost". echo every CDP touchMove with a 0.4px-jittered duplicate and
+  the real one always lands. real chrome never needs this. multitouch itself
+  works great via `Input.dispatchTouchEvent` with two touchPoints.
 - **known artifact**: in swiftshader screenshots, the fixed case overlay (and
   sometimes the menu cards) can render semi-transparent over the 3d canvas.
   verified opaque in real chrome (v8) — do NOT "fix" it, and do not remove
@@ -274,6 +316,11 @@ create such a skill, note its name here so the next model finds it.
   ceiling, but that budget is defined for tier mobile @390×844 (worst there:
   ~105 calls / 59k tris). pre-existing since v8.2.x, not a regression; trim
   here first if desktop perf ever becomes a complaint.
+- (v8.4) same story at mobile LANDSCAPE (844×390, tier mobile): worst-case
+  sweeps measure ~153 calls at zoom 1 (pre-existing — the 96° h-fov clamp
+  frames a panorama) and ~154 at zoom 4.2, i.e. the chart view adds ~1 call
+  to an already-over-ceiling orientation. the canonical budget viewport
+  (390×844) stays comfortably inside at every zoom (worst ~100/61k).
 - (v8) production url is the auto-assigned vercel domain until jorge buys and
   attaches jorgeantolin.com; canonical/og/sitemap urls intentionally already
   point at jorgeantolin.com and will be correct the moment the domain lands.
