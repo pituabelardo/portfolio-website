@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.4";
+  var BUILD = "8.5";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -208,7 +208,7 @@
     btn.className = "close-case";
     btn.setAttribute("aria-label", "close case, back to the sea");
     btn.textContent = "×";
-    btn.addEventListener("click", function () { closeCase(); });
+    btn.addEventListener("click", function () { closeCase(true); });
     el.prepend(btn);
   });
 
@@ -216,9 +216,17 @@
   function openCase(id) {
     window.__ocLog = id + " @" + new Date().toISOString().slice(11, 19);
     var el = document.getElementById(id);
-    if (!el) { window.__ocLog += " NO-EL"; return; }
+    if (!el) {
+      /* v8.5: an island id with no matching <article> used to leave the
+         world beached forever (caseOpened never set → no relaunch path).
+         cycle pause so world.js plays the launch and the tour continues. */
+      window.__ocLog += " NO-EL";
+      if (window.WORLD) { window.WORLD.setPaused(true); window.WORLD.setPaused(false); }
+      return;
+    }
     closeCase();
     openCaseEl = el;
+    el.classList.remove("sinking");
     el.classList.add("open");
     body.classList.add("case-open");
     /* v8.2.2: the entry animation is applied only after the browser has
@@ -234,11 +242,26 @@
     el.scrollTop = 0;
     if (window.WORLD) window.WORLD.setPaused(true);
   }
-  function closeCase() {
+  /* v8.5 · the close is choreographed too: the card sinks back under the
+     surface (reverse of .surfacing) instead of a hard cut. animation is
+     cosmetic only — the card's removal rides a plain timeout, never an
+     animationend (ios lesson: visibility must not depend on an animation
+     actually running), and every non-user path stays instant. */
+  function closeCase(animate) {
     var wasOpen = !!openCaseEl;
-    if (openCaseEl) {
-      openCaseEl.classList.remove("open", "surfacing");
-      openCaseEl = null;
+    var el = openCaseEl;
+    openCaseEl = null;
+    if (el) {
+      el.classList.remove("surfacing");
+      if (animate && body.classList.contains("mode-sea") && !reducedMotion) {
+        el.classList.add("sinking");
+        setTimeout(function () {
+          if (openCaseEl !== el) el.classList.remove("open");
+          el.classList.remove("sinking");
+        }, 340);
+      } else {
+        el.classList.remove("open", "sinking");
+      }
     }
     body.classList.remove("case-open");
     if (window.WORLD) {
@@ -253,10 +276,10 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && body.classList.contains("mode-sea")) {
-      if (openCaseEl) closeCase();
+      if (openCaseEl) closeCase(true);
       else {
         setMode("content");
-        if (typeof cleanupTransition === "function") cleanupTransition();
+        cleanupTransition();   // v8.5: always defined in this closure
       }
     }
   });
@@ -417,7 +440,9 @@
           tc.dataset.shown = "1";
           tc.classList.add("show");
           setTimeout(function () {
+            /* v8.5: leave upward (.bye), don't rewind the entrance */
             tc.classList.remove("show");
+            tc.classList.add("bye");
             showControlsCard();
           }, 3800);
         }
@@ -460,7 +485,12 @@
   /* auto-enter the sea on capable devices, after content is painted.
      deep links (#capullos etc.) keep the content view so shared urls
      land directly on the case. */
-  var hasHash = location.hash && document.querySelector(location.hash);
+  var hasHash = null;
+  try {
+    /* v8.5: querySelector throws on malformed hashes (#123, #/foo…) —
+       a shared-and-mangled url must never kill the whole boot script */
+    hasHash = location.hash && document.querySelector(location.hash);
+  } catch (e) { hasHash = null; }
   if (!hasHash && (tier === "high" || tier === "mobile")) {
     /* auto-entering the sea: the loader (already on screen since first
        paint) simply stays up until the world is ready. */
@@ -471,5 +501,31 @@
     /* v8.3: destination is the content view (deep link or low tier) —
        drop the loader now, synchronously, before/at first paint. */
     loader.hidden = true;
+    /* v8.5: the browser's native anchor jump reliably loses to late layout
+       (font swaps, injected decoration re-flowing thousands of px) — shared
+       case urls were landing on the hero at scrollY 0. assert the
+       destination ourselves: instantly (never smooth — reduced motion, and
+       a jump is honest on arrival), re-checked as layout settles, and only
+       while the visitor hasn't scrolled on their own. */
+    if (hasHash) {
+      var anchorEl = hasHash;
+      var userScrolled = false;
+      ["wheel", "touchstart", "keydown"].forEach(function (ev) {
+        window.addEventListener(ev, function () { userScrolled = true; }, { once: true, passive: true });
+      });
+      var anchorHop = function () {
+        if (userScrolled) return;   // they took the wheel
+        var prev = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = "auto";
+        anchorEl.scrollIntoView();
+        document.documentElement.style.scrollBehavior = prev;
+      };
+      window.addEventListener("load", function () {
+        anchorHop();
+        setTimeout(anchorHop, 400);
+        setTimeout(anchorHop, 1400);
+      });
+      if (document.readyState === "complete") anchorHop();
+    }
   }
 })();

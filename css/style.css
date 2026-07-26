@@ -105,6 +105,7 @@ body.mode-sea.case-open #topbar { display: none; }
   transition: transform .2s, background .2s;
 }
 .btn:hover { transform: scale(1.05); background: var(--coral); }
+.btn:active { transform: scale(.96); }   /* v8.5: one press accent everywhere */
 /* fingers need ≥44px targets */
 @media (pointer: coarse) {
   .btn { padding: 13px 18px; }
@@ -151,11 +152,16 @@ body.mode-sea #stage { display: block; }
   justify-content: center;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 1.1s ease;
+  /* v8.5: the name rises out of the water with the camera, it doesn't just
+     fade in — same easing family as the surfacing menu (.22,.84,.28,1) */
+  transform: translateY(18px) scale(.985);
+  transition: opacity 1.1s ease, transform 1.6s cubic-bezier(.22, .84, .28, 1);
   text-align: center;
   padding: 0 20px;
 }
-#title-card.show { opacity: 1; }
+#title-card.show { opacity: 1; transform: none; }
+/* the exit keeps drifting up — never rewinds the entrance */
+#title-card.bye { opacity: 0; transform: translateY(-14px); transition: opacity .9s ease, transform 1.3s ease; }
 #title-card h2 {
   font-family: var(--font-display);
   font-size: clamp(2.6rem, 9vw, 6.8rem);
@@ -234,7 +240,12 @@ body:not(.mode-sea) #hud { display: none; }
   cursor: pointer;
   text-transform: lowercase;
   box-shadow: 0 6px 0 rgba(0,0,0,.25);
-  animation: bounce .9s ease-in-out infinite;
+  /* v8.5: was .9s/-8px — read as a toy. a slow, small swell sits in the
+     same tempo family as the hint float and the golden-hour water; the
+     one-shot entrance (dockin) restarts on every display flip, so the
+     prompt rises into the lane instead of popping. if ios ever freezes
+     the entrance animation the base state is fully visible — safe. */
+  animation: dockin .35s cubic-bezier(.2, .9, .3, 1.2), bounce 1.8s .35s ease-in-out infinite;
   /* v8.2: long island names must wrap inside the pill, never overflow a
      narrow window ("beach at ministerie van justitie" @320px) */
   max-width: min(86vw, 520px);
@@ -243,7 +254,11 @@ body:not(.mode-sea) #hud { display: none; }
 }
 @keyframes bounce {
   0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-8px); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+@keyframes dockin {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* v6 · edge cta: the "fifth island" mail chip — same dock-btn language,
@@ -352,6 +367,12 @@ body:not(.mode-sea) #hud { display: none; }
   transition: opacity .6s ease;
 }
 #controls-card.show { opacity: 1; }
+#controls-card .controls-inner {
+  /* v8.5: same rise accent as the title card, scaled down for a card */
+  transform: translateY(12px) scale(.985);
+  transition: transform .9s cubic-bezier(.22, .84, .28, 1);
+}
+#controls-card.show .controls-inner { transform: none; }
 .controls-inner {
   background: rgba(12, 11, 20, .82);
   border: 1.5px solid rgba(246, 238, 221, .35);
@@ -537,6 +558,12 @@ body:not(.mode-sea) #hud { display: none; }
   font-size: .55rem;
   color: var(--ink);
   font-weight: 700;
+  /* v8.5: the ✓ lands with the same spring accent as the rest of the hud */
+  animation: dotcheck .4s cubic-bezier(.2, .9, .3, 1.3);
+}
+@keyframes dotcheck {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 .compass-dot.targeted { animation: dotpulse 1s infinite; }
 @keyframes dotpulse {
@@ -582,7 +609,15 @@ body:not(.mode-sea) #hud { display: none; }
   line-height: 1;
   display: grid;
   place-items: center;
+  transition: transform .2s, background .2s, opacity .3s;
 }
+/* v8.5: at the dolly's floor/ceiling the chip says so instead of playing
+   dead — the "+" is disabled at spawn (default framing IS the close-up) */
+.zoom-btn:disabled {
+  opacity: .35;
+  cursor: default;
+}
+.zoom-btn:disabled:hover { transform: none; background: rgba(18, 16, 24, .82); }
 
 /* ---------- touch joystick ---------- */
 .joy-base {
@@ -1035,6 +1070,18 @@ body.mode-sea .case.open {
 }
 body.mode-sea .case.open.surfacing {
   animation: surface .45s cubic-bezier(.2, .9, .3, 1.2);
+}
+/* v8.5 · the close mirrors the open: the card sinks back under. cosmetic
+   only — main.js removes .open on a timeout, never on animationend (ios:
+   visibility must never depend on an animation running). `forwards` holds
+   the faded frame if the timeout lands a tick late. */
+body.mode-sea .case.open.sinking {
+  animation: sink .3s cubic-bezier(.55, 0, .8, .6) forwards;
+  pointer-events: none;
+}
+@keyframes sink {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+  to { transform: translate3d(0, 54px, 0) scale(.965); opacity: 0; }
 }
 /* v8.2.3 · the endgame for the ios invisible-case bug: with every computed
    style verified correct on the device (op:1, vis:visible, z:70, rect in

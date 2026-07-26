@@ -125,16 +125,21 @@ in `updateCamera`'s sail branch). the contract:
   until lifted and re-pressed. 3+ fingers do nothing.
 - **desktop**: wheel/trackpad on the canvas (preventDefault'd), plus two
   `.zoom-btn` chips (`#zoom-ctl`, bottom-left, non-touch devices only —
-  guarded by the same maxTouchPoints check as the hint copy).
+  the shared `TOUCH_DEV` const). (v8.5) the chips reflect the clamp:
+  `+` is disabled at the floor (spawn framing IS the max close-up) and
+  `−` at the ceiling — `setZoomT` owns that bookkeeping, and the chip
+  click handler carries the same paused/choreography guard as the wheel.
 - **return to the frame**: pan eases back to the canoe whenever the boat is
   driven (manual input or autopilot — `input.manual` is set by readInput);
   zoom PERSISTS while sailing (navigating from the chart is the point) and
   every choreography (dive/board/land/launch/beached) resets zoom+pan
-  instantly at the top of `updateCamera` — their composed cams ignore it and
-  sailing resumes at the default close-up. pan is clamped to PAN_MAX and the
-  look-point never leaves BOUND_R. gestures are inert while `paused` or any
-  choreography runs (guarded in the handlers too). reduced motion snaps the
-  easing instead of animating it.
+  instantly at the top of `updateCamera`. dive/board/land have composed
+  cams; (v8.5) `beached` HOLDS the land cam's final postcard under the open
+  case (arrival → hold), and `launch` releases it by easing back into the
+  chase cam. pan is clamped to PAN_MAX and the look-point never leaves
+  BOUND_R. gestures are inert while `paused` or any choreography runs
+  (guarded in the handlers too). reduced motion snaps the easing instead
+  of animating it.
 - `getState()` reports `zoom` (the `?debug=1` overlay prints it for free).
   `W.setZoom(z)` exists for the harness.
 - budget (v8.4, tier mobile): worst case at zoom 4.2 @390×844 is ~100 calls
@@ -151,7 +156,11 @@ future pass can build it in one go:
   module vars + `stepX(dt,t)` functions dispatched from `stepFrame`; the new
   state must obey the same contract: escape-instant at any frame, clean mutual
   cancellation with every other state, reduced-motion skips straight to the
-  destination, `W.getState().mode` reports it.
+  destination, `W.getState().mode` reports it. (v8.5) `W.setPaused(true)`
+  CANCELS any running dive/board/land/launch (pausing mid-choreography can
+  only mean the sea was escaped — a case never opens while one runs); only
+  `beached` survives a pause, because beached+paused IS the open-case state.
+  a new state must either be cancelled there too or justify why it survives.
 - **trigger**: a solid interactive object in open water — same pattern as the
   edge sale-buoys: a mesh + `rocks[]` collider + proximity check in
   `stepBoat`. sailing into its influence radius starts the portal choreography
@@ -315,7 +324,15 @@ create such a skill, note its name here so the next model finds it.
   framing the whole archipelago measure ~153-156 draw calls — over the 150
   ceiling, but that budget is defined for tier mobile @390×844 (worst there:
   ~105 calls / 59k tris). pre-existing since v8.2.x, not a regression; trim
-  here first if desktop perf ever becomes a complaint.
+  here first if desktop perf ever becomes a complaint. (v8.5) plain desktop
+  1280×800 at SPAWN also measures ~152-154 — same tier-high story (clouds,
+  seagulls, fish, motes are high-tier extras), same disposition.
+- (v8.5) main.js and dryland.js snapshot `prefers-reduced-motion` once at
+  load (their `reducedMotion`/`reduced` vars), while world.js reads the
+  cached live MediaQueryList (`rmQ`) per call — flipping the OS setting
+  mid-session updates world choreographies but not the dive/board veil
+  decision until reload. deliberate: the veil decision is per-visit, and a
+  mid-session flip is rare enough not to earn listener plumbing.
 - (v8.4) same story at mobile LANDSCAPE (844×390, tier mobile): worst-case
   sweeps measure ~153 calls at zoom 1 (pre-existing — the 96° h-fov clamp
   frames a panorama) and ~154 at zoom 4.2, i.e. the chart view adds ~1 call

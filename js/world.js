@@ -182,6 +182,9 @@
   var onDockCb = null;
   var introT = 0;
 
+  /* v8.5: ONE touch-device answer for the whole module (was recomputed
+     per-frame in checkIslands and re-derived in bindHud) */
+  var TOUCH_DEV = navigator.maxTouchPoints > 1 || "ontouchstart" in window;
   var input = { throttle: 0, turn: 0, touching: false, tx: 0, ty: 0, manual: false };
   /* v8.4 · one-finger rowing "arms" after a short window (time or travel) so
      planting two fingers for a pinch never rows and never cancels autosail */
@@ -451,7 +454,7 @@
 
     baseFov = fovForAspect(w0 / h0);
     camera = new THREE.PerspectiveCamera(baseFov, w0 / h0, 0.5, 900);
-    var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reducedMotion = rmQ && rmQ.matches;   // v8.5: one cached MediaQueryList (rmQ), always live
     if (reducedMotion) {
       // no aerial swoop: start right behind the canoe
       var fx0 = Math.sin(boat.heading), fz0 = Math.cos(boat.heading);
@@ -510,6 +513,17 @@
 
   W.setPaused = function (p) {
     paused = p;
+    /* v8.5 · pausing mid-choreography can only mean the sea was escaped
+       (mode switch) — a case never opens while one runs. cancel instead of
+       freezing an orphaned sequence: pose reset is invisible (the stage is
+       hidden in content mode) and "instant escape" stays true at world
+       level too. beached is NOT cancelled — beached+pause IS the open-case
+       contract. */
+    if (p && (dive || board || land || launch)) {
+      dive = null; board = null; land = null; launch = null;
+      boardLean = 0;
+      resetPaddlerPose();
+    }
     /* the case pauses the world while we're beached; only when it has
        actually been open (p:true seen) does unpausing mean "case
        closed" — then the light relaunch plays itself. this dodges
@@ -540,7 +554,7 @@
 
   W.diveOut = function (cb) {
     cb = cb || function () {};
-    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduced = rmQ && rmQ.matches;   // v8.5: one cached MediaQueryList (rmQ), always live
     // paused (a case is open) means the sequence could never step:
     // hand straight over to the caller instead of hanging the veil
     if (reduced || dive || paused) { cb(); return; }
@@ -569,7 +583,7 @@
   var B_BOB = 0.3, B_LEAP = 0.95, B_SIT = 1.3, B_CB = 1.55, B_END = 2.05;
   W.boardIn = function (cb) {
     cb = cb || function () {};
-    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduced = rmQ && rmQ.matches;   // v8.5: one cached MediaQueryList (rmQ), always live
     if (reduced) { cb(); return; }
     // escape can freeze a dive mid-air; boarding supersedes it (its old
     // cb is dropped — main.js already cleaned that transition up)
@@ -792,7 +806,7 @@
     autopilot = null;
     visited[isl.def.id] = true;
     updateCounter();
-    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduced = rmQ && rmQ.matches;   // v8.5: one cached MediaQueryList (rmQ), always live
     if (reduced) {
       beached = { isl: isl, parked: true, reduced: true };
       onDockCb(isl.def.id);
@@ -900,7 +914,7 @@
   /* the light way back: hop in, sit, the canoe slides off the sand */
   var LA_HOP = 0.55, LA_SIT = 0.85, LA_SLIDE = 1.8;
   function startLaunch() {
-    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduced = rmQ && rmQ.matches;   // v8.5: one cached MediaQueryList (rmQ), always live
     var wasReduced = beached && beached.reduced;
     var isl = beached.isl;
     beached = null;
@@ -3715,8 +3729,7 @@
     /* v8.4 · chart zoom for non-touch pointers: two discreet chips,
        bottom-left (the compass owns bottom-right). wheel does the same;
        on touch the pinch owns it and the chips stay out of the frame. */
-    var touchDev = navigator.maxTouchPoints > 1 || "ontouchstart" in window;
-    if (!touchDev) {
+    if (!TOUCH_DEV) {
       var zc = document.createElement("div");
       zc.id = "zoom-ctl";
       var mkZoom = function (label, aria, k) {
@@ -3725,17 +3738,22 @@
         b.textContent = label;
         b.setAttribute("aria-label", aria);
         b.title = aria;
-        b.addEventListener("click", function () { setZoomT(camUser.zoomT * k); });
+        b.addEventListener("click", function () {
+          // §3.5 contract: gestures are inert while paused or choreographed
+          if (paused || dive || board || land || launch || beached) return;
+          setZoomT(camUser.zoomT * k);
+        });
         zc.appendChild(b);
         return b;
       };
-      mkZoom("+", "zoom back in", 1 / 1.5);
-      mkZoom("−", "zoom out to the chart", 1.5);
+      zoomInBtn = mkZoom("+", "zoom back in", 1 / 1.5);
+      zoomOutBtn = mkZoom("−", "zoom out to the chart", 1.5);
+      zoomInBtn.disabled = true;   // spawn framing IS the max close-up
       document.getElementById("hud").appendChild(zc);
     }
 
     var hintEl = document.getElementById("hint");
-    if (hintEl && touchDev) {
+    if (hintEl && TOUCH_DEV) {
       hintEl.textContent = "drag anywhere to row · or tap the compass to autosail";
     }
     setTimeout(function () {
@@ -3752,6 +3770,9 @@
   }
 
   function sailTo(isl) {
+    /* v8.5: a choreography owns the boat — a compass tap mid-sequence used
+       to toast "setting sail" while stepFrame vetoed the autopilot every frame */
+    if (dive || board || land || launch || beached) return;
     autopilot = isl;
     toast("setting sail to: " + isl.def.name + ". sit back, i'll row.");
   }
@@ -3802,7 +3823,14 @@
   var PAN_MAX = 130;      // world units of look-point offset from the canoe
   var fogN0 = 110, fogF0 = 255;
   var rmQ = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
-  function setZoomT(z) { camUser.zoomT = clamp(z, 1, ZOOM_MAX); }
+  var zoomInBtn = null, zoomOutBtn = null;   // v8.5: chips reflect the clamp
+  function setZoomT(z) {
+    camUser.zoomT = clamp(z, 1, ZOOM_MAX);
+    if (zoomInBtn) {
+      zoomInBtn.disabled = camUser.zoomT <= 1.001;
+      zoomOutBtn.disabled = camUser.zoomT >= ZOOM_MAX - 0.001;
+    }
+  }
   W.setZoom = setZoomT;   // harness/debug hook
   function clampPan() {
     var pl = Math.sqrt(camUser.panX * camUser.panX + camUser.panZ * camUser.panZ);
@@ -4108,7 +4136,7 @@
     if (nearIsland) {
       dockBtn.hidden = false;
       // v8: the ⏎ is a keyboard promise — don't make it to fingers
-      var enterHint = (navigator.maxTouchPoints > 1 || "ontouchstart" in window) ? "" : " ⏎";
+      var enterHint = TOUCH_DEV ? "" : " ⏎";
       dockBtn.textContent = (groundedIsl === nearIsland
         ? "hop ashore"
         : "beach at " + nearIsland.def.name) + enterHint;
@@ -4412,6 +4440,11 @@
     if (dive) { updateDiveCamera(dt); return; }
     if (board) { updateBoardCamera(dt); return; }
     if (land) { updateLandCamera(dt); return; }
+    /* v8.5 · beached = HOLD. the land cam composed a postcard; keep it
+       framed under the open case instead of drifting back to the chase
+       cam. the release is the launch: the chase cam eases in from the
+       held shot as the canoe slides off — arrival, hold, release. */
+    if (beached) return;
     var spdK = boat.speed / MAX_SPEED;
     var fx = Math.sin(boat.heading), fz = Math.cos(boat.heading);
     var rx = fz, rz = -fx;
