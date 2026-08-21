@@ -7,10 +7,23 @@ todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, verc
 
 ## dónde meter cada cosa
 
-### (a) link de youtube de "capullos"
-`js/config.js` → `CAPULLOS_YOUTUBE_ID`
-pega solo el id del vídeo (lo que va después de `v=` en la url).
-ejemplo: para `https://youtube.com/watch?v=Ab12Cd34` → `CAPULLOS_YOUTUBE_ID: "Ab12Cd34"`.
+### (a) links de youtube de "capullos"
+`js/config.js` → `CAPULLOS_VIDEOS`
+un objeto por versión del vídeo: `{ lang, label, id }`. pega solo el id (lo que
+va después de `v=` en la url). el primero es el que carga; si hay más de uno,
+el case pinta un chip por versión (english / español) para cambiar sin salir
+de la página.
+ejemplo: `https://youtube.com/watch?v=Ab12Cd34` →
+`{ lang: "en", label: "english", id: "Ab12Cd34" }`.
+
+ahora mismo: english `zHokzNbwlV4` · español `nzK2vCV108I`.
+
+si algún día solo hay un vídeo, el viejo `CAPULLOS_YOUTUBE_ID` sigue valiendo
+(carga el embed sin chips).
+
+ojo: los ids viven en tres sitios y tienen que ir a la vez → `js/config.js`
+(el player), el `.video-placeholder` de `index.html` (el enlace que ven los
+crawlers y quien no tenga js) y los nodos `VideoObject` del JSON-LD.
 
 ### (b) case de estrategia de liga u (cuando esté el contenido real)
 `index.html` → busca el `<article id="liga-u-strategy">` (marcado con el

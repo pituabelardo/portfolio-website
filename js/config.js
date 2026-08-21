@@ -5,9 +5,17 @@
 
 window.PORTFOLIO_CONFIG = {
 
-  /* (a) capullos youtube video:
-     paste the id only — for https://youtube.com/watch?v=dQw4w9WgXcQ
-     the id is "dQw4w9WgXcQ" */
+  /* (a) capullos youtube videos — one entry per language cut.
+     paste the id only: for https://youtube.com/watch?v=dQw4w9WgXcQ the id
+     is "dQw4w9WgXcQ". the first entry is the one that loads; if there is
+     more than one, the case shows a chip per cut to swap between them.
+     `label` is what the chip says, `lang` is the bcp-47 tag. */
+  CAPULLOS_VIDEOS: [
+    { lang: "en", label: "english",  id: "zHokzNbwlV4" },
+    { lang: "es", label: "español",  id: "nzK2vCV108I" },
+  ],
+
+  /* legacy single-video field — still honoured if CAPULLOS_VIDEOS is empty */
   CAPULLOS_YOUTUBE_ID: "",
 
   /* (c) social links — they appear in the about section and in schema.org.

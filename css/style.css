@@ -983,6 +983,83 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   font-weight: 600;
 }
 
+/* v8.6 · language chips under the capullos embed (english / español cuts).
+   built by main.js only when config ships more than one video, so a single
+   video keeps the bare iframe. same pill language as the social links; the
+   selected one fills with the island color and takes the contrast-safe
+   --dot-text main.js computes per case. */
+.video-langs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.lang-chip,
+.case-links a {
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--ink);
+  background: transparent;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 15px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .2s, color .2s, transform .2s;
+}
+.lang-chip:hover,
+.case-links a:hover { transform: translateY(-1px); }
+.lang-chip.on {
+  background: var(--dot, var(--ink));
+  color: var(--dot-text, var(--cream));
+  font-weight: 700;
+}
+.case-links a:hover { background: var(--ink); color: var(--cream); }
+
+/* v8.6 · the campaign's own sites, as chips instead of naked urls */
+.case-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1em;
+  max-width: 62ch;
+}
+
+/* v8.6 · the two numbers that close the argument (capullos: €11 in,
+   €32,800 of earned media out). anton for the figure, mono for the label,
+   painted in the island color with the AA-safe --dot-text main.js picks. */
+.case-stats {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 34px;
+  margin: 0 0 1.4em;
+  padding: 16px 20px;
+  max-width: 62ch;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: var(--dot, var(--coral));
+  color: var(--dot-text, var(--ink));
+}
+.case-stats strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 4.6vw, 2.4rem);
+  line-height: 1;
+}
+.case-stats span {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  opacity: .72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-chip, .case-links a { transition: none; }
+  .lang-chip:hover, .case-links a:hover { transform: none; }
+}
+
 /* v7: placeholder slots in a poster grid — same visual language as
    the capullos video placeholder (cream stripes, mono aside), poster
    proportions so the swap to real images is 1:1 */

@@ -23,8 +23,13 @@ the canoe to reach it (`WORLD.diveOut`) and climb back aboard to leave
   the canoe never buries.
 - never commit secrets. never stage anything outside `website/`. jorge's
   prompt-history files (`PROMPT-FABLE5*.md`) are gitignored on purpose.
-- README.md keeps its content-insertion points (a) youtube id, (b) liga u
+- README.md keeps its content-insertion points (a) youtube videos, (b) liga u
   case content, (c) social links. don't orphan them.
+- (v8.6) capullos ships TWO language cuts (`CAPULLOS_VIDEOS` in config.js:
+  english + español). main.js builds one iframe plus a `.lang-chip` per cut;
+  the `.video-placeholder` in index.html is now the real no-js/crawler
+  fallback (plain youtube links), and the JSON-LD `CreativeWork` carries a
+  `VideoObject` per cut. change a video id and all three must move together.
 
 ## 1 · anatomy of an island
 

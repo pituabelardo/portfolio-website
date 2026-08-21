@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.5";
+  var BUILD = "8.6";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -130,16 +130,94 @@
     document.querySelectorAll(".case, .about").forEach(function (el) { el.classList.add("inview"); });
   }
 
-  /* ---------- youtube embed ---------- */
+  /* ---------- per-case contrast token ----------
+     pick ink/cream for anything painted with this case's island color, so
+     the tinted UI (close button, language chips) never drops below AA.
+     v8.6: this used to live in the close-button pass further down — it now
+     runs BEFORE anything reads --dot-text, both because the no-webgl path
+     returns before that pass and because chrome kept serving the fallback
+     to nodes styled before the inline property landed. */
+  document.querySelectorAll(".case").forEach(function (el) {
+    var dot = getComputedStyle(el).getPropertyValue("--dot").trim();
+    if (/^#[0-9a-f]{6}$/i.test(dot)) {
+      var r = parseInt(dot.slice(1, 3), 16), g = parseInt(dot.slice(3, 5), 16), b = parseInt(dot.slice(5, 7), 16);
+      var yiq = (r * 299 + g * 587 + b * 114) / 1000;
+      el.style.setProperty("--dot-text", yiq >= 140 ? "#14120f" : "#f6eedd");
+    }
+  });
+
+  /* ---------- youtube embed ----------
+     v8.6 · capullos ships in two language cuts (english / español), so the
+     placeholder becomes one iframe plus a chip per cut that swaps the src.
+     one video (or the legacy CAPULLOS_YOUTUBE_ID) → no chips, same embed
+     as before. */
   var ph = document.querySelector(".video-placeholder");
-  if (ph && cfg.CAPULLOS_YOUTUBE_ID) {
+  var vids = (cfg.CAPULLOS_VIDEOS || []).filter(function (v) { return v && v.id; });
+  if (!vids.length && cfg.CAPULLOS_YOUTUBE_ID) {
+    vids = [{ id: cfg.CAPULLOS_YOUTUBE_ID }];
+  }
+  if (ph && vids.length) {
+    var ytTitle = function (v) {
+      return "capullos — liga u video campaign" + (v.label ? " (" + v.label + ")" : "");
+    };
+    var ytSrc = function (v, autoplay) {
+      return "https://www.youtube-nocookie.com/embed/" + v.id +
+        "?rel=0&modestbranding=1&enablejsapi=1" + (autoplay ? "&autoplay=1" : "");
+    };
     var iframe = document.createElement("iframe");
-    iframe.src = "https://www.youtube-nocookie.com/embed/" + cfg.CAPULLOS_YOUTUBE_ID;
-    iframe.title = "capullos — liga u video campaign";
+    iframe.src = ytSrc(vids[0], false);
+    iframe.title = ytTitle(vids[0]);
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.loading = "lazy";
     ph.replaceWith(iframe);
+
+    if (vids.length > 1) {
+      var langs = document.createElement("div");
+      langs.className = "video-langs";
+      langs.setAttribute("role", "group");
+      langs.setAttribute("aria-label", "video language");
+      var chips = vids.map(function (v, i) {
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "lang-chip" + (i === 0 ? " on" : "");
+        chip.textContent = v.label || v.lang || ("cut " + (i + 1));
+        if (v.lang) chip.setAttribute("lang", v.lang);
+        chip.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+        chip.addEventListener("click", function () {
+          if (chip.classList.contains("on")) return;
+          /* swapping is a deliberate click, so the new cut starts playing —
+             except under reduced motion, where nothing moves unasked. */
+          var rm = window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          iframe.src = ytSrc(v, !rm);
+          iframe.title = ytTitle(v);
+          chips.forEach(function (c) {
+            var on = c === chip;
+            c.classList.toggle("on", on);
+            c.setAttribute("aria-pressed", on ? "true" : "false");
+          });
+        });
+        langs.appendChild(chip);
+        return chip;
+      });
+      iframe.parentNode.appendChild(langs);
+    }
+  }
+
+  /* v8.6 · a case can be closed — or the whole content layer hidden by a mode
+     switch — with the video playing, and youtube keeps talking from inside a
+     display:none subtree. enablejsapi=1 (see ytSrc above) makes this
+     postMessage enough to shut it up. */
+  function pauseCaseVideos() {
+    document.querySelectorAll(".case iframe").forEach(function (f) {
+      if (f.src.indexOf("youtube-nocookie.com") < 0) return;
+      try {
+        f.contentWindow.postMessage(
+          '{"event":"command","func":"pauseVideo","args":""}',
+          "https://www.youtube-nocookie.com");
+      } catch (e) { /* no contentWindow yet: nothing playing either */ }
+    });
   }
 
   /* ---------- social links ---------- */
@@ -196,14 +274,6 @@
 
   /* ---------- close buttons for case overlays ---------- */
   document.querySelectorAll(".case").forEach(function (el) {
-    // pick ink/cream for anything painted with this case's island color,
-    // so the tinted UI never drops below AA contrast
-    var dot = getComputedStyle(el).getPropertyValue("--dot").trim();
-    if (/^#[0-9a-f]{6}$/i.test(dot)) {
-      var r = parseInt(dot.slice(1, 3), 16), g = parseInt(dot.slice(3, 5), 16), b = parseInt(dot.slice(5, 7), 16);
-      var yiq = (r * 299 + g * 587 + b * 114) / 1000;
-      el.style.setProperty("--dot-text", yiq >= 140 ? "#14120f" : "#f6eedd");
-    }
     var btn = document.createElement("button");
     btn.className = "close-case";
     btn.setAttribute("aria-label", "close case, back to the sea");
@@ -252,6 +322,7 @@
     var el = openCaseEl;
     openCaseEl = null;
     if (el) {
+      pauseCaseVideos();
       el.classList.remove("surfacing");
       if (animate && body.classList.contains("mode-sea") && !reducedMotion) {
         el.classList.add("sinking");
@@ -287,6 +358,7 @@
   /* ---------- mode switching ---------- */
   function setMode(mode) {
     if (mode === "sea") {
+      pauseCaseVideos();            // v8.6: dry land goes display:none, audio doesn't
       body.classList.remove("mode-content");
       body.classList.add("mode-sea");
       hud.hidden = false;

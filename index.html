@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=8.5">
+  <link rel="stylesheet" href="css/style.css?v=8.6">
 
   <!-- structured data -->
   <script type="application/ld+json">
@@ -59,7 +59,32 @@
         "name": "capullos — liga u video campaign",
         "creator": { "@id": "https://jorgeantolin.com/#jorge" },
         "about": "video campaign for liga u, spain's u22 national basketball league. 'capullos' means both 'flower buds' and 'little punks' in spanish: young players everyone doubts, blooming into the real thing.",
-        "url": "https://jorgeantolin.com/#capullos"
+        "url": "https://jorgeantolin.com/#capullos",
+        "sameAs": ["https://capullos.es/", "https://capullos.es/test"],
+        "video": [
+          {
+            "@type": "VideoObject",
+            "name": "Liga U - Capullos (Case Study) | Campaign",
+            "description": "english cut of the capullos case study: liga u's launch campaign turning the spanish insult 'capullos' into flower buds about to open.",
+            "inLanguage": "en",
+            "uploadDate": "2026-07-28",
+            "duration": "PT2M3S",
+            "thumbnailUrl": "https://i.ytimg.com/vi/zHokzNbwlV4/hqdefault.jpg",
+            "embedUrl": "https://www.youtube-nocookie.com/embed/zHokzNbwlV4",
+            "url": "https://www.youtube.com/watch?v=zHokzNbwlV4"
+          },
+          {
+            "@type": "VideoObject",
+            "name": "Liga U - Capullos (Case Study) | Campaña",
+            "description": "versión en español del case study de capullos: la campaña de lanzamiento de liga u que convierte el insulto en brotes a punto de abrir.",
+            "inLanguage": "es",
+            "uploadDate": "2026-07-28",
+            "duration": "PT2M3S",
+            "thumbnailUrl": "https://i.ytimg.com/vi/nzK2vCV108I/hqdefault.jpg",
+            "embedUrl": "https://www.youtube-nocookie.com/embed/nzK2vCV108I",
+            "url": "https://www.youtube.com/watch?v=nzK2vCV108I"
+          }
+        ]
       },
       {
         "@type": "CreativeWork",
@@ -163,19 +188,27 @@
       </div>
       <div class="case-body">
         <div class="video-wrap" id="capullos-video">
-          <!-- YOUTUBE_EMBED: replace data-yt with the video id (the part after v= in the url) -->
-          <div class="video-placeholder" data-yt="">
-            <p>video case — youtube embed goes here</p>
-            <span class="mono">(waiting for the link, see readme)</span>
+          <!-- YOUTUBE_EMBED: main.js swaps this block for the embed + one chip
+               per language cut. the ids live in js/config.js → CAPULLOS_VIDEOS;
+               this markup is what no-js visitors and crawlers get. -->
+          <div class="video-placeholder">
+            <p><a href="https://www.youtube.com/watch?v=zHokzNbwlV4">watch the case on youtube</a></p>
+            <span class="mono">english cut · <a href="https://www.youtube.com/watch?v=nzK2vCV108I" hreflang="es" lang="es">versión en español</a></span>
           </div>
         </div>
         <div class="case-text">
           <p>young players get doubted for a living. too green, too cocky, too soon. <em>capullos</em> flips the insult: buds are exactly what blooms. the campaign frames liga u's under-22 talent as flowers about to open — and dares you to keep calling them capullos when they do.</p>
+          <p>it ran 360º: film, social, and a microsite where a basketball league sells packets of wildflower seeds at €2.22 — you adopt your capullos, you plant them, they open around the play-in in burgos. plus a six-question test that tells you which of the seventy capullos is your type. i designed both sites.</p>
+          <p class="case-links"><a href="https://capullos.es" target="_blank" rel="noopener" hreflang="es">capullos.es ↗</a><a href="https://capullos.es/test" target="_blank" rel="noopener" hreflang="es">¿cuál es tu capullo? ↗</a></p>
+          <ul class="case-stats">
+            <li><strong>€11</strong><span>media investment</span></li>
+            <li><strong>€32,800</strong><span>earned media value</span></li>
+          </ul>
           <p>launch campaign made at liga u, where i lead creative direction, communication and strategy.</p>
           <ul class="case-meta">
-            <li><span>role</span>creative direction, concept, copy</li>
+            <li><span>role</span>creative direction, concept, copy, web design</li>
             <li><span>for</span>liga u (acb)</li>
-            <li><span>format</span>video campaign</li>
+            <li><span>format</span>360º campaign</li>
           </ul>
         </div>
       </div>
@@ -186,7 +219,7 @@
       <div class="case-head">
         <span class="case-tag" style="--tag:#ffd23f">island 02 · case study · liga u</span>
         <h2>liga u — brand & communication strategy</h2>
-        <p class="case-claim">a league nobody had heard of, a voice everybody under 22 recognizes. built from zero.</p>
+        <p class="case-claim">a league nobody had heard of, a voice everybody under 22 recognizes. built&nbsp;from&nbsp;zero.</p>
       </div>
       <div class="case-body">
         <!-- CASE_PLACEHOLDERS: swap each .case-slot below for the real content (see readme, point b) -->
@@ -210,7 +243,7 @@
           <ul class="case-meta">
             <li><span>role</span>creative direction, brand strategy, community management</li>
             <li><span>for</span>liga u (acb)</li>
-            <li><span>format</span>case study — brand & communication strategy</li>
+            <li><span>format</span>brand & communication strategy</li>
           </ul>
         </div>
       </div>
@@ -230,10 +263,11 @@
           <img src="assets/talens-3.webp" alt="talens x pantone poster: 'colors kill, forget about color' over a black and white photo of migrants by a freight train in the chihuahua desert, framed like a pantone color chip" loading="lazy" width="1000" height="1415">
         </div>
         <div class="case-text">
-          <p>two brands that live off color, going black and white on purpose. the campaign takes real border photography — melilla, lampedusa, chihuahua — and strips the color out, because when color means skin, nobody's admiring the palette. the only color left is the pantone chip: <em>color is art. not a barrier.</em></p>
+          <p>a fictional brief with real homework: the premium end of the art aisle, royal talens x pantone, and no strategy to inherit — so i built one from zero. the closest audience turned out to be young art, fine arts and design students, and i went looking for what worries them beyond the price of a brush: the world they are about to graduate into. the campaign sits exactly where the product's usp meets that worry — color is what talens x pantone sells, and color is also what gets people stopped at a border.</p>
+          <p>so: two brands that live off color, going black and white on purpose. the campaign takes real border photography — melilla, lampedusa, chihuahua — and strips the color out, because when color means skin, nobody's admiring the palette. the only color left is the pantone chip: <em>color is art. not a barrier.</em></p>
           <p>concept campaign for royal talens x pantone, developed during my brand design specialization at hogeschool utrecht.</p>
           <ul class="case-meta">
-            <li><span>role</span>concept, art direction, copy</li>
+            <li><span>role</span>strategy, concept, art direction, copy</li>
             <li><span>for</span>royal talens x pantone (concept)</li>
             <li><span>format</span>print / ooh</li>
           </ul>
@@ -255,10 +289,10 @@
           <img src="assets/justitie-3.webp" alt="dutch ministry of justice poster: an elderly person in a black balaclava, headline 'unusual suspects', quote from annie, 84, convicted of stealing 1200 euros with a single click" loading="lazy" width="1000" height="1415">
         </div>
         <div class="case-text">
-          <p>online scammers don't look like movie hackers. they look like anyone — even like ruth, 82, asking you to hold her bags. the campaign puts grandmas and grandpas in balaclavas to make one point stick: on the internet you never know who's on the other side, so <em>think before you click.</em></p>
+          <p>online scammers don't look like movie hackers. they look like anyone — even like ruth, 82, asking you to hold her bags. the grandparents under those balaclavas are mine: i photographed them for this campaign, which is the whole point. <em>on the internet, nobody is who they seem</em> — so think before you click.</p>
           <p>concept awareness campaign for the dutch ministerie van justitie en veiligheid, developed during my brand design specialization at hogeschool utrecht.</p>
           <ul class="case-meta">
-            <li><span>role</span>concept, art direction, copy</li>
+            <li><span>role</span>concept, art direction, copy, photography</li>
             <li><span>for</span>ministerie van justitie en veiligheid (concept)</li>
             <li><span>format</span>print / ooh</li>
           </ul>
@@ -299,8 +333,8 @@
   </noscript>
 
   <!-- ?v= must match BUILD in js/main.js — bump both on every js/css deploy -->
-  <script src="js/config.js?v=8.5"></script>
-  <script src="js/main.js?v=8.5"></script>
-  <script src="js/dryland.js?v=8.5" defer></script>
+  <script src="js/config.js?v=8.6"></script>
+  <script src="js/main.js?v=8.6"></script>
+  <script src="js/dryland.js?v=8.6" defer></script>
 </body>
 </html>
