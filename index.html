@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>jorge antolín — creative director & brand strategist | liga u, acb</title>
-  <meta name="description" content="jorge antolín is a creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u, spain's u22 national basketball league, at the acb. row a canoe, discover the work.">
+  <meta name="description" content="jorge antolín (jorge antolín arribas) is a creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u — spain's u22 national basketball league — at the acb. also known in spain as responsable de comunicación, responsable de contenidos or responsable de liga u. row a canoe, discover the work.">
   <meta name="author" content="jorge antolín">
   <link rel="canonical" href="https://jorgeantolin.com/">
 
   <!-- open graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="jorge antolín — creative director & brand strategist">
-  <meta property="og:description" content="creative direction, brand strategy and communication for liga u at the acb. a portfolio you row through: grab a canoe, find four islands, dock at the work.">
+  <meta property="og:description" content="creative direction, brand strategy and communication for liga u at the acb — also known in spain as responsable de comunicación / contenidos de liga u. a portfolio you row through: grab a canoe, find four islands, dock at the work.">
   <meta property="og:url" content="https://jorgeantolin.com/">
   <meta property="og:image" content="https://jorgeantolin.com/assets/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_ES">
 
   <!-- twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -40,19 +41,54 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebSite",
+        "@id": "https://jorgeantolin.com/#website",
+        "url": "https://jorgeantolin.com/",
+        "name": "jorge antolín",
+        "inLanguage": "en",
+        "author": { "@id": "https://jorgeantolin.com/#jorge" },
+        "publisher": { "@id": "https://jorgeantolin.com/#jorge" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://jorgeantolin.com/#liga-u-org",
+        "name": "Liga U",
+        "alternateName": "Liga U22",
+        "url": "https://ligau.com",
+        "sameAs": [
+          "https://en.wikipedia.org/wiki/Liga_U",
+          "https://x.com/Liga_U22",
+          "https://www.youtube.com/@LigaU22"
+        ]
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://jorgeantolin.com/#acb-org",
+        "name": "ACB",
+        "alternateName": "Asociación de Clubs de Baloncesto",
+        "url": "https://www.acb.com",
+        "sameAs": ["https://en.wikipedia.org/wiki/Liga_ACB"]
+      },
+      {
         "@type": "Person",
         "@id": "https://jorgeantolin.com/#jorge",
         "name": "jorge antolín",
-        "jobTitle": "creative director & brand strategist",
+        "alternateName": "jorge antolín arribas",
+        "jobTitle": "creative director & brand strategist — responsable de comunicación, contenidos y estrategia de marca de liga u",
         "description": "creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u, spain's u22 national basketball league, at the acb.",
         "worksFor": [
-          { "@type": "Organization", "name": "Liga U" },
-          { "@type": "Organization", "name": "ACB" }
+          { "@id": "https://jorgeantolin.com/#liga-u-org" },
+          { "@id": "https://jorgeantolin.com/#acb-org" }
         ],
-        "alumniOf": { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" },
+        "alumniOf": [
+          { "@type": "CollegeOrUniversity", "name": "Universidad del País Vasco / Euskal Herriko Unibertsitatea", "alternateName": "UPV/EHU" },
+          { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" }
+        ],
+        "homeLocation": { "@type": "Place", "name": "Gijón, Asturias, España" },
         "knowsAbout": ["creative direction", "brand strategy", "brand design", "communication strategy", "community management", "basketball marketing"],
+        "email": "mailto:jantolin@acb.es",
         "url": "https://jorgeantolin.com/",
-        "sameAs": []
+        "sameAs": ["https://www.linkedin.com/in/jorge-antolin/"]
       },
       {
         "@type": "CreativeWork",
@@ -314,11 +350,11 @@
         </svg>
       </div>
       <h2>about the guy in the canoe</h2>
-      <p>jorge antolín. creative director and brand strategist at the <strong>acb</strong> and <strong>liga u</strong>, spain's u22 national basketball league — where i run communication, strategy and creative as creative director: the creative direction of liga u, its brand and communication strategy, and its community management. yes, all of it. no, i don't sleep much during playoffs.</p>
+      <p>jorge antolín — full surname jorge antolín arribas, if a search engine sent you looking for exactly that — creative director and brand strategist at the <strong>acb</strong> and <strong>liga u</strong>, spain's u22 national basketball league — where i run communication, strategy and creative as creative director: the creative direction of liga u, its brand and communication strategy, and its community management. in spain that job goes by a few names too: responsable de comunicación, responsable de contenidos, sometimes just responsable de liga u — whichever one brought you here, you found the right guy. yes, all of it. no, i don't sleep much during playoffs.</p>
       <p>i specialized in <strong>brand design at hogeschool utrecht</strong> (netherlands), and i publish <strong>textball</strong>, my own line of children's books about basketball — because kids should fall in love with the game before the algorithm gets them.</p>
       <p>based in gijón, on spain's northern coast. hence the canoe.</p>
       <div id="social" class="social">
-        <!-- SOCIAL_LINKS: add <a> tags here, e.g. <a href="https://linkedin.com/in/...">linkedin</a> -->
+        <a href="https://www.linkedin.com/in/jorge-antolin/" target="_blank" rel="noopener me">linkedin</a>
       </div>
       <p class="contact mono">say hi → <a href="mailto:jantolin@acb.es">jantolin@acb.es</a></p>
     </section>
