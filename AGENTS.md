@@ -328,7 +328,10 @@ create such a skill, note its name here so the next model finds it.
   youtube-nocookie (frames), i.ytimg.com (thumbs). a new third-party host needs
   a CSP entry or it silently fails. three.js is pinned with SRI in main.js
   (`THREE_SRI`) — if you change the three version, recompute the sha384.
-- AGENTS.md / README.md are rewritten to a 404 in vercel.json; they are still in
+- (v8.7.1) AGENTS.md / README.md / any *.md are excluded from the deployment
+  by `.vercelignore` — the vercel.json rewrite alone did NOT work in prod (a
+  file that exists wins over a rewrite; /AGENTS.md served 200). the rewrite
+  stays as a second belt. they are still in
   the (public) repo.
 - the youtube embed is a facade (`.yt-facade`): the iframe only exists after a
   click. `pauseCaseVideos` handles both states.

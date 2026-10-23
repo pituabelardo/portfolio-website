@@ -1,0 +1,8 @@
+# repo docs never ship to the web. on vercel a file that EXISTS wins over a
+# vercel.json rewrite, so the rewrite alone left /AGENTS.md public (v8.7.1).
+AGENTS.md
+README.md
+CLAUDE.md
+PROMPT-*.md
+*.md
+.tmp-gen/
