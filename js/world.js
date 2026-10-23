@@ -3691,7 +3691,7 @@
     ctaBtn = document.createElement("a");
     ctaBtn.id = "edge-cta";
     ctaBtn.className = "dock edge-cta";
-    ctaBtn.href = "mailto:jantolin@acb.es?subject=" + encodeURIComponent("let's build island #5");
+    ctaBtn.href = "mailto:jorgeantolinarribas@gmail.com?subject=" + encodeURIComponent("let's build island #5");
     ctaBtn.textContent = "build island #5 with me ✉";
     ctaBtn.hidden = true;
     document.getElementById("hud").appendChild(ctaBtn);
@@ -3902,7 +3902,7 @@
       if (d < best) { best = d; next = isl; }
     });
     if (next) toast("next stop: " + next.def.name + "? it's on the compass.");
-    else toast("that's the full tour. now hire the man: jantolin@acb.es");
+    else toast("that's the full tour. now hire the man: jorgeantolinarribas@gmail.com");
   };
 
   /* ============================================================

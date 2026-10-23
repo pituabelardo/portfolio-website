@@ -40,6 +40,12 @@ provisionales.
 no hay nada que tocar en `js/config.js` ni en el mundo 3d: la isla ya es
 la cancha y no sabe nada de "coming soon".
 
+### (d) email de contacto
+ahora `jorgeantolinarribas@gmail.com` (v8.7.3, sustituye al del acb). cuando
+tengas el correo del dominio: buscar-y-reemplazar en `index.html` (contacto,
+"ask for the deck", JSON-LD `email`) y `js/world.js` (chip de la isla #5 y el
+último toast del capitán), y bump de `?v=` + `BUILD`.
+
 ### (c) redes sociales
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).
 además, en `index.html` → JSON-LD (bloque `application/ld+json`), añade las urls al array `"sameAs"`.
@@ -218,7 +224,7 @@ y gijón deja de ser un decorado para ser casa.
   (girado fuera de la ruta de aproximación).
 - **los bordes venden**: al norte, este y oeste, una boya-cartel de madera
   ("island #5 — plot for sale") + toast del capitán con copy propio por rumbo
-  + chip `mailto:jantolin@acb.es` (asunto "let's build island #5") estilo
+  + chip `mailto:jorgeantolinarribas@gmail.com` (asunto "let's build island #5") estilo
   dock-btn. el borde sur es de gijón: morriña, cero marketing.
 - **el menú son las profundidades**: el fondo del contenido es una columna
   de agua cocida a la altura del documento (`#depth-bg`, aria-hidden):
