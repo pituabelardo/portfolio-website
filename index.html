@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=8.8">
+  <link rel="stylesheet" href="css/style.css?v=8.9">
 
   <!-- structured data -->
   <script type="application/ld+json">
@@ -142,6 +142,26 @@
       },
       {
         "@type": "CreativeWork",
+        "name": "ai direction — ai video for liga u",
+        "creator": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
+        "about": "ai video direction for liga u, spain's u22 national basketball league, at the acb: short-form video made with generative ai for the league's social channels.",
+        "url": "https://portfolio-website-nu-ebon-47.vercel.app/#ai-direction",
+        "video": [
+          {
+            "@type": "VideoObject",
+            "name": "nadie ha hecho un triple-doble en liga u",
+            "description": "instagram reel for liga u (@liga_u22) about the league's first triple-double, which nobody had reached yet. caption: los cuatro jinetes del apocalipsis llamado liga u buscan lo mismo, conseguir un triple doble…",
+            "inLanguage": "es",
+            "uploadDate": "2026-10-22",
+            "width": { "@type": "QuantitativeValue", "value": 1080, "unitCode": "E37" },
+            "height": { "@type": "QuantitativeValue", "value": 1920, "unitCode": "E37" },
+            "url": "https://www.instagram.com/p/Dey7g20OTtu/",
+            "publisher": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#liga-u-org" }
+          }
+        ]
+      },
+      {
+        "@type": "CreativeWork",
         "name": "talens x pantone — color is art, not a barrier (student concept)",
         "creator": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
         "about": "student concept print campaign imagining royal talens x pantone turning color from a border issue into an art statement. made during a brand design specialization at hogeschool utrecht; not commissioned by either brand.",
@@ -223,7 +243,7 @@
     <section id="top" class="hero">
       <h1>jorge antolín <span class="h1-role">— creative director & brand strategist</span></h1>
       <p class="lede">i run creative direction, brand strategy and communication for <strong>liga u</strong> — spain's u22 national basketball league — at the <strong>acb</strong>. i live by the sea in gijón, so this portfolio works like home does: you get in a canoe, you row, you find things.</p>
-      <p class="lede-sub">two islands of liga u work — the league, and the campaign that launched it. two islands of student concepts from utrecht, labelled as such. no lorem ipsum, no stock handshakes, no clients i never had.</p>
+      <p class="lede-sub">three islands of liga u work — the league, the campaign that launched it, and the ai video i direct for it. two islands of student concepts from utrecht, labelled as such. no lorem ipsum, no stock handshakes, no clients i never had.</p>
       <p class="scroll-hint" aria-hidden="true">or just scroll — the water can wait ↓</p>
     </section>
 
@@ -356,10 +376,86 @@
       </div>
     </article>
 
-    <!-- island 3: talens x pantone -->
-    <article id="talens-pantone" class="case" aria-labelledby="h-talens-pantone" data-island="talens" data-num="03" style="--dot:#ff5a3c">
+    <!-- island 3: ai direction — the ai video jorge directs for liga u.
+         built to hold many pieces over time: one <article class="ai-piece">
+         per piece inside .ai-pieces, newest first. public copy is only what
+         the post itself proves (what it is, for whom, its caption, its
+         format); the master, process, numbers, credits and permissions are
+         <template class="case-draft"> holes (?draft=1). see README (e). -->
+    <article id="ai-direction" class="case" aria-labelledby="h-ai-direction" data-island="ai" data-num="03" style="--dot:#a66bff">
       <div class="case-head">
-        <span class="case-tag" style="--tag:#ff5a3c">island 03 · student concept · hogeschool utrecht</span>
+        <span class="case-tag" style="--tag:#a66bff">island 03 · ai video direction · liga u (acb)</span>
+        <h2 id="h-ai-direction">ai direction</h2>
+        <p class="case-claim">video made with ai, for a real league. the machine renders; somebody still has to call the play.</p>
+      </div>
+      <div class="case-body">
+        <div class="case-text">
+          <p>this island is where the ai-directed video for liga u's channels docks — one piece per post, newest first.</p>
+        </div>
+
+        <div class="ai-pieces">
+          <article class="ai-piece" aria-labelledby="h-ai-triple-double">
+            <!-- POSTER: a css-drawn stand-in, not the real cover. once the master
+                 and the cover are cleared, swap this block for the <video> in the
+                 draft below (README (e)). -->
+            <div class="ai-media">
+            <a class="ai-poster" href="https://www.instagram.com/p/Dey7g20OTtu/" target="_blank" rel="noopener">
+              <span class="ai-poster-kicker">reel · 9:16</span>
+              <span class="ai-poster-beam" aria-hidden="true"></span>
+              <span class="ai-poster-head">nobody has done a <span class="nowrap">triple-double</span> in liga&nbsp;u.</span>
+              <span class="ai-poster-stadium" aria-hidden="true"></span>
+              <span class="ai-poster-cta">watch on instagram <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></span>
+            </a>
+            <template class="case-draft">
+              <div class="case-pending ai-pending-master">
+                <p class="mono">draft · the master — needs from jorge</p>
+                <p>the mp4 master (h.264, 1080×1920, ideally under 8 mb, plus its real cover as a jpg) to self-host in <code>assets/ai/</code> — it replaces the css poster with a <code>&lt;video controls playsinline preload="none" poster="…"&gt;</code>. or, if it should stay on instagram, the ok to embed it (needs a csp entry). and the cover's ok: it isn't published here yet.</p>
+              </div>
+            </template>
+            </div>
+            <div class="ai-piece-text">
+              <p class="ai-piece-meta"><span>piece 01</span> · <time datetime="2026-10-22">22 oct 2026</time> · @liga_u22</p>
+              <h3 id="h-ai-triple-double">the first triple-double</h3>
+              <p>a reel for liga u's instagram about the one stat line nobody in the league had reached when it went out: a triple-double. its cover says it straight — <em>nadie ha hecho un triple-doble en liga u</em>, nobody has done a triple-double in liga u. the caption:</p>
+              <blockquote class="ai-caption" lang="es"><p>“los cuatro jinetes del apocalipsis llamado liga u buscan lo mismo, conseguir un triple doble…”</p></blockquote>
+              <p class="ai-translation">the four horsemen of an apocalypse called liga u are all chasing the same thing: a triple-double…</p>
+              <template class="case-draft">
+                <div class="case-pending"><p class="mono">draft · the piece — needs from jorge</p>
+                  <p><b>duration</b> · <b>tools &amp; models</b> (what generated what: image, video, voice, music, edit) · <b>process</b>: the storyboard or the prompts, or one before → after frame · <b>credits</b>: what you did yourself (concept, script, prompts, edit, sound) and who else touched it.</p></div>
+                <ul class="case-stats case-pending-stats" aria-label="draft: the reel's numbers">
+                  <li><strong>[ ? ]</strong><span>views / plays</span></li>
+                  <li><strong>[ ? ]</strong><span>reach</span></li>
+                  <li><strong>[ ? ]</strong><span>saves · shares</span></li>
+                  <li><strong>[ ? ]</strong><span>retention (% watched)</span></li>
+                </ul>
+                <div class="case-pending"><p class="mono">draft · numbers — source and date or nothing</p>
+                  <p>from instagram insights, with the date you read them. the only public number so far is a snapshot about a day after posting: 1,254 likes and 15 comments — likes, not views, so it doesn't headline anything.</p></div>
+                <div class="case-pending"><p class="mono">draft · permissions — mandatory before any of this goes public</p>
+                  <p>the acb's ok to show the piece and its numbers here. and if the video uses ai to generate the image or likeness of real players: their written consent or the image-rights clearance (for under-18s, their guardians'). no permission on file, no publish.</p></div>
+              </template>
+              <ul class="case-meta">
+                <li><span>for</span>liga u (acb) · instagram</li>
+                <li><span>format</span>reel · 9:16 · 1080×1920</li>
+                <li><span>published</span>22 oct 2026</li>
+              </ul>
+              <p class="case-links"><a href="https://www.instagram.com/p/Dey7g20OTtu/" target="_blank" rel="noopener">see the post on instagram <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></p>
+            </div>
+          </article>
+
+          <template class="case-draft">
+            <div class="case-pending">
+              <p class="mono">draft · piece 02 — the next one</p>
+              <p>copy the <code>&lt;article class="ai-piece"&gt;</code> above, put it FIRST (newest on top), give it its own <code>h-ai-…</code> id, and add its <code>VideoObject</code> to the json-ld. same rule: what, for whom, caption, format in public; the rest in drafts until it's cleared.</p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </article>
+
+    <!-- island 4: talens x pantone -->
+    <article id="talens-pantone" class="case" aria-labelledby="h-talens-pantone" data-island="talens" data-num="04" style="--dot:#ff5a3c">
+      <div class="case-head">
+        <span class="case-tag" style="--tag:#ff5a3c">island 04 · student concept · hogeschool utrecht</span>
         <h2 id="h-talens-pantone">talens x pantone</h2>
         <p class="case-claim">color is art. not a barrier.</p>
       </div>
@@ -382,10 +478,10 @@
       </div>
     </article>
 
-    <!-- island 4: ministerie van justitie -->
-    <article id="ministerie" class="case" aria-labelledby="h-ministerie" data-island="ministerie" data-num="04" style="--dot:#2b47d9">
+    <!-- island 5: ministerie van justitie -->
+    <article id="ministerie" class="case" aria-labelledby="h-ministerie" data-island="ministerie" data-num="05" style="--dot:#2b47d9">
       <div class="case-head">
-        <span class="case-tag" style="--tag:#2b47d9; color:#f6eedd">island 04 · student concept · hogeschool utrecht</span>
+        <span class="case-tag" style="--tag:#2b47d9; color:#f6eedd">island 05 · student concept · hogeschool utrecht</span>
         <h2 id="h-ministerie">ministerie van justitie</h2>
         <p class="case-claim">un-usual suspects. think before you click.</p>
       </div>
@@ -440,8 +536,8 @@
   </noscript>
 
   <!-- ?v= must match BUILD in js/main.js — bump both on every js/css deploy -->
-  <script src="js/config.js?v=8.8"></script>
-  <script src="js/main.js?v=8.8"></script>
-  <script src="js/dryland.js?v=8.8" defer></script>
+  <script src="js/config.js?v=8.9"></script>
+  <script src="js/main.js?v=8.9"></script>
+  <script src="js/dryland.js?v=8.9" defer></script>
 </body>
 </html>

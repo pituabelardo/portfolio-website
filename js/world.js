@@ -1,4 +1,4 @@
-/* world.js — the sea, the canoe, the four islands. v3 "painted gold"
+/* world.js — the sea, the canoe, the five islands. v3 "painted gold"
    three.js r128 (global THREE), loaded lazily by main.js.
 
    ============================================================
@@ -2677,7 +2677,277 @@
       g.add(lamp);
       beacon = lamp;
       isl.props.boardY = 41;
+
+    } else if (id === "ai-direction") {
+      /* -- v8.9: ai direction — the one island where it's already night.
+         a low-poly stadium after dark, a vertical beam of light punching
+         out of its roof (the triple-double reel's cover, translated to
+         toon, never copied) and a 9:16 screen on the plaza wearing the
+         reel's poster. NO video in the 3d: the poster is one ≤512px
+         canvas, the beam one alpha-gradient mesh. 9 draw calls with the
+         name board: terrain, stadium, lights, screen, beam, 2 glows,
+         pebbles. everything stays inside the plaza → no rocks[] entry. -- */
+      var hFn5 = beachify(function (r01, x, z) {
+        var e = edgeMask(r01);
+        var rr5 = r01 * ISLAND_R;
+        var h = (1.5 + gauss(x, z, 0, 0, 14) * 3.6 + fbm2(x * 0.16 + seed, z * 0.16, 2) * 1.1) * e - (1 - e) * 3.5;
+        /* the plaza: one dead-flat concrete pad the stadium stands on */
+        return lerp(h, 3.4, smoothstep(19, 15.5, rr5));
+      });
+      /* night concrete: violet-grey asphalt, darker than the golden sea
+         around it, but lifted enough that the toon ramp never goes muddy */
+      var ramp5 = [
+        [0.4, COL.sand], [1.6, 0x9c8f86], [2.5, 0x4a4458],
+        [3.3, 0x332e43], [5, 0x2a2638],
+      ];
+      g.add(buildTerrain(hFn5, rampFn(ramp5, COL.sandWet, 1.0), true));
+      isl.props.heightFn = hFn5;
+
+      var plazaY = 3.4;
+      /* broadside to the spawn approach, like liga u's court: local +z
+         faces the incoming canoe */
+      var stA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);
+      var stG = new THREE.Group();
+      stG.rotation.y = stA;
+      g.add(stG);
+
+      var SX = 10.5, SZK = 0.78, SH = 6.6, SCZ = -3.5;   // facade radius, depth squash, height, center z
+      var rAt = function (y) { return lerp(10.8, 10.2, y / SH); };   // facade tapers a touch
+      var st = [];     // stadium shell + plaza props → ONE toon mesh
+      var lit = [];    // everything that glows → ONE unlit mesh
+
+      var podium = new THREE.CylinderGeometry(12, 12.6, 0.9, 24);
+      tint(podium, 0x4b4560, 0x5d5674, -0.45, 0.45);
+      podium.scale(1, 1, 0.8);
+      st.push(placed(podium, 0, plazaY + 0.25, SCZ, 0, 1));
+
+      var shell = new THREE.CylinderGeometry(rAt(SH), rAt(0), SH, 24);
+      tint(shell, 0x1f1c2a, 0x3a344c, -SH / 2, SH / 2);
+      shell.scale(1, 1, SZK);
+      st.push(placed(shell, 0, plazaY + 0.7 + SH / 2, SCZ, 0, 1));
+
+      var lip = new THREE.TorusGeometry(rAt(SH) + 0.1, 0.45, 4, 24);
+      lip.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      tint(lip, 0x4d4763);
+      lip.scale(1, 1, SZK);
+      st.push(placed(lip, 0, plazaY + 0.7 + SH, SCZ, 0, 1));
+
+      /* facade ribs: the vertical fins that make it read "stadium" */
+      for (var rb5 = 0; rb5 < 24; rb5++) {
+        var ra5 = (rb5 / 24) * Math.PI * 2 + 0.13;
+        var rr6 = rAt(SH / 2) + 0.05;
+        var nx5 = Math.cos(ra5) / rr6, nz5 = Math.sin(ra5) / (rr6 * SZK);
+        var rib = new THREE.BoxGeometry(0.34, SH - 0.2, 0.5);
+        tint(rib, 0x2c2839, 0x4a4460, -SH / 2, SH / 2);
+        st.push(placed(rib, Math.cos(ra5) * rr6, plazaY + 0.7 + SH / 2, SCZ + Math.sin(ra5) * rr6 * SZK, Math.atan2(nx5, nz5), 1));
+      }
+
+      /* window bands: two rings of warm light behind the fins */
+      [[2.1, 0xffa64a], [4.5, 0xffc77a]].forEach(function (bd) {
+        var band = new THREE.CylinderGeometry(rAt(bd[0]) + 0.12, rAt(bd[0]) + 0.12, 0.26, 24, 1, true);
+        tint(band, bd[1]);
+        band.scale(1, 1, SZK);
+        lit.push(placed(band, 0, plazaY + 0.7 + bd[0], SCZ, 0, 1));
+      });
+      /* THE slit: the glowing vertical doorway from the cover */
+      var slitZ = SCZ + rAt(3.2) * SZK;
+      var slit = new THREE.BoxGeometry(0.7, 4.4, 0.4);
+      tint(slit, 0xffb25a, 0xffe2b0, -2.2, 2.2);
+      lit.push(placed(slit, 1.8, plazaY + 0.7 + 2.6, slitZ, 0, 1));
+      /* entrance strip + the beam's source in the roof */
+      var door = new THREE.BoxGeometry(5.2, 0.3, 0.3);
+      tint(door, 0xffd28a);
+      lit.push(placed(door, -2.6, plazaY + 0.95, slitZ + 0.15, 0, 1));
+      var oculus = new THREE.TorusGeometry(1.7, 0.2, 4, 16);
+      oculus.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      tint(oculus, 0xfff1cf);
+      lit.push(placed(oculus, 0, plazaY + 0.75 + SH, SCZ, 0, 1));
+      var source = new THREE.CylinderGeometry(1.2, 1.3, 0.35, 12);
+      tint(source, 0xfffaf0);
+      lit.push(placed(source, 0, plazaY + 0.8 + SH, SCZ, 0, 1));
+
+      /* plaza lamps: posts in the toon mesh, heads in the lit one */
+      for (var lp = 0; lp < 4; lp++) {
+        var lpx = -13 + lp * 2.4, lpz = 5.5 + lp * 2.0;
+        if (lp > 1) { lpx = 6.5 + (lp - 2) * 3.2; lpz = 9.8 - (lp - 2) * 1.6; }
+        var lpost = new THREE.CylinderGeometry(0.1, 0.14, 3.4, 5);
+        tint(lpost, COL.ink);
+        st.push(placed(lpost, lpx, plazaY + 1.7, lpz, 0, 1));
+        var lhead = new THREE.BoxGeometry(0.42, 0.5, 0.42);
+        tint(lhead, 0xffe2b0);
+        lit.push(placed(lhead, lpx, plazaY + 3.55, lpz, 0.5, 1));
+      }
+
+      /* the 9:16 screen: frame + legs (toon), poster face (unlit canvas).
+         it stands left-front of the stadium, angled at the approach */
+      var scX = -8.6, scZ = 8.4, scRy = 0.42;
+      var SW = 6.3, SHh = 11.2, scY = plazaY + 3.0 + SHh / 2;
+      var scParts = [];
+      var sframe = new THREE.BoxGeometry(SW + 0.7, SHh + 0.7, 0.5);
+      tint(sframe, 0x17151f, 0x2c2839, -SHh / 2, SHh / 2);
+      scParts.push(placed(sframe, 0, scY, 0, 0, 1));
+      for (var sl = -1; sl <= 1; sl += 2) {
+        var sleg = new THREE.BoxGeometry(0.45, 3.4, 0.45);
+        tint(sleg, COL.ink);
+        scParts.push(placed(sleg, sl * (SW / 2 - 0.6), plazaY + 1.5, -0.1, 0, 1));
+      }
+      var scM = new THREE.Matrix4().makeRotationY(scRy).setPosition(scX, 0, scZ);
+      scParts.forEach(function (p) { p.applyMatrix4(scM); st.push(p); });
+      var screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(SW, SHh),
+        new THREE.MeshBasicMaterial({ map: makeReelPosterTexture() })
+      );
+      screen.position.set(scX + Math.sin(scRy) * 0.27, scY, scZ + Math.cos(scRy) * 0.27);
+      screen.rotation.y = scRy;
+      stG.add(screen);
+
+      stG.add(new THREE.Mesh(mergeGeos(st), propMat()));
+      stG.add(new THREE.Mesh(mergeGeos(lit), new THREE.MeshBasicMaterial({ vertexColors: true })));
+
+      /* the beam: a bright core inside a soft halo, both open cylinders in
+         ONE geometry. alpha comes from a 2-column gradient texture (core
+         column strong, halo column faint) because r128 vertex colors carry
+         no alpha. fog:false — it's the landmark you read from far away. */
+      var BEAM_H = 150, beamY0 = plazaY + 0.9 + SH;
+      var bCore = new THREE.CylinderGeometry(1.35, 0.95, BEAM_H, 10, 1, true);
+      var bHalo = new THREE.CylinderGeometry(4.6, 2.3, BEAM_H, 12, 1, true);
+      var beamGeo = new THREE.BufferGeometry();
+      var bPos = [], bUv = [], bIdx = [], bOff = 0;
+      [[bCore, 0.25], [bHalo, 0.75]].forEach(function (pair) {
+        var bg = pair[0], bp = bg.attributes.position, bu = bg.attributes.uv;
+        for (var bi = 0; bi < bp.count; bi++) {
+          bPos.push(bp.getX(bi), bp.getY(bi) + BEAM_H / 2, bp.getZ(bi));
+          bUv.push(pair[1], bu.getY(bi));
+        }
+        for (var bj = 0; bj < bg.index.count; bj++) bIdx.push(bg.index.array[bj] + bOff);
+        bOff += bp.count;
+        bg.dispose();
+      });
+      beamGeo.setAttribute("position", new THREE.Float32BufferAttribute(bPos, 3));
+      beamGeo.setAttribute("uv", new THREE.Float32BufferAttribute(bUv, 2));
+      beamGeo.setIndex(bIdx);
+      var beam5 = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({
+        map: makeBeamTexture(), color: 0xfff4dc, transparent: true,
+        depthWrite: false, fog: false, side: THREE.DoubleSide,
+      }));
+      beam5.position.set(0, beamY0, SCZ);
+      stG.add(beam5);
+      isl.props.beam = beam5;
+
+      /* two glows: where the beam leaves the roof, and the slit */
+      var bGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeGlowTexture(), color: 0xfff0d0, blending: THREE.AdditiveBlending,
+        transparent: true, opacity: 0.75, depthWrite: false,
+      }));
+      bGlow.position.set(0, beamY0 + 0.6, SCZ);
+      bGlow.scale.set(11, 11, 1);
+      stG.add(bGlow);
+      isl.props.beamGlow = bGlow;
+      var sGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeGlowTexture(), color: 0xff9a3c, blending: THREE.AdditiveBlending,
+        transparent: true, opacity: 0.6, depthWrite: false,
+      }));
+      sGlow.position.set(1.8, plazaY + 3.3, slitZ + 0.6);
+      sGlow.scale.set(5.5, 7.5, 1);
+      stG.add(sGlow);
+
+      addShorePebbles(g, hFn5, 0x5a5468, 0x9890a6, seed);
+
+      /* the screen powers on as you sail in (animateWorld) — it starts dim */
+      isl.props.screen = screen;
+      isl.props.power = 0.35;
+      screen.material.color.setScalar(0.35);
+      isl.props.boardY = 24;
     }
+  }
+
+  /* v8.9 · the beam's alpha: column 1 (u<.5) = the core, column 2 = the
+     halo. bottom opaque → top transparent (CylinderGeometry v runs 0 at
+     the base to 1 at the top; the canvas is flipped, so draw top-down). */
+  var _beamTex = null;
+  function makeBeamTexture() {
+    if (_beamTex) return _beamTex;
+    var cv = document.createElement("canvas");
+    cv.width = 2; cv.height = 128;
+    var ctx = cv.getContext("2d");
+    var cols = [0.62, 0.17];
+    for (var c = 0; c < 2; c++) {
+      var gr = ctx.createLinearGradient(0, 0, 0, 128);
+      gr.addColorStop(0, "rgba(255,255,255,0)");
+      gr.addColorStop(0.55, "rgba(255,255,255," + (cols[c] * 0.35).toFixed(3) + ")");
+      gr.addColorStop(0.97, "rgba(255,255,255," + cols[c] + ")");
+      gr.addColorStop(1, "rgba(255,255,255," + (cols[c] * 0.6).toFixed(3) + ")");
+      ctx.fillStyle = gr;
+      ctx.fillRect(c, 0, 1, 128);
+    }
+    _beamTex = new THREE.CanvasTexture(cv);
+    _beamTex.magFilter = THREE.LinearFilter;
+    _beamTex.minFilter = THREE.LinearFilter;
+    _beamTex.generateMipmaps = false;
+    return _beamTex;
+  }
+
+  /* v8.9 · the reel's poster on the plaza screen: drawn, not copied — the
+     real cover only goes public with jorge's ok. 288×512 (9:16, ≤512px).
+     anton may land after the world is built, so it redraws once it does. */
+  var _reelTex = null;
+  function makeReelPosterTexture() {
+    if (_reelTex) return _reelTex;
+    var cv = document.createElement("canvas");
+    cv.width = 288; cv.height = 512;
+    var draw = function () {
+      var ctx = cv.getContext("2d");
+      var bg = ctx.createLinearGradient(0, 0, 0, 512);
+      bg.addColorStop(0, "#0b0a14"); bg.addColorStop(0.62, "#1b1631"); bg.addColorStop(1, "#2b1f2f");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 288, 512);
+      // the beam, rising out of the stadium
+      var bm = ctx.createLinearGradient(0, 0, 0, 392);
+      bm.addColorStop(0, "rgba(255,244,220,0)"); bm.addColorStop(1, "rgba(255,244,220,0.95)");
+      ctx.fillStyle = "rgba(255,244,220,0.10)";
+      ctx.fillRect(190, 0, 30, 392);
+      ctx.fillStyle = bm;
+      ctx.fillRect(201, 0, 8, 392);
+      // stadium silhouette with window rows and the slit
+      ctx.fillStyle = "#14121d";
+      roundRect(ctx, 20, 380, 248, 92, 30);
+      ctx.fill();
+      ctx.fillStyle = "#ffa64a";
+      for (var wy = 396; wy < 460; wy += 15) {
+        for (var wx = 36; wx < 252; wx += 9) {
+          if (hash2(wx, wy) > 0.32) ctx.fillRect(wx, wy, 5, 2);
+        }
+      }
+      ctx.fillStyle = "#ffcf8a";
+      ctx.fillRect(172, 404, 7, 44);
+      // headline (the reel's cover line, in the site's language)
+      ctx.fillStyle = "#f6eedd";
+      ctx.textBaseline = "alphabetic";
+      ctx.font = "400 50px Anton, Impact, 'Arial Narrow', sans-serif";
+      ["nobody has", "done a", "triple-double", "in liga u."].forEach(function (ln, i) {
+        ctx.fillText(ln, 20, 132 + i * 54, 248);
+      });
+      // labels + a fake playhead: it's a reel, not a still
+      ctx.font = "700 13px 'Space Mono', monospace";
+      ctx.fillStyle = "#ffc77a";
+      ctx.fillText("ai video direction", 20, 38);
+      ctx.fillStyle = "rgba(246,238,221,0.7)";
+      ctx.fillText("@liga_u22 · reel 9:16", 20, 500);
+      ctx.fillStyle = "rgba(246,238,221,0.25)";
+      ctx.fillRect(20, 482, 248, 3);
+      ctx.fillStyle = "#ff5a3c";
+      ctx.fillRect(20, 482, 92, 3);
+      if (_reelTex) _reelTex.needsUpdate = true;
+    };
+    draw();
+    _reelTex = new THREE.CanvasTexture(cv);
+    if (document.fonts && document.fonts.load) {
+      Promise.all([
+        document.fonts.load("400 50px Anton"),
+        document.fonts.load("700 13px 'Space Mono'"),
+      ]).then(draw, function () {});
+    }
+    return _reelTex;
   }
 
   /* v7: FULL-court parquet + painted lines, one 512px canvas.
@@ -2813,7 +3083,7 @@
   /* ============================================================
      v6 · the edges are a conversation, not a wall.
      three wooden sign-buoys mark the N/E/W limits. reaching one
-     makes the captain pitch the fifth island and surfaces a mailto
+     makes the captain pitch the sixth island and surfaces a mailto
      chip (handled in the hud). the south edge belongs to gijón and
      gets homesickness instead of marketing. buoys are SOLID.
      ============================================================ */
@@ -2854,7 +3124,7 @@
       rocks.push({ x: eb.x, z: eb.z, r: 2.2 });   // solid, like everything now
       // the sign reads from the water: one shared texture, billboarded not —
       // fixed, facing the map center like the planks
-      var board = makeTextBoard("island #5 — plot for sale", COL.yellow);
+      var board = makeTextBoard("island #6 — plot for sale", COL.yellow);
       board.scale.setScalar(0.55);
       board.position.set(eb.x + Math.sin(va) * 0.4, 8.1, eb.z + Math.cos(va) * 0.4);
       board.rotation.y = va;                // text face toward the map
@@ -3694,12 +3964,12 @@
   function bindHud() {
     hudEl = document.getElementById("hud");
     // the conversion buoy: a dock-style chip that opens a mail draft.
-    // subject pre-filled — the fifth island starts as an email.
+    // subject pre-filled — the sixth island starts as an email.
     ctaBtn = document.createElement("a");
     ctaBtn.id = "edge-cta";
     ctaBtn.className = "dock edge-cta";
-    ctaBtn.href = "mailto:jorgeantolinarribas@gmail.com?subject=" + encodeURIComponent("let's build island #5");
-    ctaBtn.textContent = "build island #5 with me ✉";
+    ctaBtn.href = "mailto:jorgeantolinarribas@gmail.com?subject=" + encodeURIComponent("let's build island #6");
+    ctaBtn.textContent = "build island #6 with me ✉";
     ctaBtn.hidden = true;
     document.getElementById("hud").appendChild(ctaBtn);
 
@@ -4045,7 +4315,7 @@
         if (Math.abs(az) < Math.PI / 4) {
           toast("south of here it's just gijón and my mother's cooking. neither fits in a portfolio.");
         } else if (Math.abs(az) > Math.PI * 0.75) {
-          toast("north edge. the chart stops, the ideas don't — island #5 is unclaimed. want it?");
+          toast("north edge. the chart stops, the ideas don't — island #6 is unclaimed. want it?");
         } else if (az > 0) {
           toast("east of this buoy the map is blank on purpose. that's room for YOUR island.");
         } else {
@@ -4477,6 +4747,25 @@
           pr.coil.scale.setScalar(cs);
         }
       }
+
+      /* v8.9 · ai direction: the screen powers on as you sail in (a short
+         flicker, then steady) and the beam breathes. reduced motion: the
+         screen is simply on and nothing moves. */
+      if (id === "ai-direction" && pr.screen) {
+        if (rmQ && rmQ.matches) {
+          if (pr.power !== 1) { pr.power = 1; pr.screen.material.color.setScalar(1); }
+        } else if (isl.dist < 200) {
+          var onT = isl.dist < 95 ? 1 : 0.35;
+          pr.power += (onT - pr.power) * Math.min(1, dt * 1.4);
+          var flick = (pr.power > 0.4 && pr.power < 0.75) ? 0.82 + 0.18 * (Math.sin(t * 47) > 0 ? 1 : 0) : 1;
+          pr.screen.material.color.setScalar(pr.power * flick);
+          if (pr.beam) {
+            var br = 1 + Math.sin(t * 1.3) * 0.07;
+            pr.beam.scale.set(br, 1, br);
+            pr.beamGlow.material.opacity = 0.62 + Math.sin(t * 1.3) * 0.13;
+          }
+        }
+      }
     });
   }
 
@@ -4546,6 +4835,7 @@
     "liga-u-strategy": { side: -12, back: 19, h: 6.5, heroY: 7, mix: 0.6 },
     "talens-pantone":  { side: 9,   back: 16, h: 6,   heroY: 16, mix: 0.5 },
     "ministerie":      { side: 6,   back: 13, h: 3.4, heroY: 25, mix: 0.55 },
+    "ai-direction":    { side: -9,  back: 17, h: 5,   heroY: 13, mix: 0.5 },
   };
   function updateLandCamera(dt) {
     var C = LAND_CAMS[land.isl.def.id] || LAND_CAMS["capullos"];

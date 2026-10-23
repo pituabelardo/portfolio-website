@@ -1,8 +1,8 @@
 # portfolio — jorge antolín
 
-web 3d navegable: remas en canoa, descubres 4 islas, cada isla abre un case.
-las dos primeras son trabajo real en liga u; talens y ministerie son conceptos
-de estudiante (hogeschool utrecht) y el copy lo dice en cada sitio — mantenlo así.
+web 3d navegable: remas en canoa, descubres 5 islas, cada isla abre un case.
+las tres primeras son trabajo real en liga u (la liga, capullos y la dirección
+de vídeo con ia); talens y ministerie son conceptos de estudiante (hogeschool utrecht) y el copy lo dice en cada sitio — mantenlo así.
 todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, vercel, github pages…).
 
 > para modelos/agentes: lee `AGENTS.md` antes de tocar nada — anatomía de una isla, recetas, presupuesto, harness de verificación y política de deploy.
@@ -50,10 +50,47 @@ de `<template class="case-draft">`.
 - ninguna cifra sin fuente; nada que el acb no haya aprobado publicar.
 no hay nada que tocar en el mundo 3d: la isla ya es la cancha.
 
+### (e) isla 03 · ai direction — tus piezas de vídeo con ia
+`index.html` → `<article id="ai-direction">`. es un ESTANTE: cada pieza es un
+`<article class="ai-piece">` dentro de `.ai-pieces`, la más nueva arriba. la
+primera es el reel del triple-doble (@liga_u22, 22 oct 2026). en público solo
+va lo que prueba el propio post: qué es, para quién, el texto del post y el
+formato. lo demás está en `<template class="case-draft">` (míralo con
+**`?draft=1`**):
+
+- **el máster**: el mp4 (h.264, 1080×1920, idealmente <8 mb) y su portada en
+  jpg → `assets/ai/` (se sirven desde el propio dominio: la csp ya permite
+  `media-src 'self'`). sustituye el `<a class="ai-poster">` (póster dibujado
+  en css, NO es la portada real) por
+  `<video controls playsinline preload="none" poster="assets/ai/….jpg">`.
+  la portada real no se publica sin tu ok.
+- **si prefieres el embed de instagram** en vez del mp4: añade
+  `https://www.instagram.com` a `frame-src` (y a `script-src` si usas su
+  `embed.js`) en la csp de `vercel.json`, o el iframe falla en silencio.
+  mejor el mp4 propio: sin rastreadores y sin depender de instagram.
+- **json-ld**: el `VideoObject` de la pieza ya lleva nombre, descripción,
+  fecha, 1080×1920 y url del post. cuando haya máster/portada públicos,
+  añade `thumbnailUrl`, `contentUrl` y `duration` (formato `PT0M45S`) —
+  google pide `thumbnailUrl` para el resultado enriquecido de vídeo.
+- **huecos por pieza**: duración · herramientas y modelos (qué generó qué) ·
+  proceso (storyboard, prompts o un antes → después) · métricas de insights
+  con fecha (reproducciones, alcance, guardados, compartidos, % de
+  retención; el único dato público hoy son 1.254 likes y 15 comentarios a ~1
+  día — likes, no reproducciones, así que no encabeza nada) · créditos (qué
+  hiciste tú y quién más).
+- **permisos (obligatorio)**: el ok del acb para enseñar la pieza y sus
+  cifras y, si el vídeo genera con ia la imagen de jugadores reales, su
+  consentimiento por escrito o la cesión de derechos de imagen. sin eso
+  archivado, la pieza no sale de borrador.
+- **pieza nueva**: copia el `<article class="ai-piece">`, ponlo PRIMERO, dale
+  su propio id `h-ai-…` y añade su `VideoObject` al array `video` del nodo
+  `CreativeWork` "ai direction". el mundo 3d no se toca: la pantalla 9:16
+  de la isla es un póster genérico dibujado en canvas.
+
 ### (d) email de contacto
 ahora `jorgeantolinarribas@gmail.com` (v8.7.3, sustituye al del acb). cuando
 tengas el correo del dominio: buscar-y-reemplazar en `index.html` (contacto,
-"ask for the deck", JSON-LD `email`) y `js/world.js` (chip de la isla #5 y el
+"ask for the deck", JSON-LD `email`) y `js/world.js` (chip de la isla #6 y el
 último toast del capitán), y bump de `?v=` + `BUILD`.
 
 ### (c) redes sociales

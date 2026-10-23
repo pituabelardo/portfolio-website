@@ -269,7 +269,7 @@ body:not(.mode-sea) #hud { display: none; }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* v6 · edge cta: the "fifth island" mail chip — same dock-btn language,
+/* v6 · edge cta: the "next island" mail chip — same dock-btn language,
    parked a notch higher so it never collides with a beach prompt */
 .edge-cta {
   text-decoration: none;
@@ -1074,7 +1074,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
 
 @media (prefers-reduced-motion: reduce) {
   .lang-chip, .case-links a { transition: none; }
-  .lang-chip:hover, .case-links a:hover { transform: none; }
+  .lang-chip:hover, .case-links a:hover, .ai-poster:hover { transform: none; }
 }
 
 /* v7: placeholder slots in a poster grid — same visual language as
@@ -1516,6 +1516,104 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
   border-left: 4px solid var(--dot, var(--ink));
   padding-left: 12px;
 }
+
+/* v8.9 · island 03, ai direction: a shelf of pieces, newest first. each
+   piece = a 9:16 poster + its facts, side by side once the card is wide.
+   the poster is drawn in css (night stadium, vertical beam — the reel's
+   cover, translated) until jorge clears the real cover and master. */
+.ai-pieces { display: grid; gap: 28px; }
+.ai-piece {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr);
+  border-top: 3px solid var(--ink);
+  padding-top: 22px;
+}
+@media (min-width: 760px) {
+  .ai-piece { grid-template-columns: minmax(190px, 250px) minmax(0, 1fr); align-items: start; }
+}
+.ai-poster {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 250px;
+  aspect-ratio: 9 / 16;
+  padding: 16px 16px 14px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(#0b0a14, #1b1631 62%, #2b1f2f);
+  color: var(--cream);
+  text-decoration: none;
+  transition: transform .25s;
+}
+@media (hover: hover) { .ai-poster:hover { transform: rotate(-1.2deg) scale(1.02); } }
+.ai-poster-kicker, .ai-poster-cta {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+}
+.ai-poster-kicker { color: #ffc77a; }
+.ai-poster-beam {
+  position: absolute;
+  left: 70%;
+  top: 0;
+  width: 6px;
+  height: 77%;
+  background: linear-gradient(rgba(255, 244, 220, 0), rgba(255, 244, 220, .95));
+  box-shadow: 0 0 24px 8px rgba(255, 244, 220, .12);
+}
+.ai-poster-head {
+  position: relative;
+  z-index: 1;
+  margin-top: 18%;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6.4vw, 1.9rem);
+  line-height: 1.04;
+}
+.ai-poster-head .nowrap { white-space: nowrap; }
+.ai-poster-stadium {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 12%;
+  height: 17%;
+  border-radius: 22px;
+  background:
+    linear-gradient(90deg, transparent 58%, #ffcf8a 58%, #ffcf8a 61%, transparent 61%) center 30% / 100% 42% no-repeat,
+    repeating-linear-gradient(transparent 0 9px, rgba(255, 166, 74, .85) 9px 11px) center 26% / 86% 62% no-repeat,
+    #14121d;
+}
+.ai-poster-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  background: var(--cream);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.ai-piece-meta { font-family: var(--font-mono); font-size: .78rem; opacity: .8; margin-bottom: .4em; }
+.ai-piece-meta span { color: var(--coral-ink); }
+.ai-piece-text h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3.6vw, 2rem);
+  line-height: 1.05;
+  margin-bottom: .45em;
+}
+.ai-piece-text p { max-width: 62ch; margin-bottom: 1em; }
+.ai-caption {
+  border-left: 4px solid var(--dot, var(--ink));
+  padding-left: 14px;
+  font-weight: 600;
+}
+.ai-caption p { margin-bottom: .3em; }
+.ai-translation { font-family: var(--font-mono); font-size: .82rem; padding-left: 18px; opacity: .85; }
+.ai-media { display: grid; gap: 14px; justify-items: start; }
+.ai-pending-master { max-width: 250px; margin: 0; }
 
 /* ?draft=1 only: the holes. loud on purpose — never meant for the public */
 .case-pending {

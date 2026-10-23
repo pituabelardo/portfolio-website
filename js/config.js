@@ -33,6 +33,7 @@ window.PORTFOLIO_CONFIG = {
   ISLANDS: [
     { id: "liga-u-strategy", name: "liga u — strategy", pos: [58, 48], color: 0xffd23f },
     { id: "capullos",  name: "capullos",              pos: [-26, 92],  color: 0x3ec46d, tag: "a liga u campaign" },
+    { id: "ai-direction", name: "ai direction",       pos: [150, 45],  color: 0xa66bff, tag: "ai video direction · liga u" },
     { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c, tag: "student concept, utrecht" },
     { id: "ministerie", name: "ministerie van justitie", pos: [108, -96], color: 0x2b47d9, tag: "student concept, utrecht" },
   ],

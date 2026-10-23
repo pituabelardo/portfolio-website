@@ -1,8 +1,9 @@
 # AGENTS.md — field guide for models working on this site
 
 you landed on jorge antolín's 3d portfolio: a static site (no build step) where
-you row a toon canoe across a golden-hour sea, discover four islands, and each
-island opens a case study (liga u first — see §8.8 for the content rules). the html menu "lives under the sea" — you dive off
+you row a toon canoe across a golden-hour sea, discover five islands, and each
+island opens a case study (liga u first — see §8.8 for the content rules;
+island 03 is the ai video shelf — §8.9). the html menu "lives under the sea" — you dive off
 the canoe to reach it (`WORLD.diveOut`) and climb back aboard to leave
 (`WORLD.boardIn`). read this file WHOLE before touching anything, then read
 `js/world.js` whole too (its header comment is the art direction bible).
@@ -52,7 +53,8 @@ an island exists in FIVE places that must stay in sync:
    style="--dot:#hexcolor">`** — the case overlay. copy the structure of
    `#liga-u-strategy` for placeholder cases (`.case-slot` stripes, the
    CASE_PLACEHOLDERS convention) or `#talens-pantone` for real content. also
-   add a `CreativeWork` node to the JSON-LD graph and a url to `sitemap.xml`.
+   add a `CreativeWork` node to the JSON-LD graph. (v8.7+) the sitemap lists
+  only the root — `#fragments` are ignored by google, so don't add one.
 5. **`README.md`** — if the case ships with placeholders, add/extend an
    insertion note in the style of points (a)(b)(c) so jorge knows where the
    real content goes later.
@@ -78,7 +80,7 @@ placement rules (hard-won in v7 — don't rediscover them):
 3. if the island has solid off-shore props (like liga u's giant hoop), push a
    collider into `rocks[] = {x, z, r}` in world coordinates.
 4. add its `LAND_CAMS` entry and screenshot the beaching from two angles.
-5. add the `<article>` case block, JSON-LD node, sitemap url (step 4/5 of §1).
+5. add the `<article>` case block and JSON-LD node (step 4/5 of §1).
 6. budget check: read `WORLD._renderer.info.render` (`calls`, `triangles`)
    at spawn, next to the new island, and looking at gijón, in tier `mobile`
    (390×844). the <150/<150k ceiling is for the WHOLE scene — if you're over,
@@ -374,6 +376,63 @@ create such a skill, note its name here so the next model finds it.
   `#define NUM_ISL` from `defs.length` (GLSL ES 1.0 needs a constant loop
   bound). `stepBoat`'s `shoreDamp` already looped every island, so a 5th
   island now gets foam rings AND stays in hull/physics sync.
+
+## 8.9 · v8.9 notes — island 03, ai direction (the ai video shelf)
+
+- **what it is**: the fifth island, `id: "ai-direction"` at **(150, 45)**,
+  color `0xa66bff` (ink text on it is 5.5:1 — the first violet, 0x9c5bd9,
+  failed AA both ways). third in `ISLANDS[]` (after capullos, before the
+  student concepts) and case **island 03**; talens moved to 04, ministerie
+  to 05 (`data-num` + tags). the captain's "land ho" reads its `tag`.
+- **placement, verified**: 92.0 from liga u (the tightest pair in the
+  archipelago — their 46u dock zones touch exactly at the midpoint), 147
+  from ministerie, 182 from capullos; r = 156.6 (≤165); z = 45; the spawn →
+  capullos lane and the welcome buoy are untouched; nowhere near the gijón
+  side. the east sale-buoy (191, 0) sits ~61 from its center, outside
+  dockR. rocks keep their 45u exclusion automatically (`buildRocks` loops
+  `islands`).
+- **the moment**: a low-poly stadium after dark with a vertical light beam
+  out of its roof (the triple-double reel's cover, translated to toon, not
+  copied) + a 9:16 screen on the plaza wearing a canvas-drawn poster of the
+  reel (288×512, redrawn once anton loads). **no video in the 3d, and the
+  real cover is NOT used** — it's jorge's to clear. the stadium faces the
+  spawn approach (`stA`, same rule as liga u's court).
+- **draw calls (island alone = 9, ≤10 budget)**: terrain · stadium shell +
+  ribs + podium + screen frame/legs + lamp posts (one `propMat` mesh) · every
+  emissive bit — window bands, the slit, the oculus, lamp heads (one
+  `MeshBasicMaterial` vertex-color mesh) · screen face · beam · 2 glow
+  sprites · shore pebbles · the name board. the beam is two open cylinders in
+  ONE geometry; alpha comes from a 2×128 gradient texture whose two columns
+  (core strong / halo faint) are picked by forcing the uv.x of each cylinder
+  — r128 vertex colors carry no alpha. `fog: false` on purpose: it's the
+  landmark you read from far away, like liga u's hoop.
+- **animation** (`animateWorld`): the screen "powers on" when you're within
+  95 (dim 0.35 → 1 with a short flicker on the way up) and the beam breathes.
+  distance-gated (<200), and under `prefers-reduced-motion` the screen is
+  simply on and nothing moves. no off-shore props → no `rocks[]` entry.
+- **budget (tier mobile, 390×844, swiftshader, calls / tris)**: spawn
+  70 / 36k (unchanged: the island isn't in the portrait frame) · gijón
+  44 / 30k · next to the island from the spawn side, from liga u and from
+  the north 52 / 27-33k · beached on it 51 / 27k · chart zoom 4.2 over the
+  origin 61 / 27k, over the island 54 / 29k, over the spawn **92 / 41k**
+  (worst) — all well inside 150 / 150k. the island alone: 9 objects.
+- **content rule**: the case is a shelf (`.ai-pieces` → one `.ai-piece` per
+  reel, newest first). public = only what the post proves (what, for whom,
+  caption, format). master/duration/tools/process/metrics/credits/
+  **permissions** are `case-draft` templates. permissions are mandatory: the
+  acb's ok, and if a piece generates real players' likeness with ai, their
+  consent or image rights — no permission on file, no publish. the poster in
+  the case is css-drawn, not the cover. JSON-LD carries a `VideoObject` per
+  piece with real data only (no `thumbnailUrl` until a cover is public).
+- **csp**: unchanged — there is no embed (no mp4 yet: poster + link to the
+  post). self-hosted mp4s already pass `media-src 'self'`; an instagram embed
+  would need `https://www.instagram.com` in `frame-src` (+ `script-src` for
+  `embed.js`). README (e) has the recipe.
+- the edge sale-buoys now sell **island #6** (board, mailto subject, chip,
+  north toast).
+- route matrix is now 25 routes (spawn + off each of 5 islands → every
+  other island). "off-ai-direction" starts 52u toward the SPAWN, not toward
+  the origin — toward the origin lands inside liga u's dock zone.
 
 ## 9 · known deltas
 
