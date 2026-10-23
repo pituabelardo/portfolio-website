@@ -1133,8 +1133,14 @@
     var seg = tier === "high" ? 120 : tier === "mobile" ? 76 : 48;
     var geo = new THREE.PlaneGeometry(SEA_R * 2.4, SEA_R * 2.4, seg, seg);
 
+    /* v8.8: one foam ring / swell damp per island in config — the shader
+       array is sized by a #define from defs.length (it was hard-wired to 4,
+       so a 5th island got no foam AND the hull desynced: stepBoat's shoreDamp
+       already loops every island). GLSL ES 1.0 needs a constant loop bound,
+       hence the define instead of a uniform count. */
     var isl = [];
-    for (var i = 0; i < 4; i++) {
+    var nIsl = Math.max(1, defs.length);
+    for (var i = 0; i < nIsl; i++) {
       var d = defs[i] || { pos: [9999, 9999] };
       isl.push(new THREE.Vector2(d.pos[0], -d.pos[1]));
     }
@@ -1163,9 +1169,10 @@
 
     var mat = new THREE.ShaderMaterial({
       uniforms: waterUniforms,
+      defines: { NUM_ISL: nIsl },
       vertexShader: [
         "uniform float uTime;",
-        "uniform vec2 uIsl[4];",
+        "uniform vec2 uIsl[NUM_ISL];",
         "varying float vH;",
         "varying float vShore;",
         "varying float vFoamD;",     // distance beyond the island shore line
@@ -1178,7 +1185,7 @@
         "          + cos(pos.y * 0.045 + uTime * 0.8) * 0.9",
         "          + sin((pos.x + pos.y) * 0.09 + uTime * 1.4) * 0.45;",
         "  float dmin = 9999.0;",
-        "  for (int i = 0; i < 4; i++) { dmin = min(dmin, distance(pos.xy, uIsl[i])); }",
+        "  for (int i = 0; i < NUM_ISL; i++) { dmin = min(dmin, distance(pos.xy, uIsl[i])); }",
         "  vShore = smoothstep(58.0, 26.0, dmin);",
         "  vFoamD = dmin - " + SHORE_FOAM_R.toFixed(1) + ";",
         // v6.1: san lorenzo is a sheltered bay — the swell dies before
@@ -4237,7 +4244,7 @@
       return;
     }
     if (nearIsland && nearIsland !== prev) {
-      toast("land ho: " + nearIsland.def.name);
+      toast("land ho: " + nearIsland.def.name + (nearIsland.def.tag ? " — " + nearIsland.def.tag : ""));
       setHudTint(nearIsland.def.color);
     } else if (!nearIsland && prev) {
       setHudTint(null);

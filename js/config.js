@@ -25,11 +25,15 @@ window.PORTFOLIO_CONFIG = {
     // { label: "instagram", url: "https://www.instagram.com/..." },
   ],
 
-  /* islands in the 3d world: position [x, z], color theme, dom id */
+  /* islands in the 3d world: position [x, z], color theme, dom id.
+     order = importance (liga u first, the main case). the world
+     itself only reads positions — seeds and orientation derive from pos, so
+     reordering never moves anything. `tag` rides along in the captain's
+     "land ho" so the two student concepts are never mistaken for clients. */
   ISLANDS: [
-    { id: "capullos",  name: "capullos",              pos: [-26, 92],  color: 0x3ec46d },
     { id: "liga-u-strategy", name: "liga u — strategy", pos: [58, 48], color: 0xffd23f },
-    { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c },
-    { id: "ministerie", name: "ministerie van justitie", pos: [108, -96], color: 0x2b47d9 },
+    { id: "capullos",  name: "capullos",              pos: [-26, 92],  color: 0x3ec46d, tag: "a liga u campaign" },
+    { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c, tag: "student concept, utrecht" },
+    { id: "ministerie", name: "ministerie van justitie", pos: [108, -96], color: 0x2b47d9, tag: "student concept, utrecht" },
   ],
 };

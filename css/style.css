@@ -1478,6 +1478,57 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
 .pillar p { max-width: 34ch; }
 .case-text a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
+/* v8.8 · island 01, the main case: numbered chapters (problem → positioning →
+   identity & voice → community engine; results + learnings join once jorge
+   sends real material). same anton-outline numerals as the pillars. */
+.case-chapters { list-style: none; display: grid; gap: 14px; }
+.case-chapter {
+  position: relative;
+  border-top: 3px solid var(--ink);
+  padding: 18px 64px 6px 0;
+}
+.case-chapter::after {
+  content: attr(data-n);
+  position: absolute;
+  right: 0; top: 10px;
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(20, 18, 15, .16);
+  pointer-events: none;
+}
+.case-chapter h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3.4vw, 1.9rem);
+  line-height: 1.05;
+  margin-bottom: .4em;
+}
+.case-chapter p { max-width: 62ch; }
+.case-chapter .poster-grid { margin-top: 12px; }
+.case-chapter .case-slot { aspect-ratio: 4 / 3; }
+
+/* the student concepts say so, plainly, in the same card language */
+.case-honest {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  border-left: 4px solid var(--dot, var(--ink));
+  padding-left: 12px;
+}
+
+/* ?draft=1 only: the holes. loud on purpose — never meant for the public */
+.case-pending {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 3px dashed var(--coral-ink);
+  border-radius: 12px;
+  background: repeating-linear-gradient(45deg, #fff3ea, #fff3ea 14px, #ffe9dc 14px, #ffe9dc 28px);
+}
+.case-pending .mono { font-family: var(--font-mono); font-size: .72rem; color: var(--coral-ink); margin-bottom: .3em; }
+.case-pending-wide { aspect-ratio: 16 / 9; display: flex; flex-direction: column; justify-content: center; text-align: center; margin: 0; }
+.case-pending-stats { border-style: dashed; }
+
 /* long copy never drags the layout wider than the card */
 .case-text, .case-head h2 { overflow-wrap: anywhere; }
 .case-text p, .about p { hyphens: manual; }

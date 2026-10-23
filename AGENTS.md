@@ -2,7 +2,7 @@
 
 you landed on jorge antolín's 3d portfolio: a static site (no build step) where
 you row a toon canoe across a golden-hour sea, discover four islands, and each
-island opens a case study. the html menu "lives under the sea" — you dive off
+island opens a case study (liga u first — see §8.8 for the content rules). the html menu "lives under the sea" — you dive off
 the canoe to reach it (`WORLD.diveOut`) and climb back aboard to leave
 (`WORLD.boardIn`). read this file WHOLE before touching anything, then read
 `js/world.js` whole too (its header comment is the art direction bible).
@@ -351,6 +351,29 @@ create such a skill, note its name here so the next model finds it.
   island → every other island) — all must open the target's case.
 - ambient animation rides `tw` (frozen under prefers-reduced-motion); the hull
   uses the same time through `tWave`, so the boat never bobs on frozen water.
+
+## 8.8 · v8.8 notes — liga u is the axis
+
+- **honesty rule (content)**: only liga u (island 01, the main case) and
+  capullos (island 02, a liga u campaign) are professional work. talens x
+  pantone and ministerie are STUDENT CONCEPTS (hogeschool utrecht, fictional
+  briefs). every surface says so: case tag, a `.case-honest` line, case-meta
+  "for: a fictional brief", JSON-LD (`genre: student work`,
+  `sourceOrganization`), hero lede, meta descriptions, and the captain's
+  "land ho" (config `ISLANDS[].tag`). never write copy implying they were
+  clients — proud, not apologetic.
+- `ISLANDS[]` order is importance (liga u first). the world only reads `pos`:
+  terrain seeds, dock/hoop/frame orientation all derive from position, so
+  reordering moves nothing. swapping POSITIONS is a different story — liga
+  u's off-shore hoop sits 36u toward the spawn, so at capullos' spot it lands
+  at ≈(-13,126), right next to the welcome buoy. re-tune before trying.
+- the liga u case ships draft holes as `<template class="case-draft">` —
+  inert and unindexed; `?draft=1` renders them (main.js). never turn a hole
+  into visible placeholder copy on the public page, and never invent numbers.
+- the water shader is no longer hard-wired to 4 islands: `uIsl` is sized by
+  `#define NUM_ISL` from `defs.length` (GLSL ES 1.0 needs a constant loop
+  bound). `stepBoat`'s `shoreDamp` already looped every island, so a 5th
+  island now gets foam rings AND stays in hull/physics sync.
 
 ## 9 · known deltas
 

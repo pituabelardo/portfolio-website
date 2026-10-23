@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.7.3";
+  var BUILD = "8.8";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -128,6 +128,18 @@
     document.querySelectorAll(".case, .about").forEach(function (el) { io.observe(el); });
   } else {
     document.querySelectorAll(".case, .about").forEach(function (el) { el.classList.add("inview"); });
+  }
+
+  /* ---------- v8.8 · draft view of the liga u case ----------
+     the holes jorge still has to fill live in <template class="case-draft">:
+     inert, unrendered, unindexed. ?draft=1 stamps them in place so the full
+     skeleton can be reviewed on any deploy without a placeholder ever
+     reaching a recruiter or a crawler. */
+  if (/[?&]draft=1(&|$)/.test(location.search)) {
+    document.body.classList.add("draft");
+    document.querySelectorAll("template.case-draft").forEach(function (t) {
+      t.parentNode.insertBefore(t.content.cloneNode(true), t);
+    });
   }
 
   /* ---------- per-case contrast token ----------

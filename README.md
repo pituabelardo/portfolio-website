@@ -1,6 +1,8 @@
 # portfolio — jorge antolín
 
 web 3d navegable: remas en canoa, descubres 4 islas, cada isla abre un case.
+las dos primeras son trabajo real en liga u; talens y ministerie son conceptos
+de estudiante (hogeschool utrecht) y el copy lo dice en cada sitio — mantenlo así.
 todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, vercel, github pages…).
 
 > para modelos/agentes: lee `AGENTS.md` antes de tocar nada — anatomía de una isla, recetas, presupuesto, harness de verificación y política de deploy.
@@ -25,20 +27,28 @@ ojo: los ids viven en tres sitios y tienen que ir a la vez → `js/config.js`
 (el player), el `.video-placeholder` de `index.html` (el enlace que ven los
 crawlers y quien no tenga js) y los nodos `VideoObject` del JSON-LD.
 
-### (b) case de estrategia de liga u (cuando esté el contenido real)
-`index.html` → busca el `<article id="liga-u-strategy">` (marcado con el
-comentario `CASE_PLACEHOLDERS`). el case ya tiene la estructura definitiva:
-un `.poster-grid` con tres `.case-slot` (marcadores a rayas cream, mismas
-proporciones que los pósters reales) + un `.case-text` con dos párrafos
-provisionales.
-- sustituye cada `<div class="case-slot">…</div>` por un `<img>` real
-  (mira los `<img>` de talens: `loading="lazy"`, `width`/`height` y un
-  `alt` descriptivo).
-- reescribe los dos párrafos del `.case-text` con el contenido definitivo
-  y borra la frase de "the placeholders above hold its seat".
-- los `case-meta` (role/for/format) ya son los definitivos.
-no hay nada que tocar en `js/config.js` ni en el mundo 3d: la isla ya es
-la cancha y no sabe nada de "coming soon".
+### (b) case de liga u — la pieza central (isla 01)
+`index.html` → `<article id="liga-u-strategy">`. desde v8.8 es el primer case
+y tiene la estructura de un case estratégico: cuatro capítulos públicos
+(`.case-chapter`: the problem · positioning · identity & voice · community
+engine) escritos SOLO con frases tuyas, y los huecos para tu material dentro
+de `<template class="case-draft">`.
+
+- los `<template>` no se pintan ni se indexan: el público nunca ve un hueco.
+  abre cualquier deploy con **`?draft=1`** y main.js los estampa en su sitio
+  (cajas rayadas en coral con "draft · needs from jorge").
+- para rellenar un hueco: copia el contenido real FUERA del `<template>`
+  (p. ej. el `<img>` de identidad sustituye a su `.case-slot`; mira los `<img>`
+  de talens: `loading="lazy"`, `width`/`height`, `alt`) y borra ese
+  `<template>`.
+- qué falta, por capítulo: vídeo/visual de cabecera · 4 cifras de cabecera ·
+  brief y punto de partida · statement de posicionamiento · identidad (3
+  imágenes) + principios de voz + créditos · pilares/formatos/cadencia/equipo
+  + 2-3 piezas héroe · resultados con fuente y fecha · 2-3 aprendizajes.
+- capítulos 05 (results) y 06 (what i learned) son enteros `case-draft`:
+  aparecen en público cuando saques el `<li>` del `<template>`.
+- ninguna cifra sin fuente; nada que el acb no haya aprobado publicar.
+no hay nada que tocar en el mundo 3d: la isla ya es la cancha.
 
 ### (d) email de contacto
 ahora `jorgeantolinarribas@gmail.com` (v8.7.3, sustituye al del acb). cuando
