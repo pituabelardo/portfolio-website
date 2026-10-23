@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "8.6";
+  var BUILD = "8.7";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -157,20 +157,67 @@
     vids = [{ id: cfg.CAPULLOS_YOUTUBE_ID }];
   }
   if (ph && vids.length) {
+    /* v8.7 · FACADE. the old code mounted the real iframe at boot, so every
+       visitor paid ~1MB of youtube player js plus google tracking calls
+       before pressing play — and it competed with three.js for the same
+       bandwidth. now the page shows the thumbnail and loads the player on the
+       first click (a user gesture, so autoplay is legal too). */
     var ytTitle = function (v) {
       return "capullos — liga u video campaign" + (v.label ? " (" + v.label + ")" : "");
     };
     var ytSrc = function (v, autoplay) {
       return "https://www.youtube-nocookie.com/embed/" + v.id +
-        "?rel=0&modestbranding=1&enablejsapi=1" + (autoplay ? "&autoplay=1" : "");
+        "?rel=0&modestbranding=1&playsinline=1&enablejsapi=1" + (autoplay ? "&autoplay=1" : "");
     };
-    var iframe = document.createElement("iframe");
-    iframe.src = ytSrc(vids[0], false);
-    iframe.title = ytTitle(vids[0]);
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-    iframe.loading = "lazy";
-    ph.replaceWith(iframe);
+    var rmQuery = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
+    var current = vids[0];
+    var slot = document.createElement("div");   // holds the facade OR the iframe
+    slot.className = "video-slot";
+    var iframe = null;
+    var facade = null;
+
+    var mountFrame = function (v, autoplay) {
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+        if (facade) { facade.replaceWith(iframe); facade = null; }
+      }
+      iframe.src = ytSrc(v, autoplay);
+      iframe.title = ytTitle(v);
+    };
+
+    var buildFacade = function (v) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "yt-facade";
+      var img = document.createElement("img");
+      img.alt = "";
+      img.width = 1280; img.height = 720;
+      img.decoding = "async";
+      img.loading = "lazy";
+      img.src = "https://i.ytimg.com/vi_webp/" + v.id + "/maxresdefault.webp";
+      /* not every video has a maxres still: hqdefault always exists (4:3 with
+         black bars — object-fit:cover crops exactly the bars away) */
+      img.onerror = function () { img.onerror = null; img.src = "https://i.ytimg.com/vi/" + v.id + "/hqdefault.jpg"; };
+      var play = document.createElement("span");
+      play.className = "yt-play";
+      play.setAttribute("aria-hidden", "true");
+      var label = document.createElement("span");
+      label.className = "yt-label";
+      label.textContent = "play the case study" + (v.label ? " · " + v.label + " cut" : "");
+      btn.appendChild(img); btn.appendChild(play); btn.appendChild(label);
+      btn.addEventListener("click", function () {
+        mountFrame(current, !(rmQuery && rmQuery.matches));
+        iframe.focus();
+      });
+      return btn;
+    };
+
+    facade = buildFacade(current);
+    slot.appendChild(facade);
+    ph.replaceWith(slot);
 
     if (vids.length > 1) {
       var langs = document.createElement("div");
@@ -186,12 +233,10 @@
         chip.setAttribute("aria-pressed", i === 0 ? "true" : "false");
         chip.addEventListener("click", function () {
           if (chip.classList.contains("on")) return;
+          current = v;
           /* swapping is a deliberate click, so the new cut starts playing —
              except under reduced motion, where nothing moves unasked. */
-          var rm = window.matchMedia &&
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          iframe.src = ytSrc(v, !rm);
-          iframe.title = ytTitle(v);
+          mountFrame(v, !(rmQuery && rmQuery.matches));
           chips.forEach(function (c) {
             var on = c === chip;
             c.classList.toggle("on", on);
@@ -201,7 +246,7 @@
         langs.appendChild(chip);
         return chip;
       });
-      iframe.parentNode.appendChild(langs);
+      slot.parentNode.appendChild(langs);
     }
   }
 
@@ -259,6 +304,7 @@
   /* v8.3: the loader ships visible in the initial html (loader-first boot,
      no menu flash). every path that doesn't keep it up must hide it. */
   function hideLoader() {
+    loader.setAttribute("aria-busy", "false");
     if (loader.hidden) return;
     loader.classList.add("out");                 // opacity fade (css)
     setTimeout(function () {
@@ -275,6 +321,7 @@
   /* ---------- close buttons for case overlays ---------- */
   document.querySelectorAll(".case").forEach(function (el) {
     var btn = document.createElement("button");
+    btn.type = "button";
     btn.className = "close-case";
     btn.setAttribute("aria-label", "close case, back to the sea");
     btn.textContent = "×";
@@ -283,6 +330,8 @@
   });
 
   var openCaseEl = null;
+  var lastFocus = null;
+  var FOCUSABLE = "a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex='-1'])";
   function openCase(id) {
     window.__ocLog = id + " @" + new Date().toISOString().slice(11, 19);
     var el = document.getElementById(id);
@@ -296,6 +345,11 @@
     }
     closeCase();
     openCaseEl = el;
+    lastFocus = document.activeElement;
+    /* v8.7: while it floats over the sea the card IS a modal dialog — name it
+       for assistive tech (aria-labelledby is already on the article) */
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
     el.classList.remove("sinking");
     el.classList.add("open");
     body.classList.add("case-open");
@@ -309,6 +363,12 @@
         if (openCaseEl === el) el.classList.add("surfacing");
       });
     });
+    /* v8.7: move keyboard focus into the card (the close button leads), so a
+       keyboard / screen-reader user lands inside the dialog, not behind it */
+    var closer = el.querySelector(".close-case");
+    if (closer) {
+      try { closer.focus({ preventScroll: true }); } catch (e) { closer.focus(); }
+    }
     el.scrollTop = 0;
     if (window.WORLD) window.WORLD.setPaused(true);
   }
@@ -323,6 +383,8 @@
     openCaseEl = null;
     if (el) {
       pauseCaseVideos();
+      el.removeAttribute("role");
+      el.removeAttribute("aria-modal");
       el.classList.remove("surfacing");
       if (animate && body.classList.contains("mode-sea") && !reducedMotion) {
         el.classList.add("sinking");
@@ -335,6 +397,12 @@
       }
     }
     body.classList.remove("case-open");
+    /* v8.7: hand focus back to whatever opened the card (when it still exists
+       and is on screen — the sea's dock button usually isn't) */
+    if (el && lastFocus && lastFocus.focus && document.contains(lastFocus) && lastFocus.offsetParent !== null) {
+      try { lastFocus.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+    }
+    lastFocus = null;
     if (window.WORLD) {
       window.WORLD.setPaused(false);
       if (wasOpen && body.classList.contains("mode-sea") && window.WORLD.suggestNext) {
@@ -344,6 +412,20 @@
   }
   window.openCase = openCase;
   window.closeCase = closeCase;
+
+  /* v8.7: Tab never leaves an open case card (focus trap, wraps both ways) */
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Tab" || !openCaseEl || !body.classList.contains("mode-sea")) return;
+    var nodes = Array.prototype.filter.call(openCaseEl.querySelectorAll(FOCUSABLE), function (n) {
+      return n.offsetParent !== null || n === document.activeElement;
+    });
+    if (!nodes.length) return;
+    var first = nodes[0], last = nodes[nodes.length - 1];
+    var active = document.activeElement;
+    if (!openCaseEl.contains(active)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+  });
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && body.classList.contains("mode-sea")) {
@@ -430,7 +512,11 @@
     });
   }
 
-  toggleBtn.addEventListener("click", function () {
+  toggleBtn.addEventListener("click", function (e) {
+    /* v8.7: a mouse click leaves the toggle focused, and Enter (dock) would
+       then re-press it — "abandon ship" instead of beaching. keyboard users
+       who tabbed here keep their focus. */
+    if (e.detail) toggleBtn.blur();
     if (toggleBtn.dataset.mode === "sea") exitSea();
     else enterSea();
   });
@@ -467,44 +553,92 @@
   }
 
   /* ---------- lazy 3d loading ---------- */
-  function loadScript(src) {
-    return new Promise(function (res, rej) {
-      var s = document.createElement("script");
-      s.src = src;
-      s.onload = res;
-      s.onerror = rej;
-      document.head.appendChild(s);
-    });
+  /* v8.7 · three.js r128 is pinned by hash (SRI): the cdn can never swap the
+     file under a visitor's feet. its download now runs IN PARALLEL with
+     world.js (async=false keeps execution order) instead of one after the
+     other — the old chain made world.js wait for all 600kB of three first. */
+  var THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+  var THREE_SRI = "sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu";
+  var SEA_TIMEOUT_MS = 25000;
+  var aborted = false;      // visitor (or a timeout) chose dry land while the sea loads
+
+  function loadScripts(list) {
+    return Promise.all(list.map(function (it) {
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = it.src;
+        s.async = false;                          // download parallel, run in order
+        if (it.integrity) { s.integrity = it.integrity; s.crossOrigin = "anonymous"; }
+        s.onload = res;
+        s.onerror = function () { rej(new Error("failed to load " + it.src)); };
+        document.head.appendChild(s);
+      });
+    }));
   }
+
+  /* the loader's way out — also what the 25s timeout does on a dead cdn */
+  function abandonLoad() {
+    aborted = true;
+    hideLoader();
+    setMode("content");
+  }
+  var skipBtn = document.getElementById("loader-skip");
+  if (skipBtn) skipBtn.addEventListener("click", abandonLoad);
 
   function startWorld() {
     if (worldStarted) {
       if (worldReady && window.WORLD) window.WORLD.setPaused(false);
+      else if (!worldReady) {              // still loading and the visitor changed their mind back
+        aborted = false;
+        loader.classList.remove("out");
+        loader.hidden = false;
+      }
       return;
     }
     worldStarted = true;
     loader.classList.remove("out");
+    loader.setAttribute("aria-busy", "true");
     loader.hidden = false;
     var msgs = ["inflating the sea…", "waxing the canoe…", "bribing the seagulls…", "planting the capullos…", "hiding the easter eggs…"];
     var mi = 0;
-    var loaderP = loader.querySelector("p");
+    var loaderP = document.getElementById("loader-msg") || loader.querySelector("p");
     var msgTimer = setInterval(function () {
       if (loader.hidden) { clearInterval(msgTimer); return; }
       mi = (mi + 1) % msgs.length;
       loaderP.textContent = msgs[mi];
     }, 1300);
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js")
-      .then(function () { return loadScript("js/world.js?v=" + BUILD); })
+    var giveUp = setTimeout(function () {
+      if (!worldReady) { console.warn("3d took too long, staying on dry land"); abandonLoad(); }
+    }, SEA_TIMEOUT_MS);
+    loadScripts([
+      { src: THREE_URL, integrity: THREE_SRI },
+      { src: "js/world.js?v=" + BUILD }
+    ])
       .then(function () {
         return window.WORLD.init({
           container: document.getElementById("stage"),
           tier: tier,
           islands: cfg.ISLANDS,
           onDock: function (islandId) { openCase(islandId); },
+          /* v8.7: the webgl context died and did not come back (ios does this
+             to backgrounded tabs) — dry land takes over instead of a dead canvas */
+          onLost: function () {
+            console.warn("webgl context lost, staying on dry land");
+            worldReady = false;
+            toggleBtn.hidden = true;
+            closeCase();
+            setModeFallback();
+            if (window.WORLD && window.WORLD.setPaused) window.WORLD.setPaused(true);
+          },
         });
       })
       .then(function () {
+        clearTimeout(giveUp);
         worldReady = true;
+        if (aborted) {                       // they left for dry land while it loaded: stay there
+          if (window.WORLD && window.WORLD.setPaused) window.WORLD.setPaused(true);
+          return;
+        }
         hideLoader();   // v8.3: fade, not pop — the world is already rendering under it
         // cinematic title card over the intro swoop, first time only
         var tc = document.getElementById("title-card");
@@ -520,6 +654,7 @@
         }
       })
       .catch(function (err) {
+        clearTimeout(giveUp);
         console.error("3d failed, staying on dry land:", err);
         hideLoader();
         toggleBtn.hidden = true;
@@ -563,7 +698,17 @@
        a shared-and-mangled url must never kill the whole boot script */
     hasHash = location.hash && document.querySelector(location.hash);
   } catch (e) { hasHash = null; }
-  if (!hasHash && (tier === "high" || tier === "mobile")) {
+  /* v8.7 · the sea is the invitation, not a toll booth. it does NOT auto-start
+     (the visitor lands on the work, one tap from the canoe) for: crawlers and
+     link-preview bots, data-saver / 2g-3g connections (it is ~800kB of js),
+     and an explicit ?sea=0. ?sea=1 forces it. */
+  var qs = location.search;
+  var conn = navigator.connection || {};
+  var thrifty = !!(conn.saveData || /^(slow-2g|2g|3g)$/.test(conn.effectiveType || ""));
+  var isBot = /bot\b|crawl|spider|slurp|facebookexternalhit|embedly|whatsapp|telegram|linkedin|prerender|pinterest/i.test(navigator.userAgent);
+  var forceSea = /[?&]sea=1/.test(qs), forceContent = /[?&]sea=0/.test(qs);
+  var autoSea = forceSea || (!forceContent && !hasHash && !thrifty && !isBot && (tier === "high" || tier === "mobile"));
+  if (autoSea) {
     /* auto-entering the sea: the loader (already on screen since first
        paint) simply stays up until the world is ready. */
     window.addEventListener("load", function () {

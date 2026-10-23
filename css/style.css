@@ -18,6 +18,9 @@
   --sea: #2b47d9;
   --sea-deep: #101b52;
   --coral: #ff5a3c;
+  /* v8.7: coral is a FILL colour (2.7:1 on cream). any coral TEXT on a light
+     surface uses coral-ink (5.2:1 on cream, 5.15 on the card white). */
+  --coral-ink: #c93514;
   --yellow: #ffd23f;
   --green: #3ec46d;
   --peach: #ffd9a6;
@@ -30,6 +33,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 84px;       /* anchors land clear of the fixed topbar */
   background: #0a1230;            /* bottom overscroll = abyss */
   /* v8: clip (not hidden — no new scroll container, sticky keeps working).
      kills the layout-viewport expansion on phones: without it the tilted
@@ -53,6 +57,10 @@ body {
 }
 
 a { color: inherit; }
+button { font: inherit; }
+/* v8.7: taps feel instant (no 300ms heuristics, no grey flash) */
+a, button, .chip { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+h1, h2, h3 { text-wrap: balance; }
 img { max-width: 100%; height: auto; display: block; }
 .mono { font-family: var(--font-mono); font-size: .8em; letter-spacing: .02em; }
 
@@ -82,7 +90,7 @@ body.mode-sea.case-open #topbar { display: none; }
   border-radius: 999px;
   transition: transform .2s;
 }
-.brand:hover { transform: rotate(-2deg) scale(1.03); }
+@media (hover: hover) { .brand:hover { transform: rotate(-2deg) scale(1.03); } }
 .brand .role { font-weight: 400; opacity: .75; }
 @media (max-width: 640px) { .brand .role { display: none; } }
 
@@ -104,7 +112,7 @@ body.mode-sea.case-open #topbar { display: none; }
   text-transform: lowercase;
   transition: transform .2s, background .2s;
 }
-.btn:hover { transform: scale(1.05); background: var(--coral); }
+@media (hover: hover) { .btn:hover { transform: scale(1.05); background: var(--coral-ink); } }
 .btn:active { transform: scale(.96); }   /* v8.5: one press accent everywhere */
 /* fingers need ≥44px targets */
 @media (pointer: coarse) {
@@ -232,7 +240,7 @@ body:not(.mode-sea) #hud { display: none; }
   letter-spacing: .03em;
   /* tinted by the nearest island (world.js sets --hud-tint) */
   background: var(--hud-tint, var(--coral));
-  color: var(--hud-tint-text, var(--cream));
+  color: var(--hud-tint-text, var(--ink));
   transition: background .6s ease, color .6s ease;
   border: 0;
   border-radius: 999px;
@@ -336,7 +344,7 @@ body:not(.mode-sea) #hud { display: none; }
   font-family: var(--font-mono);
   font-size: .58rem;
   letter-spacing: .16em;
-  color: var(--hud-tint-deep, var(--coral));
+  color: var(--hud-tint-deep, var(--coral-ink));
   transition: color .6s ease;
   margin-bottom: 2px;
 }
@@ -526,11 +534,15 @@ body:not(.mode-sea) #hud { display: none; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 15px;
-  height: 15px;
-  margin: -7.5px 0 0 -7.5px;
+  /* v8.7: the BUTTON is 24px (wcag 2.2 target size) but only a 15px disc is
+     painted — the transparent border keeps the crowded cluster readable */
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
   border-radius: 50%;
-  border: 1.5px solid var(--cream);
+  border: 4.5px solid transparent;
+  background-clip: padding-box;
+  z-index: 2;                 /* above the dial's ::after ring, which painted over the dots */
   cursor: pointer;
   padding: 0;
   transition: box-shadow .2s;
@@ -540,8 +552,10 @@ body:not(.mode-sea) #hud { display: none; }
 .compass-dot::before {
   content: "";
   position: absolute;
-  inset: -15px;
+  inset: -1.5px;
   border-radius: 50%;
+  border: 1.5px solid var(--cream);
+  pointer-events: none;
 }
 .compass-dot:focus-visible {
   outline: 2px solid var(--cream);
@@ -551,11 +565,11 @@ body:not(.mode-sea) #hud { display: none; }
 .compass-dot.visited::after {
   content: "✓";
   position: absolute;
-  inset: 0;
+  inset: -4.5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: .55rem;
+  font-size: .75rem;
   color: var(--ink);
   font-weight: 700;
   /* v8.5: the ✓ lands with the same spring accent as the rest of the hud */
@@ -825,12 +839,12 @@ h1 {
   font-size: clamp(1.05rem, 2.6vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--coral);
+  color: var(--coral-ink);
   margin-top: .5em;
 }
 .lede { font-size: clamp(1.05rem, 2.4vw, 1.35rem); max-width: 46ch; margin-top: 1.4em; }
 .lede-sub { font-size: clamp(1rem, 2vw, 1.15rem); margin-top: .8em; color: var(--sea); font-weight: 600; }
-.scroll-hint { margin-top: 3em; font-family: var(--font-mono); font-size: .8rem; opacity: .6; }
+.scroll-hint { margin-top: 3em; font-family: var(--font-mono); font-size: .8rem; opacity: .74; }
 
 /* ---------- marquee ---------- */
 .marquee {
@@ -868,9 +882,11 @@ h1 {
   box-shadow: 8px 8px 0 rgba(20,18,15,.12);
   transition: transform .35s ease, box-shadow .35s ease;
 }
-.case:hover {
-  transform: translateY(-5px) rotate(-.25deg);
-  box-shadow: 10px 14px 0 rgba(20,18,15,.14);
+@media (hover: hover) {
+  .case:hover {
+    transform: translateY(-5px) rotate(-.25deg);
+    box-shadow: 10px 14px 0 rgba(20,18,15,.14);
+  }
 }
 /* dashed route up to each port, with a colored marker */
 .case::before {
@@ -937,7 +953,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   margin-top: .5em;
   line-height: 1.04;
 }
-.case-claim { font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--coral); font-weight: 600; margin-top: .5em; max-width: 55ch; }
+.case-claim { font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--coral-ink); font-weight: 600; margin-top: .5em; max-width: 55ch; }
 .case-body { padding: clamp(20px, 4vw, 40px); display: grid; gap: 28px; }
 
 .case-text p { max-width: 62ch; margin-bottom: 1em; }
@@ -950,7 +966,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   font-family: var(--font-mono);
   font-size: .8rem;
 }
-.case-meta span { display: block; opacity: .55; font-size: .7rem; }
+.case-meta span { display: block; opacity: .72; font-size: .72rem; }
 
 .poster-grid {
   display: grid;
@@ -962,7 +978,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   border-radius: 12px;
   transition: transform .25s;
 }
-.poster-grid img:hover { transform: rotate(-1.2deg) scale(1.02); }
+@media (hover: hover) { .poster-grid img:hover { transform: rotate(-1.2deg) scale(1.02); } }
 
 /* video */
 .video-wrap { position: relative; }
@@ -1044,6 +1060,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
 }
 .case-stats strong {
   display: block;
+  font-variant-numeric: tabular-nums;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(1.7rem, 4.6vw, 2.4rem);
@@ -1077,7 +1094,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   text-align: center;
   font-weight: 600;
 }
-.case-slot .mono { font-size: .75rem; opacity: .65; }
+.case-slot .mono { font-size: .75rem; opacity: .75; }
 
 /* ---------- about ---------- */
 .about { position: relative; margin: 16vh 0 8vh; max-width: 68ch; }
@@ -1107,7 +1124,7 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
   transition: background .2s, color .2s;
 }
 .social a:hover { background: var(--ink); color: var(--cream); }
-.contact a { color: var(--coral); font-weight: 700; }
+.contact a { color: var(--coral-ink); font-weight: 700; }
 
 footer {
   position: relative;
@@ -1281,6 +1298,205 @@ body.diving #topbar, body.boarding #topbar { opacity: 0; transition: opacity .45
 
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  /* v8.7: a .01ms duration on an INFINITE animation restarts it ~100k times
+     a second — the marquee, loader bar and stamp strobed instead of resting.
+     finite animations still snap to their end frame; looping ones just stop. */
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .marquee-track, .stamp, .cap-avatar, #hint, .dock, .compass-dot.targeted,
+  .depth-bubbles span, .depth-angler, .depth-angler .angler-lure, .touch-icon span { animation: none !important; }
+  .loader-line::after { animation: none !important; left: 0; width: 40%; }
   html { scroll-behavior: auto; }
+}
+
+/* ============================================================
+   v8.7 · red-team pass — a11y, facade, pillars, print
+   ============================================================ */
+
+/* visually hidden, still read aloud */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* skip link: first tab stop, only visible while focused */
+.skip-link {
+  position: fixed;
+  top: 10px; left: 10px;
+  z-index: 100;
+  transform: translateY(-160%);
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  letter-spacing: .05em;
+  padding: 10px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: transform .2s ease;
+}
+.skip-link:focus-visible { transform: none; }
+body.mode-sea .skip-link { display: none; }
+#content:focus { outline: none; }
+
+/* one focus language everywhere: a cream/ink double ring that reads on the
+   cream page, the ultramarine deep, the cards and the 3d sea alike */
+:where(a, button, [tabindex]):focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--cream);
+  border-radius: 999px;
+}
+.case a:focus-visible, .case-text a:focus-visible { border-radius: 4px; }
+.chip:focus-visible, .dock:focus-visible, .close-case:focus-visible, .compass-dot:focus-visible {
+  outline-color: var(--cream);
+  box-shadow: 0 0 0 6px var(--ink);
+}
+body.js .about a:focus-visible, body.js footer a:focus-visible {
+  outline-color: var(--cream);
+  box-shadow: 0 0 0 6px var(--sea-deep);
+}
+.dock:focus-visible { transform: translateX(-50%); }   /* never lose the pill's centring */
+
+/* the loader's way out: the sea is a gift, not a gate */
+.loader-skip {
+  margin-top: 26px;
+  background: transparent;
+  color: var(--cream);
+  border: 1.5px solid rgba(246, 238, 221, .55);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  cursor: pointer;
+  text-transform: lowercase;
+  transition: background .2s, color .2s;
+}
+@media (hover: hover) { .loader-skip:hover { background: var(--cream); color: var(--ink); } }
+.loader-skip:focus-visible { outline-color: var(--cream); box-shadow: none; }
+@media (pointer: coarse) { .loader-skip { padding: 14px 20px; } }
+
+/* youtube facade — no player, no trackers, no ~1MB of embed js until asked */
+.yt-facade {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0d0c16;
+  color: var(--cream);
+}
+.yt-facade img { width: 100%; height: 100%; object-fit: cover; }
+.yt-facade::after {              /* soft vignette so the label always reads */
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(13, 12, 22, .72));
+  pointer-events: none;
+}
+.yt-play {
+  position: absolute;
+  left: 50%; top: 50%;
+  z-index: 1;
+  width: clamp(56px, 11vw, 84px);
+  aspect-ratio: 1;
+  margin: calc(clamp(56px, 11vw, 84px) / -2) 0 0 calc(clamp(56px, 11vw, 84px) / -2);
+  border-radius: 50%;
+  background: var(--yellow);
+  border: 3px solid var(--ink);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .3);
+  transition: transform .2s ease;
+}
+.yt-play::before {
+  content: "";
+  position: absolute;
+  left: 53%; top: 50%;
+  transform: translate(-50%, -50%);
+  border-left: clamp(16px, 3.2vw, 24px) solid var(--ink);
+  border-top: clamp(10px, 2vw, 15px) solid transparent;
+  border-bottom: clamp(10px, 2vw, 15px) solid transparent;
+}
+.yt-label {
+  position: absolute;
+  z-index: 1;
+  left: 16px; right: 16px; bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  text-align: left;
+  text-transform: lowercase;
+}
+@media (hover: hover) { .yt-facade:hover .yt-play { transform: scale(1.08); } }
+.yt-facade:focus-visible { outline-color: var(--ink); border-radius: 12px; }
+
+/* island 02: the three pillars (replaces the striped placeholders) */
+.pillars {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 14px;
+}
+.pillar {
+  position: relative;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: repeating-linear-gradient(45deg, #fbf3dc, #fbf3dc 14px, #f7edcf 14px, #f7edcf 28px);
+  padding: 22px 20px 20px;
+  overflow: hidden;
+}
+.pillar::after {
+  content: attr(data-n);
+  position: absolute;
+  right: 12px; top: 2px;
+  font-family: var(--font-display);
+  font-size: 4.2rem;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(20, 18, 15, .14);
+  pointer-events: none;
+}
+.pillar h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3.4vw, 1.8rem);
+  line-height: 1.05;
+  margin-bottom: .45em;
+}
+.pillar p { max-width: 34ch; }
+.case-text a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* long copy never drags the layout wider than the card */
+.case-text, .case-head h2 { overflow-wrap: anywhere; }
+.case-text p, .about p { hyphens: manual; }
+
+/* forced-colors (windows high contrast): borders carry the design */
+@media (forced-colors: active) {
+  .chip, .dock, .lang-chip, .yt-facade, .pillar { border: 2px solid CanvasText; }
+  .yt-play { forced-color-adjust: none; }
+}
+
+/* print / save-as-pdf: a recruiter can print the work, no sea required */
+@media print {
+  #stage, #hud, #loader, #title-card, #controls-card, #topbar, #flotsam, #depth-bg,
+  #sea-veil, .marquee, .skip-link, .stamp, .hero-field, .close-case, .video-langs { display: none !important; }
+  html, body { background: #fff !important; }
+  body.js .case, body.js .about { opacity: 1 !important; transform: none !important; }
+  body.js .about, body.js .about h2, body.js footer, body.js .about .contact a { color: #000 !important; }
+  .case { break-inside: avoid; margin: 24px 0; box-shadow: none; }
+  .case::before { display: none; }
+  .yt-facade { display: none; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; }
 }

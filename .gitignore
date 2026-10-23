@@ -14,3 +14,6 @@ assets/og-tmp*.png
 # jorge's prompt history for this project — project lore, not site code.
 # it lives in this folder for convenience but stays out of git history.
 PROMPT-FABLE5*.md
+
+# local generators (og / icons) — never shipped
+.tmp-gen/

@@ -44,6 +44,44 @@ la cancha y no sabe nada de "coming soon".
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).
 además, en `index.html` → JSON-LD (bloque `application/ld+json`), añade las urls al array `"sameAs"`.
 
+## novedades v8.7 — "red team"
+
+pasada de auditoría completa (código + web publicada). nada del mundo 3d cambia
+de aspecto; cambia lo que lo rodea.
+
+- **seo/compartir**: canonical, og, sitemap y robots apuntan al dominio que SÍ
+  responde (el de vercel) — `jorgeantolin.com` está en un aparcamiento de ionos
+  y no servía el og:image, así que las previews no salían. cuando adjuntes el
+  dominio en vercel: buscar-y-reemplazar
+  `portfolio-website-nu-ebon-47.vercel.app` → `jorgeantolin.com` en
+  `index.html`, `sitemap.xml`, `robots.txt`. og nuevo (`assets/og-v2.jpg`, con
+  la tilde de "antolín"), apple-touch-icon, favicon png, `manifest.webmanifest`,
+  `404.html`. el sitemap ya no lista `#fragmentos` (google los ignora).
+- **seguridad**: cabeceras en `vercel.json` (csp, nosniff, referrer-policy,
+  permissions-policy, frame-ancestors none) y `AGENTS.md`/`README.md` ya no se
+  sirven públicamente. three.js r128 va con SRI y descarga EN PARALELO a
+  world.js.
+- **rendimiento**: el vídeo de youtube es una fachada (miniatura + botón): el
+  reproductor (~1 MB + rastreadores) solo carga al pulsar play. el mar ya no
+  arranca solo en crawlers/bots, con data-saver ni en 2g/3g (`?sea=0` fuerza
+  contenido, `?sea=1` fuerza mar). loader con botón "skip the sea" y salida
+  automática a los 25 s si el cdn no responde. el render se detiene mientras el
+  mar está pausado (menú abierto) — antes pintaba a 60 fps para nadie.
+- **accesibilidad**: skip link, anillo de foco único, los casos son
+  `role="dialog"` con foco dentro, trampa de tab y devolución de foco,
+  contraste AA en todo el texto coral (`--coral-ink`), movimiento reducido sin
+  parpadeos (las animaciones infinitas se paran en vez de ir a .01ms), brújula
+  con dianas de 24 px, el capitán se anuncia (`role="status"`), tinte del hud
+  por contraste WCAG real.
+- **bugs de world.js**: volver a la pestaña ya no deja una mancha gigante de
+  estela (el reloj se reiniciaba a 0), las flechas/espacio/enter ya no se
+  roban a la página ni al foco, teclas ya no se quedan pegadas (cmd+tab),
+  pérdida de contexto webgl → vuelta a contenido, doble `init` protegido,
+  `powerPreference: default` (no despierta la gpu discreta).
+- **contenido**: la isla 02 deja de ser tres cuadros "coming right up" y pasa a
+  tres pilares con texto real (sin inventar datos); fuera el relleno de
+  keywords del about y la meta description.
+
 ## novedades v7 — "gijón es gijón"
 
 tres órdenes: las islas que venden, delante; liga u deja de estar en obras;
@@ -339,8 +377,9 @@ manteniendo three.js r128 sin build: toda la calidad sale del shading, no de la 
 - contador de progreso bajo la brújula; al cerrar un case se sugiere la siguiente parada.
 
 ## otras notas
-- dominio: ahora mismo todo apunta a `https://jorgeantolin.com/`. si el dominio final es otro,
-  haz buscar-y-reemplazar en `index.html`, `sitemap.xml` y `robots.txt`.
+- dominio: ahora mismo todo apunta a `https://portfolio-website-nu-ebon-47.vercel.app/` (ver v8.7).
+  cuando `jorgeantolin.com` esté adjuntado en vercel, buscar-y-reemplazar en `index.html`,
+  `sitemap.xml` y `robots.txt`.
 - imágenes de los cases: `assets/*.webp` (ya optimizadas desde los pdfs originales).
 - la versión "dry land" (contenido html) es a la vez el fallback para móviles flojos/sin webgl
   y la capa que leen buscadores e ias. no la borres.

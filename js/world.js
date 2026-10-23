@@ -178,6 +178,8 @@
   var motes = null;           // drifting light motes
   var windShaders = [];       // shaders that need uTime
   var paused = false;
+  var ctxLostTimer = 0;
+  var tWave = 0;   // v8.7: the time the WATER lives on (frozen under reduced motion); hull + shader share it
   var tier = "high";
   var onDockCb = null;
   var introT = 0;
@@ -429,6 +431,7 @@
      init
      ============================================================ */
   W.init = function (opts) {
+    if (renderer) return Promise.resolve();   // v8.7: a second init must never build a second world
     tier = opts.tier || "high";
     onDockCb = opts.onDock || function () {};
     var container = opts.container;
@@ -436,7 +439,7 @@
 
     renderer = new THREE.WebGLRenderer({
       antialias: tier !== "low",
-      powerPreference: "high-performance",
+      powerPreference: "default",   // v8.7: "high-performance" woke the discrete gpu on dual-gpu macbooks for a toon scene
     });
     var dpr = Math.min(window.devicePixelRatio || 1, tier === "high" ? 2 : 1.5);
     renderer.setPixelRatio(dpr);
@@ -503,9 +506,24 @@
     setTimeout(onResize, 350);
     setTimeout(onResize, 1200);
     setTimeout(onResize, 3000);
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) clock.stop(); else clock.start();
+    /* v8.7: the old stop()/start() pair reset clock.elapsedTime to 0 on every
+       tab return (three r128 start() zeroes it), so the wake ribbon's point
+       ages went hugely negative — a giant cream smear after alt-tabbing, and
+       every t-based timer jumped. rAF already sleeps in hidden tabs and dt is
+       capped at 0.05, so nothing needs stopping. held keys are dropped
+       though: keyup never arrives for a key released in another window. */
+    document.addEventListener("visibilitychange", function () { keys = {}; });
+    window.addEventListener("blur", function () { keys = {}; });
+
+    /* v8.7: webgl context loss. three r128 swallows it silently, which on iOS
+       (backgrounded tab) leaves a dead canvas. give it a few seconds to come
+       back, then tell main.js so dry land can take over. */
+    renderer.domElement.addEventListener("webglcontextlost", function (e) {
+      e.preventDefault();
+      clearTimeout(ctxLostTimer);
+      ctxLostTimer = setTimeout(function () { if (opts.onLost) opts.onLost(); }, 3500);
     });
+    renderer.domElement.addEventListener("webglcontextrestored", function () { clearTimeout(ctxLostTimer); });
 
     renderer.setAnimationLoop(tick);
     return Promise.resolve();
@@ -530,6 +548,14 @@
        main.js's closeCase-inside-openCase unpause blip. */
     if (p && beached && beached.parked) beached.caseOpened = true;
     if (!p && beached && beached.parked && beached.caseOpened) startLaunch();
+    /* v8.7: in dry-land mode #stage is display:none, yet the loop kept running
+       a full 60fps render for nobody. stop it while paused (an open case keeps
+       it alive — beached+paused is the ios self-heal contract in AGENTS.md)
+       and restart cleanly, with a fresh dt, on resume. */
+    if (renderer) {
+      if (p && !beached) renderer.setAnimationLoop(null);
+      else if (!p) { clock.getDelta(); onResize(); renderer.setAnimationLoop(tick); }
+    }
   };
 
   /* ============================================================
@@ -1624,7 +1650,7 @@
       var s = m.userData.s0 * (0.6 + k * 2.6);
       m.scale.set(s, s, 1);
       m.material.opacity = m.userData.op * (1 - k) * (1 - k);
-      m.position.y = 0.25 + waveH(m.position.x, m.position.z, t) * 0.7;
+      m.position.y = 0.25 + waveH(m.position.x, m.position.z, tWave) * 0.7;
     }
   }
 
@@ -1689,7 +1715,7 @@
       var age = (t - p.t) / RIBBON_LIFE;                  // 0 → 1
       var width = 0.45 + age * 2.4 + Math.sin(age * 7 + p.x) * 0.25 * age;
       var rx = Math.cos(p.h), rz = -Math.sin(p.h);
-      var y = 0.22 + waveH(p.x, p.z, t) * 0.75;
+      var y = 0.22 + waveH(p.x, p.z, tWave) * 0.75;
       pos.setXYZ(i * 2, p.x + rx * width, y, p.z + rz * width);
       pos.setXYZ(i * 2 + 1, p.x - rx * width, y, p.z - rz * width);
       var a = (1 - age) * (1 - age) * 0.28 * p.k;
@@ -3505,13 +3531,24 @@
   var keys = {};
   function bindInput(container) {
     document.addEventListener("keydown", function (e) {
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].indexOf(e.key) >= 0) e.preventDefault();
-      keys[e.key.toLowerCase()] = true;
-      if (e.key === "Enter" && nearIsland && !document.querySelector(".case.open")) {
+      /* v8.7: the sea only owns the keyboard while it is on screen. before, the
+         arrows/space were swallowed page-wide (no scrolling the menu or a
+         case), Enter docked even from a focused link, and cmd/ctrl chords left
+         keys "held" forever. */
+      if (paused || e.metaKey || e.ctrlKey || e.altKey) return;
+      var key = e.key || "";
+      var tg = e.target;
+      var interactive = tg && tg.closest && tg.closest("a, button, input, textarea, select, [contenteditable], .case");
+      if (tg && tg.closest && tg.closest("input, textarea, select, [contenteditable]")) return;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(key) >= 0) e.preventDefault();
+      keys[key.toLowerCase()] = true;
+      /* rowing keys work even with a hud button focused (you just clicked
+         "enter the sea"); Enter belongs to the focused control, if any */
+      if (key === "Enter" && !interactive && !e.repeat && nearIsland && !document.querySelector(".case.open")) {
         dockAt(nearIsland);
       }
     });
-    document.addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+    document.addEventListener("keyup", function (e) { keys[(e.key || "").toLowerCase()] = false; });
 
     var el = renderer.domElement;
     var startX = 0, startY = 0;
@@ -3662,6 +3699,9 @@
 
     var cap = document.createElement("div");
     cap.id = "island-toast";
+    cap.setAttribute("role", "status");          // v8.7: screen readers hear the captain too
+    cap.setAttribute("aria-live", "polite");
+    cap.setAttribute("aria-atomic", "true");
     cap.innerHTML =
       "<div class='cap-avatar' aria-hidden='true'>" +
       "<svg viewBox='0 0 48 48' width='46' height='46'>" +
@@ -3685,7 +3725,7 @@
     compassRose = document.createElement("div");
     compassRose.className = "compass-rose";
     compassRose.innerHTML =
-      "<span class='compass-n'>n</span>" +
+      "<span class='compass-n' aria-hidden='true'>n</span>" +
       "<span class='compass-tick t-e'></span>" +
       "<span class='compass-tick t-s'></span>" +
       "<span class='compass-tick t-w'></span>";
@@ -3872,9 +3912,13 @@
     // v8.1: self-heal the canvas size every ~2s — catches every ios case
     // where the viewport settled without firing any event we listen to
     if ((sizeCheckN = (sizeCheckN + 1) % 120) === 0) onResize();
-    waterUniforms.uTime.value = t;
+    /* v8.7: ambient life (waves, wind, gulls, fish, orbits…) rides tw, which
+       stands still under prefers-reduced-motion. real t stays for timers. */
+    var tw = (rmQ && rmQ.matches) ? 0 : t;
+    tWave = tw;
+    waterUniforms.uTime.value = tw;
     for (var wsI = 0; wsI < windShaders.length; wsI++) {
-      windShaders[wsI].uniforms.uTime.value = t;
+      windShaders[wsI].uniforms.uTime.value = tw;
     }
 
     if (!paused) {
@@ -3889,9 +3933,9 @@
     }
     stepWake(dt, t);
     stepRibbon(t);
-    animateWorld(dt, t);
+    animateWorld(dt, tw);
     updateCamera(dt);
-    updateCompass();
+    if (!paused) updateCompass();   // v8.7: nobody sees the compass while paused
   }
 
   /* ---------- boat physics: thrust + drift + banking ---------- */
@@ -4005,12 +4049,12 @@
       }
     }
 
-    var h = waveH(boat.x, boat.z, t);
+    var h = waveH(boat.x, boat.z, tWave);
     // near shore the shader damps the swell — the hull must agree
     var shoreDamp = 1 - 0.55 * smoothstep(58, 26, boat.sandD || 999);
     h *= shoreDamp;
-    var hAhead = waveH(boat.x + fx * 3, boat.z + fz * 3, t) * shoreDamp;
-    var hSide = waveH(boat.x + fz * 2, boat.z - fx * 2, t) * shoreDamp;
+    var hAhead = waveH(boat.x + fx * 3, boat.z + fz * 3, tWave) * shoreDamp;
+    var hSide = waveH(boat.x + fz * 2, boat.z - fx * 2, tWave) * shoreDamp;
     var floatY = HULL_Y + h;
     var groundK = 0;
     /* v6.1: the hull rests ON the sand — support is the HIGHEST
@@ -4136,10 +4180,19 @@
     if (nearIsland) {
       dockBtn.hidden = false;
       // v8: the ⏎ is a keyboard promise — don't make it to fingers
-      var enterHint = TOUCH_DEV ? "" : " ⏎";
-      dockBtn.textContent = (groundedIsl === nearIsland
+      var dockLabel = (groundedIsl === nearIsland
         ? "hop ashore"
-        : "beach at " + nearIsland.def.name) + enterHint;
+        : "beach at " + nearIsland.def.name);
+      if (dockBtn._label !== dockLabel) {      // v8.7: only touch the dom when it changes
+        dockBtn._label = dockLabel;
+        dockBtn.textContent = dockLabel;
+        if (!TOUCH_DEV) {
+          var glyph = document.createElement("span");
+          glyph.setAttribute("aria-hidden", "true");
+          glyph.textContent = " ⏎";
+          dockBtn.appendChild(glyph);
+        }
+      }
     } else {
       dockBtn.hidden = true;
     }
@@ -4149,21 +4202,37 @@
 
   /* v4: the HUD borrows the island's color while you're in its waters.
      text color flips ink/cream by YIQ luminance so contrast stays AA. */
+  var tintKey = "";
+  function relLum(r, g, b) {
+    var f = function (c) { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  }
   function setHudTint(hex) {
+    var key = hex === null || hex === undefined ? "none" : String(hex);
+    if (key === tintKey) return;       // v8.7: choreographies called this every frame (3 root-var writes = doc-wide restyle)
+    tintKey = key;
     var rootStyle = document.documentElement.style;
     if (hex === null || hex === undefined) {
       rootStyle.removeProperty("--hud-tint");
       rootStyle.removeProperty("--hud-tint-text");
+      rootStyle.removeProperty("--hud-tint-deep");
       return;
     }
     var r = (hex >> 16) & 255, gg = (hex >> 8) & 255, b = hex & 255;
-    var yiq = (r * 299 + gg * 587 + b * 114) / 1000;
+    /* v8.7: ink-vs-cream by real WCAG contrast (the old yiq>=140 rule picked
+       cream on coral at 2.6:1). the "deep" variant for small labels on cream is
+       darkened until it clears 4.5:1 against cream. */
+    var L = relLum(r, gg, b);
+    var inkL = relLum(20, 18, 15), creamL = relLum(246, 238, 221);
+    var cInk = (L + 0.05) / (inkL + 0.05), cCream = (creamL + 0.05) / (L + 0.05);
     rootStyle.setProperty("--hud-tint", "#" + new THREE.Color(hex).getHexString());
-    rootStyle.setProperty("--hud-tint-text", yiq >= 140 ? "#14120f" : "#f6eedd");
-    // darker variant for small tinted text sitting on cream (labels)
-    var dk = new THREE.Color(hex);
-    if (yiq >= 140) dk.multiplyScalar(0.52);
-    rootStyle.setProperty("--hud-tint-deep", "#" + dk.getHexString());
+    rootStyle.setProperty("--hud-tint-text", cInk >= cCream ? "#14120f" : "#f6eedd");
+    var dr = r, dg = gg, db = b, guard = 0;
+    while ((creamL + 0.05) / (relLum(dr, dg, db) + 0.05) < 4.5 && guard++ < 40) {
+      dr *= 0.93; dg *= 0.93; db *= 0.93;
+    }
+    var hx = function (v) { var h = Math.round(v).toString(16); return h.length < 2 ? "0" + h : h; };
+    rootStyle.setProperty("--hud-tint-deep", "#" + hx(dr) + hx(dg) + hx(db));
   }
 
   /* ---------- world life ---------- */
@@ -4184,7 +4253,7 @@
     });
 
     buoys.forEach(function (b) {
-      b.obj.position.y = waveH(b.x, b.z, t) * (b.amp || 0.8);
+      b.obj.position.y = waveH(b.x, b.z, tWave) * (b.amp || 0.8);
       b.obj.rotation.z = Math.sin(t * 1.1 + b.x) * 0.07;
     });
 
@@ -4497,22 +4566,48 @@
   }
 
   /* ---------- compass ---------- */
+  var _cpx = [], _cpy = [], _cMaxR = 46;   // _cMaxR: dial radius minus a dot radius, re-measured on resize
   function updateCompass() {
     var relN = Math.PI - boat.heading;
     compassRose.style.transform = "rotate(" + (-relN) + "rad)";
-    islands.forEach(function (isl, i) {
+    var n = islands.length, i, j;
+    for (i = 0; i < n; i++) {
+      var isl = islands[i];
       var dx = isl.group.position.x - boat.x;
       var dz = isl.group.position.z - boat.z;
       var d = Math.sqrt(dx * dx + dz * dz);
       var rel = Math.atan2(dx, dz) - boat.heading;
-      var r = 15 + Math.min(1, d / 420) * 29;
-      var x = -Math.sin(rel) * r;
-      var y = -Math.cos(rel) * r;
+      // v8.7: sqrt spreads the near field, where the four dots used to pile up
+      var r = (17 + Math.sqrt(Math.min(1, d / 300)) * 29) * (_cMaxR / 46);
+      _cpx[i] = -Math.sin(rel) * r;
+      _cpy[i] = -Math.cos(rel) * r;
+    }
+    /* v8.7: the dots are 24px buttons (wcag 2.2 target size) on a 118px dial —
+       relax overlaps so neighbours never sit on top of each other. the dial is
+       a rough bearing aid, so a few px of displacement is honest enough. */
+    for (var pass = 0; pass < 4; pass++) {
+      for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+          var ox = _cpx[j] - _cpx[i], oy = _cpy[j] - _cpy[i];
+          var od = Math.sqrt(ox * ox + oy * oy);
+          if (od >= 27) continue;
+          if (od < 0.01) { ox = 1; oy = 0; od = 1; }
+          var push = (27 - od) / 2 / od;
+          _cpx[i] -= ox * push; _cpy[i] -= oy * push;
+          _cpx[j] += ox * push; _cpy[j] += oy * push;
+        }
+      }
+      for (i = 0; i < n; i++) {
+        var rr = Math.sqrt(_cpx[i] * _cpx[i] + _cpy[i] * _cpy[i]);
+        if (rr > _cMaxR) { _cpx[i] *= _cMaxR / rr; _cpy[i] *= _cMaxR / rr; }
+      }
+    }
+    for (i = 0; i < n; i++) {
       var dot = compassDots[i];
-      dot.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
-      dot.classList.toggle("visited", !!visited[isl.def.id]);
-      dot.classList.toggle("targeted", autopilot === isl);
-    });
+      dot.style.transform = "translate(" + _cpx[i].toFixed(1) + "px," + _cpy[i].toFixed(1) + "px)";
+      dot.classList.toggle("visited", !!visited[islands[i].def.id]);
+      dot.classList.toggle("targeted", autopilot === islands[i]);
+    }
   }
 
   /* v8.1 · sizing that survives ios safari. after a reload (esp. pull-to-
@@ -4524,11 +4619,12 @@
      emit, and self-heal periodically from the frame loop. */
   var lastW = 0, lastH = 0;
   function onResize() {
-    var w = (stageEl && stageEl.clientWidth) || window.innerWidth;
-    var h = (stageEl && stageEl.clientHeight) || window.innerHeight;
-    if (!w || !h) return;                       // stage display:none (menu mode)
+    var w = stageEl ? stageEl.clientWidth : window.innerWidth;
+    var h = stageEl ? stageEl.clientHeight : window.innerHeight;
+    if (!w || !h) return; // stage display:none (menu mode) — v8.7: the old `|| innerWidth` made this unreachable
     if (w === lastW && h === lastH) return;
     lastW = w; lastH = h;
+    if (compassEl && compassEl.offsetWidth) _cMaxR = compassEl.offsetWidth / 2 - 12;
     camera.aspect = w / h;
     // v8.2: re-derive the framing for the new proportions, applied
     // immediately (choreography cameras don't touch fov) and then eased

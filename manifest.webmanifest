@@ -1,0 +1,15 @@
+{
+  "name": "jorge antolín — creative director & brand strategist",
+  "short_name": "jorge antolín",
+  "description": "a portfolio you row through: four islands, four cases.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#f6eedd",
+  "theme_color": "#101b52",
+  "lang": "en",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -319,6 +319,28 @@ create such a skill, note its name here so the next model finds it.
   overlays, viewport sizing or input — chromium touch emulation proved all
   three of these bugs invisible.
 
+## 8.7 · v8.7 red-team notes (read before touching deploy/a11y)
+
+- origin in index/sitemap/robots is the VERCEL url until `jorgeantolin.com` is
+  attached (it was parked at ionos and served no og image). swap with one
+  search-and-replace when the domain lands.
+- `vercel.json` now carries a CSP. allowed: self, cdnjs (three), google fonts,
+  youtube-nocookie (frames), i.ytimg.com (thumbs). a new third-party host needs
+  a CSP entry or it silently fails. three.js is pinned with SRI in main.js
+  (`THREE_SRI`) — if you change the three version, recompute the sha384.
+- AGENTS.md / README.md are rewritten to a 404 in vercel.json; they are still in
+  the (public) repo.
+- the youtube embed is a facade (`.yt-facade`): the iframe only exists after a
+  click. `pauseCaseVideos` handles both states.
+- local testing gotcha: js/css are cached a day, and `?v=` does NOT change while
+  you edit — hard-reload via `fetch(url,{cache:"reload"})` or bump BUILD.
+- cases are `role="dialog"` only while floating over the sea; focus goes to the
+  close button and returns on close; tab is trapped (main.js).
+- `setPaused(true)` now STOPS the render loop unless beached; `setPaused(false)`
+  restarts it. anything that needs frames while paused must be beached-gated.
+- ambient animation rides `tw` (frozen under prefers-reduced-motion); the hull
+  uses the same time through `tWave`, so the boat never bobs on frozen water.
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts

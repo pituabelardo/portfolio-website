@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jorgeantolin.com/sitemap.xml
+Sitemap: https://portfolio-website-nu-ebon-47.vercel.app/sitemap.xml
