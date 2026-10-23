@@ -3643,7 +3643,7 @@
     }, { passive: false });
   }
 
-  function readInput() {
+  function readInput(rdt) {
     var throttle = 0, turn = 0, manual = false;
     if (keys["arrowup"] || keys["w"]) { throttle = 1; manual = true; }
     if (keys["arrowdown"] || keys["s"]) { throttle = -0.4; manual = true; }
@@ -3663,13 +3663,17 @@
       var dx = autopilot.group.position.x - boat.x;
       var dz = autopilot.group.position.z - boat.z;
       var d = Math.sqrt(dx * dx + dz * dz);
-      var err = normAngle(Math.atan2(dx, dz) - boat.heading);
+      /* v8.7.2: steer for a waypoint that rounds whatever sits between us
+         and the target (other islands, liga u's hoop, buoys, rocks) — the
+         straight line used to run aground on the wrong island. */
+      var wp = autopilotWaypoint(autopilot, rdt);
+      var err = normAngle(Math.atan2(wp.x - boat.x, wp.z - boat.z) - boat.heading);
       turn = clamp(err * 2.2, -1, 1);
       throttle = d < 70 ? 0.55 : 1;
-      // v6: no prompt at the end — the captain rows straight onto the
-      // beach and momentum + sand do the docking (startLand fires on
-      // grounding). release the helm just before the sand grabs.
-      if (d < ISLAND_R + 3) { autopilot = null; throttle = 0.5; }
+      // v8.7.2: no early release. the captain keeps rowing until the keel
+      // grounds on the TARGET's sand and stepBoat starts the disembark
+      // (releasing at ISLAND_R + 3 let the sand drag stop the canoe short
+      // of grounding — liga u never docked from the compass).
     }
 
     input.throttle = throttle;
@@ -3809,11 +3813,68 @@
     toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 3000);
   }
 
+  /* v8.7.2 · autopilot routing. obstacles = every other island's sand
+     (ISLAND_R + 9) and every solid collider in rocks[] that isn't on the
+     target's own beach. find the nearest one whose circle crosses the line
+     boat → target and aim at its tangent side (the side the boat already
+     leans toward), recomputed every frame so the route bends smoothly. */
+  var _wp = { x: 0, z: 0 };
+  var _apObs = [];
+  var apStuckT = 0, apFlip = 0;      // stuck watchdog: try the other tangent side
+  function autopilotWaypoint(target, dt) {
+    var tx = target.group.position.x, tz = target.group.position.z;
+    var sx = tx - boat.x, sz = tz - boat.z;
+    var len = Math.sqrt(sx * sx + sz * sz) || 1;
+    var ux = sx / len, uz = sz / len;
+    _apObs.length = 0;
+    for (var i = 0; i < islands.length; i++) {
+      if (islands[i] === target) continue;
+      _apObs.push(islands[i].group.position.x, islands[i].group.position.z, ISLAND_R + 9);
+    }
+    for (var k = 0; k < rocks.length; k++) {
+      var rk = rocks[k];
+      var dtx = rk.x - tx, dtz = rk.z - tz;
+      if (dtx * dtx + dtz * dtz < (ISLAND_R + 2) * (ISLAND_R + 2)) continue;   // the target's own beach props
+      _apObs.push(rk.x, rk.z, rk.r + 4.5);
+    }
+    // nearest obstacle whose circle crosses the line boat → target's beach
+    var best = -1, bestT = Infinity, bpx = 0, bpz = 0, boff = 0;
+    for (var o = 0; o < _apObs.length; o += 3) {
+      var cx = _apObs[o], cz = _apObs[o + 1], r = _apObs[o + 2];
+      var t = (cx - boat.x) * ux + (cz - boat.z) * uz;
+      if (t <= -r * 0.5 || t >= len - ISLAND_R) continue;   // well behind us, or past the beach
+      var px = boat.x + ux * Math.max(t, 0) - cx, pz = boat.z + uz * Math.max(t, 0) - cz;
+      var off = Math.sqrt(px * px + pz * pz);
+      if (off < r && t < bestT) { bestT = t; best = o; bpx = px; bpz = pz; boff = off; }
+    }
+    // stuck watchdog: rowing but going nowhere for 1.2s → swap sides
+    if (boat.speed < 0.8) apStuckT += dt; else apStuckT = Math.max(0, apStuckT - dt * 2);
+    if (apStuckT > 1.2) { apStuckT = 0; apFlip = apFlip ? 0 : 1; }
+    if (best < 0) { _wp.x = tx; _wp.z = tz; return _wp; }
+    // tangent side: away from the obstacle's center (dead-center → port side)
+    var nx, nz;
+    if (boff > 0.01) { nx = bpx / boff; nz = bpz / boff; } else { nx = -uz; nz = ux; }
+    if (apFlip) { nx = -nx; nz = -nz; }
+    var R = _apObs[best + 2] + 3;
+    _wp.x = _apObs[best] + nx * R;
+    _wp.z = _apObs[best + 1] + nz * R;
+    // relax: a waypoint inside a neighbouring obstacle gets pushed out of it
+    for (var pass = 0; pass < 3; pass++) {
+      for (var q = 0; q < _apObs.length; q += 3) {
+        var qx = _wp.x - _apObs[q], qz = _wp.z - _apObs[q + 1], qr = _apObs[q + 2] + 2;
+        var qd = Math.sqrt(qx * qx + qz * qz);
+        if (qd < qr && qd > 0.01) { _wp.x = _apObs[q] + qx / qd * qr; _wp.z = _apObs[q + 1] + qz / qd * qr; }
+      }
+    }
+    return _wp;
+  }
+
   function sailTo(isl) {
     /* v8.5: a choreography owns the boat — a compass tap mid-sequence used
        to toast "setting sail" while stepFrame vetoed the autopilot every frame */
     if (dive || board || land || launch || beached) return;
     autopilot = isl;
+    apStuckT = 0; apFlip = 0;
     toast("setting sail to: " + isl.def.name + ". sit back, i'll row.");
   }
 
@@ -3923,7 +3984,7 @@
 
     if (!paused) {
       if (dive || board || land || launch) { input.throttle = 0; input.turn = 0; autopilot = null; }
-      else readInput();
+      else readInput(dt);
       stepBoat(dt, t);
       checkIslands();
       if (dive) stepDive(dt, t);
@@ -4032,7 +4093,11 @@
           // real arrivals carry way — a parked hull doesn't re-trigger
           // the walk (post-dive, post-escape). the dock button still
           // offers "hop ashore" for a canoe already sitting in the sand.
-          if (intoK > 0.35 && boat.speed > 1.2) startLand(sandIsl);
+          // v8.7.2: under autopilot only the TARGET's sand may take the
+          // canoe ashore (any heading into it, any speed — the captain is
+          // still rowing); passing another island's shallows never docks.
+          if (autopilot) { if (autopilot === sandIsl && intoK > 0) startLand(sandIsl); }
+          else if (intoK > 0.35 && boat.speed > 1.2) startLand(sandIsl);
         }
       }
     }

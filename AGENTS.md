@@ -341,6 +341,14 @@ create such a skill, note its name here so the next model finds it.
   close button and returns on close; tab is trapped (main.js).
 - `setPaused(true)` now STOPS the render loop unless beached; `setPaused(false)`
   restarts it. anything that needs frames while paused must be beached-gated.
+- (v8.7.2) compass autopilot: `autopilotWaypoint` steers around other
+  islands (ISLAND_R + 9) and every `rocks[]` collider off the target's beach
+  (tangent waypoint, relaxed out of neighbours, side-swap watchdog after 1.2s
+  stuck). it no longer releases the helm at ISLAND_R + 3, and under autopilot
+  only the TARGET's sand starts `startLand`. before this, 3 of 4 islands
+  failed from spawn (liga u stalled in the sand; talens/ministerie docked on
+  capullos/liga u). regression test = the 16-route matrix (spawn + off each
+  island → every other island) — all must open the target's case.
 - ambient animation rides `tw` (frozen under prefers-reduced-motion); the hull
   uses the same time through `tWave`, so the boat never bobs on frozen water.
 
