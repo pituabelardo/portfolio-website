@@ -381,9 +381,11 @@ create such a skill, note its name here so the next model finds it.
 
 - **what it is**: the fifth island, `id: "ai-direction"` at **(150, 45)**,
   color `0xa66bff` (ink text on it is 5.5:1 — the first violet, 0x9c5bd9,
-  failed AA both ways). third in `ISLANDS[]` (after capullos, before the
+  failed AA both ways). (v8.9.1) jorge's name for it: board, compass and
+  "land ho" read **"ai video & art direction"** — no `tag`, the name says
+  it all; the case keeps the short h2 "ai direction". third in `ISLANDS[]` (after capullos, before the
   student concepts) and case **island 03**; talens moved to 04, ministerie
-  to 05 (`data-num` + tags). the captain's "land ho" reads its `tag`.
+  to 05 (`data-num` + tags).
 - **placement, verified**: 92.0 from liga u (the tightest pair in the
   archipelago — their 46u dock zones touch exactly at the midpoint), 147
   from ministerie, 182 from capullos; r = 156.6 (≤165); z = 45; the spawn →

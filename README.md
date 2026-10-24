@@ -63,7 +63,10 @@ formato. lo demás está en `<template class="case-draft">` (míralo con
   `media-src 'self'`). sustituye el `<a class="ai-poster">` (póster dibujado
   en css, NO es la portada real) por
   `<video controls playsinline preload="none" poster="assets/ai/….jpg">`.
-  la portada real no se publica sin tu ok.
+  la portada real no se publica sin tu ok. **pendiente (jorge, 24 oct 2026):
+  sí quiere la portada real en el case en lugar del póster css — la pasará
+  cuando pueda. al recibirla: `assets/ai/triple-doble-cover.jpg` (≤1080 px
+  de alto, webp/jpg), sustituye el póster y añade `thumbnailUrl` al json-ld.**
 - **si prefieres el embed de instagram** en vez del mp4: añade
   `https://www.instagram.com` a `frame-src` (y a `script-src` si usas su
   `embed.js`) en la csp de `vercel.json`, o el iframe falla en silencio.
