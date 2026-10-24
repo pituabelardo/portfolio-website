@@ -100,6 +100,31 @@
    7. global light pass — round soft sun glitter (the old square
       sparkle cells read "programmer"), warmer whitecaps, boat-hugging
       golden path toward the sun, eased UI tint per island.
+   ============================================================
+   ART DIRECTION (v9) — every island gets ai direction's recipe
+   ============================================================
+   one hero with a silhouette you read from the spawn, its own light in
+   ONE unlit vertex-color mesh (+ a glow or two), clean ground with merged
+   props, and a moment that happens when you sail within ~90 (frozen
+   under reduced motion). ≤14 draw calls per island. shading untouched:
+   still toonMat + the 4-step ramp (jorge rejected ink, gouache, clay).
+     · liga u: "the pavilion". the court now lives under a big barrel
+       roof on ten columns — cream with yellow ribs, glazed lunettes at
+       both arched ends, a skylight on the ridge and "liga u" on top.
+       stands with a crowd, a center-hung scoreboard. sail in: the lights
+       come on and the crowd does the wave. the giant sea hoop is GONE
+       (jorge: "no me gusta nada la canasta en el agua").
+     · capullos: "the gang". capullo = bud AND little punk. the boss is
+       a giant bud with a fuchsia petal mohawk and shades; six small
+       punks with angry brows; a tagged garden wall; bulbs up the hill.
+       sail in: every head turns to stare at you and the boss pops gum.
+     · talens x pantone: "the two halves" (supersedes "the grey
+       gallery"): a chain-link fence with a barbed coil splits the island
+       into color and joy vs grey misery. sail in: the swatch fan opens
+       and swatches jump the fence onto the grey side.
+     · ministerie: "the watcher": a faceted obsidian shard with red
+       slits, the eye in a solid lens bezel, a scan ring, a searchlight,
+       a ring of cctv cameras. sail in: they all lock onto the canoe.
    ============================================================ */
 
 (function () {
@@ -166,8 +191,6 @@
   var flyers = [];            // clouds + seagulls
   var petals = [];            // capullos drifting petals
   var buoys = [];             // things that bob on waves {obj, x, z, amp}
-  var searchlight = null;
-  var beacon = null;
   var fishes = [];
   var rocks = [];             // {x, z, r} solid colliders
   var wakePool = [];
@@ -275,7 +298,7 @@
   function toonMat(color, opts) {
     opts = opts || {};
     var key = (opts.key || color) + "|" + (opts.vc ? 1 : 0) + (opts.rim || 0) +
-              (opts.wind ? 1 : 0) + (opts.flat ? 1 : 0) + (opts.ds ? 1 : 0);
+              (opts.wind ? 1 : 0) + (opts.flat ? 1 : 0) + (opts.ds ? 1 : 0) + (opts.wave ? 1 : 0);
     if (_matCache[key]) return _matCache[key];
 
     /* note: r128's MeshToonMaterial has no flatShading — opts.flat only
@@ -289,7 +312,9 @@
 
     var rim = opts.rim || 0;
     var wind = !!opts.wind;
-    if (rim > 0 || wind) {
+    var wave = !!opts.wave;
+    if (wave) mat.userData.uWave = { value: 0 };
+    if (rim > 0 || wind || wave) {
       mat.onBeforeCompile = function (shader) {
         shader.uniforms.uTime = { value: 0 };
         shader.uniforms.uRimC = { value: new THREE.Color(RIM_COLOR) };
@@ -311,6 +336,19 @@
               "transformed.z += sway * " + (WIND.amp * 0.55).toFixed(3) + " * windW;",
             ].join("\n"));
         }
+        /* v9 · "the wave": a stadium crowd rises in a travelling crest.
+           each figure is ~0.9 wide along local x, so snap x to its seat */
+        if (wave) {
+          shader.uniforms.uWave = mat.userData.uWave;
+          shader.vertexShader = shader.vertexShader
+            .replace("#include <common>", "#include <common>\nuniform float uTime;\nuniform float uWave;")
+            .replace("#include <begin_vertex>", [
+              "#include <begin_vertex>",
+              "float fxw = floor(position.x / 0.9 + 0.5) * 0.9;",
+              "float wv = pow(max(0.0, sin(uTime * 2.4 - fxw * 0.35)), 8.0);",
+              "transformed.y += wv * 0.6 * uWave;",
+            ].join("\n"));
+        }
         if (rim > 0) {
           shader.fragmentShader = shader.fragmentShader
             .replace("#include <common>",
@@ -321,7 +359,7 @@
               "#include <dithering_fragment>",
             ].join("\n"));
         }
-        if (wind) windShaders.push(shader);
+        if (wind || wave) windShaders.push(shader);
       };
       mat.customProgramCacheKey = function () { return key; };
     }
@@ -2002,6 +2040,82 @@
     return mergeGeos(parts);
   }
 
+  /* v9 · a barrel-vault roof: top + underside + trims, local y=0 at the
+     springing line, spanning z ∈ [-H, H] and x ∈ [-L/2, L/2] */
+  function vaultGeo(L, H, rise, th, segs, hexEdge, hexTop, hexUnder, hexTrim, opts) {
+    var yAt = function (i) { var k = -1 + 2 * i / segs; return rise * (1 - k * k); };
+    var zAt = function (i) { return -H + 2 * H * i / segs; };
+    var mk = function (pos, idx) {
+      var gg = new THREE.BufferGeometry();
+      gg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      gg.setIndex(idx);
+      gg.computeVertexNormals();
+      return gg;
+    };
+    var top = [], under = [], ends = [], ti = [], ui = [], ei = [];
+    for (var i = 0; i <= segs; i++) {
+      top.push(-L / 2, yAt(i) + th, zAt(i), L / 2, yAt(i) + th, zAt(i));
+      under.push(-L / 2, yAt(i), zAt(i), L / 2, yAt(i), zAt(i));
+      if (i < segs) {
+        var a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+        ti.push(a, c, b, b, c, d);
+        ui.push(a, b, c, b, d, c);
+      }
+    }
+    /* arched end trims (x = ±L/2), each its own strip */
+    for (var sx = -1; sx <= 1; sx += 2) {
+      var o = ends.length / 3;
+      for (var j = 0; j <= segs; j++) ends.push(sx * L / 2, yAt(j), zAt(j), sx * L / 2, yAt(j) + th, zAt(j));
+      for (j = 0; j < segs; j++) {
+        var u0 = o + j * 2, t0 = u0 + 1, u1 = u0 + 2, t1 = u0 + 3;
+        if (sx < 0) ei.push(u0, u1, t0, t0, u1, t1);
+        else ei.push(u0, t0, u1, u1, t0, t1);
+      }
+    }
+    /* side trims along the eaves (z = ±H) */
+    var sides = [-L / 2, 0, -H, L / 2, 0, -H, -L / 2, th, -H, L / 2, th, -H,
+                 -L / 2, 0, H, L / 2, 0, H, -L / 2, th, H, L / 2, th, H];
+    var gTop = tint(mk(top, ti), hexEdge, hexTop, th, rise * 0.8 + th);
+    var extra = [];
+    /* raised ribs across the roof, every ribStep along x */
+    if (opts && opts.ribs) {
+      for (var rx = -L / 2 + opts.ribStep / 2; rx < L / 2; rx += opts.ribStep) {
+        var rp = [], ri = [];
+        for (var q = 0; q <= segs; q++) rp.push(rx - 0.22, yAt(q) + th + 0.13, zAt(q), rx + 0.22, yAt(q) + th + 0.13, zAt(q));
+        for (q = 0; q < segs; q++) { var qa = q * 2; ri.push(qa, qa + 2, qa + 1, qa + 1, qa + 2, qa + 3); }
+        extra.push(tint(mk(rp, ri), opts.ribs));
+      }
+    }
+    var gUnder = tint(mk(under, ui), hexUnder);
+    var gEnds = tint(mk(ends, ei), hexTrim);
+    var gSides = tint(mk(sides, [0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6]), hexTrim);
+    return mergeGeos([gTop, gUnder, gEnds, gSides].concat(extra));
+  }
+
+  /* v9 · four textured faces of a box (±x, ±z), one geometry with uvs */
+  function boxFacesGeo(w, h, d) {
+    var pos = [], uv = [], nor = [], idx = [];
+    for (var f = 0; f < 4; f++) {
+      var pl = new THREE.PlaneGeometry(f % 2 ? d : w, h);
+      pl.translate(0, 0, (f % 2 ? w : d) / 2);
+      pl.applyMatrix4(new THREE.Matrix4().makeRotationY(f * Math.PI / 2));
+      var o = pos.length / 3;
+      for (var i = 0; i < 4; i++) {
+        pos.push(pl.attributes.position.getX(i), pl.attributes.position.getY(i), pl.attributes.position.getZ(i));
+        nor.push(pl.attributes.normal.getX(i), pl.attributes.normal.getY(i), pl.attributes.normal.getZ(i));
+        uv.push(pl.attributes.uv.getX(i), pl.attributes.uv.getY(i));
+      }
+      for (var k = 0; k < pl.index.count; k++) idx.push(pl.index.array[k] + o);
+      pl.dispose();
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    return geo;
+  }
+
   /* lantern: dark post + warm cube + additive glow sprite */
   function addLantern(group, x, y, z) {
     var parts = [];
@@ -2072,50 +2186,185 @@
       g.add(buildTerrain(hFn, rampFn(ramp, COL.sandWet, 0.9)));
       isl.props.heightFn = hFn;
 
-      /* blooming buds (kept from v2, restyled: smooth petals, thicker stems) */
-      isl.props.buds = [];
-      for (var i = 0; i < 7; i++) {
-        var a = (i / 7) * Math.PI * 2 + 0.4;
-        var r = 11 + (i % 3) * 5;
-        var bx = Math.cos(a) * r, bz = Math.sin(a) * r;
-        var by = hFn(r / ISLAND_R, bx, bz);
-        if (by < 1.5) by = 1.5;
-        var bud = new THREE.Group();
-        bud.position.set(bx, by - 0.3, bz);
-        var hgt = 3.6 + (i % 4) * 1.5;
-        var stem = new THREE.Mesh(tint(new THREE.CylinderGeometry(0.24, 0.42, hgt, 6), COL.greenDark, COL.green, 0, hgt), propMat());
-        stem.position.y = hgt / 2;
-        bud.add(stem);
-        /* head: core + 5 petals merged into ONE mesh; blooming is animated
-           by scaling the head (x/z out, y down) — cheap and reads perfectly */
-        var headG = new THREE.Group();
-        headG.position.y = hgt;
-        var headParts = [];
-        var core = tint(new THREE.IcosahedronGeometry(0.85, 1), COL.yellow);
-        placed(core, 0, 0.8, 0, 0, 1);
-        headParts.push(core);
-        for (var p = 0; p < 5; p++) {
-          var petal = new THREE.SphereGeometry(0.62, 8, 6);
-          petal.scale(0.72, 1.65, 0.34);
-          petal.translate(0, 1.15, 0);
-          petal.applyMatrix4(new THREE.Matrix4().makeRotationX(0.35));   // baked outward tilt
-          petal.applyMatrix4(new THREE.Matrix4().makeRotationY((p / 5) * Math.PI * 2));
-          tint(petal, COL.coral, 0xff8a6a, 0.2, 2.6);
-          headParts.push(petal);
-        }
-        headG.add(new THREE.Mesh(mergeGeos(headParts), propMat()));
-        bud.add(headG);
-        g.add(bud);
-        isl.props.buds.push({ head: headG, open: 0, phase: i });
+      /* v9 · "capullos" are flower buds AND little punks, so the garden is a
+         gang. the boss: one giant bud on the big mound with a fuchsia petal
+         mohawk and shades, blowing gum. around him, six small punks with
+         angry brows (one InstancedMesh). a garden wall with the tag, and a
+         string of bulbs climbing from the beach. when you sail in, every
+         head turns to stare at the canoe and the boss pops a bubble. */
+      var spA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);   // toward the spawn
+      var CR = [0xff2f8a, 0xff6fb0];   // the mohawk fuchsia
+      var stat = [];   // stems, wall, posts, string, trees → ONE toon mesh
+      var bulbs = [];  // the lit bulbs → ONE unlit mesh
+
+      /* the boss: a tall curved stem up the main mound */
+      var bossX = -6, bossZ = -4, bossY0 = hFn(Math.sqrt(bossX * bossX + bossZ * bossZ) / ISLAND_R, bossX, bossZ) - 0.4;
+      var STEM = 9;
+      var stemCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(bossX, bossY0, bossZ),
+        new THREE.Vector3(bossX - 0.6, bossY0 + STEM * 0.4, bossZ - 0.3),
+        new THREE.Vector3(bossX + 0.4, bossY0 + STEM * 0.75, bossZ + 0.2),
+        new THREE.Vector3(bossX, bossY0 + STEM, bossZ),
+      ]);
+      var bStem = new THREE.TubeGeometry(stemCurve, 12, 0.55, 7, false);
+      stat.push(tint(bStem, COL.greenDark, COL.green, bossY0, bossY0 + STEM));
+      for (var lf = 0; lf < 2; lf++) {
+        var leaf = new THREE.SphereGeometry(1, 8, 6);
+        leaf.scale(0.7, 0.18, 2.1);
+        leaf.translate(0, 0, 1.9);
+        leaf.applyMatrix4(new THREE.Matrix4().makeRotationX(-0.45));
+        tint(leaf, COL.greenDark, COL.greenLight, -0.3, 0.6);
+        stat.push(placed(leaf, bossX, bossY0 + 2.6 + lf * 2.2, bossZ, spA + 1.4 + lf * 2.9, 1));
       }
 
-      /* trees + grass + flowers */
-      var trees = [];
-      var treeSpots = scatterOn(hFn, 4, 0.25, 0.62, 3.5, 9, seed + 3);
-      treeSpots.forEach(function (pt, ti) {
-        trees.push(treeGeo(pt.x, pt.z, pt.y - 0.3, 0.9 + hash2(ti, seed) * 0.5, COL.green, COL.greenLight));
+      /* the boss's head: bud + wrapping petals + sepals + mohawk + shades.
+         local +z is his face; the group turns to look at you */
+      var bossHead = new THREE.Group();
+      bossHead.position.set(bossX, bossY0 + STEM + 0.4, bossZ);
+      bossHead.rotation.y = spA;
+      var bh = [];
+      var bud = new THREE.SphereGeometry(2.6, 14, 12);
+      bud.scale(1, 1.3, 1);
+      bud.translate(0, 3.1, 0);
+      bh.push(tint(bud, COL.coralDark, 0xff7a5c, 0.5, 6.4));
+      for (var wp = 0; wp < 5; wp++) {
+        var wrap = new THREE.SphereGeometry(1.4, 9, 7);
+        wrap.scale(1.05, 1.95, 0.42);
+        wrap.translate(0, 2.4, 2.05);
+        wrap.applyMatrix4(new THREE.Matrix4().makeRotationY(wp / 5 * Math.PI * 2 + Math.PI / 5));
+        bh.push(tint(wrap, COL.coral, 0xff8a6a, 0.6, 4.8));
+      }
+      for (var sp = 0; sp < 5; sp++) {
+        var sep = new THREE.ConeGeometry(0.75, 2.2, 4);
+        sep.translate(0, 1.1, 0);
+        sep.applyMatrix4(new THREE.Matrix4().makeRotationX(0.75));
+        sep.translate(0, 0.2, 1.1);
+        sep.applyMatrix4(new THREE.Matrix4().makeRotationY(sp / 5 * Math.PI * 2));
+        bh.push(tint(sep, COL.greenDark, COL.green, 0, 1.6));
+      }
+      for (var mh2 = 0; mh2 < 7; mh2++) {
+        var ma = -1.05 + mh2 * 0.35;                    // front → back over the crown
+        var spike = new THREE.ConeGeometry(0.62, 2.1 + Math.sin(mh2 / 6 * Math.PI) * 1.3, 4);
+        spike.scale(1, 1, 0.4);
+        spike.translate(0, 1.0, 0);
+        spike.applyMatrix4(new THREE.Matrix4().makeRotationX(ma));
+        spike.translate(0, 3.1 + Math.cos(ma) * 3.2, Math.sin(ma) * 2.5);
+        bh.push(tint(spike, CR[0], CR[1], 3.6, 8.5));
+      }
+      for (var gl3 = -1; gl3 <= 1; gl3 += 2) {
+        var lens = new THREE.BoxGeometry(1.25, 0.72, 0.3);
+        bh.push(placed(tint(lens, COL.ink, 0x3a3644, -0.4, 0.4), gl3 * 0.78, 3.75, 2.47, gl3 * 0.18, 1));
+        var temple = new THREE.BoxGeometry(0.12, 0.12, 1.9);
+        bh.push(placed(tint(temple, COL.ink), gl3 * 1.55, 3.85, 1.5, gl3 * 0.35, 1));
+      }
+      var bridge = new THREE.BoxGeometry(0.5, 0.12, 0.12);
+      bh.push(placed(tint(bridge, COL.ink), 0, 3.9, 2.58, 0, 1));
+      bossHead.add(new THREE.Mesh(mergeGeos(bh), propMat()));
+      /* the gum bubble grows out of his mouth (origin at the lips) */
+      var gumG = new THREE.SphereGeometry(1, 14, 10);
+      gumG.translate(0, 0, 1);
+      var gum = new THREE.Mesh(gumG, toonMat(0xff9ccf, { rim: 0.6, key: "gum" }));
+      gum.position.set(0.35, 2.55, 2.5);
+      gum.scale.setScalar(0.01);
+      bossHead.add(gum);
+      g.add(bossHead);
+
+      /* the small punks: one bud-with-a-face geometry, six instances */
+      var pk = [];
+      var pBud = new THREE.SphereGeometry(1.1, 10, 8);
+      pBud.scale(1, 1.25, 1);
+      pBud.translate(0, 1.3, 0);
+      pk.push(tint(pBud, COL.coralDark, 0xff8a6a, 0.3, 2.6));
+      for (var ps = 0; ps < 4; ps++) {
+        var pSep = new THREE.ConeGeometry(0.42, 1.1, 4);
+        pSep.translate(0, 0.55, 0);
+        pSep.applyMatrix4(new THREE.Matrix4().makeRotationX(0.7));
+        pSep.translate(0, 0.1, 0.45);
+        pSep.applyMatrix4(new THREE.Matrix4().makeRotationY(ps / 4 * Math.PI * 2 + 0.4));
+        pk.push(tint(pSep, COL.greenDark, COL.green, 0, 0.8));
+      }
+      for (var pe = -1; pe <= 1; pe += 2) {
+        var eye = new THREE.SphereGeometry(0.2, 6, 5);
+        pk.push(placed(tint(eye, COL.ink), pe * 0.4, 1.55, 1.0, 0, 1));
+        var brow = new THREE.BoxGeometry(0.6, 0.17, 0.16);
+        brow.applyMatrix4(new THREE.Matrix4().makeRotationZ(pe * 0.45));
+        pk.push(placed(tint(brow, COL.ink), pe * 0.42, 1.95, 1.0, 0, 1));
+      }
+      for (var pm2 = 0; pm2 < 3; pm2++) {
+        var pSpike = new THREE.ConeGeometry(0.3, 0.9 + (pm2 === 1 ? 0.4 : 0), 4);
+        pSpike.scale(1, 1, 0.45);
+        pSpike.translate(0, 2.75, -0.45 + pm2 * 0.45);
+        pk.push(tint(pSpike, CR[0], CR[1], 2.4, 3.4));
+      }
+      var punkGeo = mergeGeos(pk);
+      var punks = [];
+      var pSpots = [[5, 9], [10, 2], [-13, 6], [2, -12], [-1, 3], [-15, -8]];
+      pSpots.forEach(function (sp2, pi) {
+        var px = sp2[0], pz = sp2[1];
+        var py = Math.max(hFn(Math.sqrt(px * px + pz * pz) / ISLAND_R, px, pz), 1.4) - 0.3;
+        var ph = 2.4 + hash2(pi, 2.2) * 2.6;
+        var pStem = new THREE.CylinderGeometry(0.2, 0.32, ph, 6);
+        stat.push(placed(tint(pStem, COL.greenDark, COL.green, -ph / 2, ph / 2), px, py + ph / 2, pz, 0, 1));
+        punks.push({ x: px, y: py + ph - 0.15, z: pz, s: 1.0 + hash2(pi, 7.1) * 0.6, yaw: spA + (hash2(pi, 4) - 0.5) * 1.2, k: 3 + hash2(pi, 9) * 5, ph: pi * 1.7 });
       });
-      if (trees.length) g.add(new THREE.Mesh(mergeGeos(trees), propMat()));
+      var punkMesh = new THREE.InstancedMesh(punkGeo, propMat(), punks.length);
+      g.add(punkMesh);
+
+      /* the garden wall on the spawn side, tagged */
+      var wR = 15.5, wA = spA + 0.45;
+      var wx = Math.sin(wA) * wR, wz = Math.cos(wA) * wR;
+      var wy = Math.max(hFn(wR / ISLAND_R, wx, wz), 1.2);
+      var wall = new THREE.BoxGeometry(9.5, 2.6, 0.7);
+      tint(wall, 0xb9b0a0, 0xd8d0c0, -1.3, 1.3);
+      stat.push(placed(wall, wx, wy + 0.9, wz, wA, 1));
+      var cap3 = new THREE.BoxGeometry(9.9, 0.3, 0.95);
+      tint(cap3, 0x9a9284);
+      stat.push(placed(cap3, wx, wy + 2.35, wz, wA, 1));
+      var tag = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.3), new THREE.MeshBasicMaterial({ map: makeTagTexture(), transparent: true }));
+      tag.position.set(wx + Math.sin(wA) * 0.37, wy + 1.0, wz + Math.cos(wA) * 0.37);
+      tag.rotation.y = wA;
+      g.add(tag);
+
+      /* a string of bulbs climbing from the beach to the boss */
+      var bA = spA - 0.95;
+      var b0x = Math.sin(bA) * 21, b0z = Math.cos(bA) * 21;
+      var NP = 6, prev = null;
+      var bulbCols = [0xfff1cf, 0xffd23f, 0xff9ccf];
+      for (var bp = 0; bp < NP; bp++) {
+        var bk = bp / (NP - 1);
+        var px2 = lerp(b0x, bossX + 1.5, bk), pz2 = lerp(b0z, bossZ + 1.5, bk);
+        var py2 = Math.max(hFn(Math.sqrt(px2 * px2 + pz2 * pz2) / ISLAND_R, px2, pz2), 1.2) - 0.2;
+        var post = new THREE.CylinderGeometry(0.08, 0.11, 3.0, 5);
+        stat.push(placed(tint(post, COL.woodDark), px2, py2 + 1.5, pz2, 0, 1));
+        var top = new THREE.Vector3(px2, py2 + 3.0, pz2);
+        if (prev) {
+          for (var sg = 0; sg < 5; sg++) {
+            var k0 = sg / 5, k1 = (sg + 1) / 5;
+            var a0 = prev.clone().lerp(top, k0); a0.y -= Math.sin(k0 * Math.PI) * 0.7;
+            var a1 = prev.clone().lerp(top, k1); a1.y -= Math.sin(k1 * Math.PI) * 0.7;
+            var segL = a0.distanceTo(a1);
+            var wire = new THREE.CylinderGeometry(0.035, 0.035, segL, 3);
+            wire.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+            wire.lookAt(a1.clone().sub(a0));
+            wire.translate((a0.x + a1.x) / 2, (a0.y + a1.y) / 2, (a0.z + a1.z) / 2);
+            stat.push(tint(wire, COL.ink));
+            if (sg > 0) {
+              var bulb = new THREE.SphereGeometry(0.2, 6, 5);
+              bulb.translate(a0.x, a0.y - 0.22, a0.z);
+              bulbs.push(tint(bulb, bulbCols[(bp * 5 + sg) % 3]));
+            }
+          }
+        }
+        prev = top;
+      }
+
+      /* two trees so the gang has some shade */
+      var treeSpots = scatterOn(hFn, 2, 0.4, 0.62, 3.5, 8, seed + 3);
+      treeSpots.forEach(function (pt, ti) {
+        stat.push(treeGeo(pt.x, pt.z, pt.y - 0.3, 0.9 + hash2(ti, seed) * 0.4, COL.green, COL.greenLight));
+      });
+      g.add(new THREE.Mesh(mergeGeos(stat), propMat()));
+      g.add(new THREE.Mesh(mergeGeos(bulbs), new THREE.MeshBasicMaterial({ vertexColors: true })));
 
       if (tier !== "low") {
         var grassPts = scatterOn(hFn, tier === "high" ? 170 : 80, 0.1, 0.8, 2.4, 10, seed + 9);
@@ -2130,14 +2379,38 @@
         instancedOn(g, mergeGeos([fStem, fGeo]), flowerPts, 0.8, 1.3, windMat(), seed + 5);
       }
 
+      /* the pop: petal confetti out of the bubble (one Points call) */
+      var BN = 26, bpos = new Float32Array(BN * 3), bcol = new Float32Array(BN * 3), bvel = [];
+      var popCols = [new THREE.Color(0xff9ccf), new THREE.Color(COL.coral), new THREE.Color(0xfff3a0), new THREE.Color(0xff2f8a)];
+      for (var bi2 = 0; bi2 < BN; bi2++) {
+        var th2 = hash2(bi2, 3.3) * Math.PI * 2, ph2 = hash2(bi2, 8.1) * 1.2 - 0.2;
+        var spd = 4 + hash2(bi2, 5.5) * 5;
+        bvel.push(new THREE.Vector3(Math.cos(th2) * Math.cos(ph2) * spd, Math.sin(ph2) * spd + 3, Math.sin(th2) * Math.cos(ph2) * spd));
+        var pc = popCols[bi2 % popCols.length];
+        bcol[bi2 * 3] = pc.r; bcol[bi2 * 3 + 1] = pc.g; bcol[bi2 * 3 + 2] = pc.b;
+      }
+      var popGeo = new THREE.BufferGeometry();
+      popGeo.setAttribute("position", new THREE.BufferAttribute(bpos, 3).setUsage(THREE.DynamicDrawUsage));
+      popGeo.setAttribute("color", new THREE.BufferAttribute(bcol, 3));
+      var pop = new THREE.Points(popGeo, new THREE.PointsMaterial({
+        size: 0.9, vertexColors: true, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: true,
+      }));
+      pop.frustumCulled = false;
+      pop.visible = false;
+      g.add(pop);
+
+      isl.props.gang = {
+        boss: bossHead, bossYaw: spA, gum: gum, punks: punks, mesh: punkMesh, homeYaw: spA,
+        pop: pop, vel: bvel, origin: new THREE.Vector3(), cyc: 0,
+      };
+      updatePunks(isl.props.gang, null, 0, 0);
+
       /* dock as set dressing (v6: you land on the sand now) — swung
          off the spawn approach lane so a beaching canoe never parks
          inside its planks */
       var dockA = Math.atan2(SPAWN_Z - isl.def.pos[1], 0 - isl.def.pos[0]) + 1.05;
       var shoreR = findShoreR(hFn, dockA) - 2.5;
       g.add(new THREE.Mesh(dockGeo(dockA, shoreR, 14), propMat()));
-      addLantern(g, Math.cos(dockA) * (shoreR + 13), 1.35, Math.sin(dockA) * (shoreR + 13));
-
       addShorePebbles(g, hFn, 0x9a9284, 0xcfc7b6, seed);
 
       /* v4 memorable moment: golden-hour fireflies drifting between the
@@ -2181,7 +2454,7 @@
           petals.push(pm);
         }
       }
-      isl.props.boardY = 26;
+      isl.props.boardY = 33;
 
     } else if (id === "liga-u-strategy") {
       /* -- v7: league night. construction is OVER — the island IS a
@@ -2211,12 +2484,13 @@
       var CL = 24.6, CW = 13.2;          // FULL court: length x width
       var courtG = new THREE.Group();
       /* broadside to the main approach: sailing in from spawn you
-         read the whole court, hoop to hoop */
+         read the whole pavilion, hoop to hoop (local +z faces the spawn) */
       var hpA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);
       courtG.rotation.y = hpA;
       g.add(courtG);
 
-      var cp = [];   // court carpentry, merged into ONE mesh
+      var cp = [];    // pavilion carpentry → ONE toon mesh
+      var lit2 = [];  // everything that glows → ONE unlit mesh
       var deckG = new THREE.BoxGeometry(CL + 3.2, 0.9, CW + 1.8);
       tint(deckG, COL.woodDark, COL.wood, -0.5, 0.5);
       placed(deckG, 0, courtY - 0.47, 0, 0, 1);
@@ -2264,62 +2538,120 @@
       }
       courtG.add(new THREE.Mesh(mergeGeos(netParts), toonMat(0xffffff, { vc: true, wind: true, ds: true, key: "hoopnet" })));
 
-      /* wooden bleachers on the far side (they back the tv shot) */
-      for (var br2 = 0; br2 < 3; br2++) {
-        var benchY = courtY + 0.55 + br2 * 0.78;
-        var benchZ = -(CW / 2 + 2.4 + br2 * 1.35);
-        var bench = new THREE.BoxGeometry(15, 0.32, 1.25);
-        tint(bench, br2 % 2 ? COL.wood : COL.woodLight);
-        placed(bench, 0, benchY, benchZ, 0, 1);
-        cp.push(bench);
-        for (var bl = -1; bl <= 1; bl++) {
-          var legH = benchY - 0.14 - (courtY - 0.45);
-          var legB = new THREE.BoxGeometry(0.28, legH, 0.95);
-          tint(legB, COL.woodDark);
-          placed(legB, bl * 6.8, benchY - 0.14 - legH / 2, benchZ, 0, 1);
-          cp.push(legB);
+      /* v9 · the pavilion. open sides, ten columns, one big yellow barrel
+         roof with a skylight along the ridge and the league's name on top —
+         that roof is the landmark you read from the spawn now (the giant
+         sea hoop is gone). */
+      var RS = courtY + 8.2, RISE = 4.4, RH = 12.6, RL = 31, RT = 0.55;
+      var roofY = function (z) { var k = z / RH; return RS + RISE * (1 - k * k); };
+      cp.push(placed(vaultGeo(RL, RH, RISE, RT, 14, 0xd9cdb6, 0xf6eedd, 0xb56f40, COL.ink, { ribs: COL.yellow, ribStep: 3.1 }), 0, RS, 0, 0, 1));
+      /* the arched ends are glazed lunettes: ink mullions, warm glass */
+      for (var ex = -1; ex <= 1; ex += 2) {
+        var lun = [], lunI = [], lx0 = ex * (RL / 2 - 0.6);
+        lun.push(lx0, RS, 0);
+        for (var li = 0; li <= 14; li++) {
+          var lzz = -RH + 2 * RH * li / 14, lk = lzz / RH;
+          lun.push(lx0, RS + RISE * (1 - lk * lk), lzz);
+          if (li < 14) lunI.push(0, li + 1, li + 2);
+        }
+        var lunG = new THREE.BufferGeometry();
+        lunG.setAttribute("position", new THREE.Float32BufferAttribute(lun, 3));
+        lunG.setIndex(lunI);
+        lunG.computeVertexNormals();
+        lit2.push(tint(lunG, 0xffcf8a, 0xfff0cc, RS, RS + RISE));
+        for (var mz = -9; mz <= 9; mz += 3) {
+          var mh = roofY(mz) - RS;
+          var mul = new THREE.BoxGeometry(0.25, mh, 0.25);
+          tint(mul, COL.ink);
+          cp.push(placed(mul, lx0 + ex * 0.08, RS + mh / 2, mz, 0, 1));
+        }
+        var tr2 = new THREE.BoxGeometry(0.25, 0.25, RH * 1.7);
+        tint(tr2, COL.ink);
+        cp.push(placed(tr2, lx0 + ex * 0.08, RS + RISE * 0.45, 0, 0, 1));
+        var sill = new THREE.BoxGeometry(0.4, 0.4, RH * 2);
+        tint(sill, COL.ink);
+        cp.push(placed(sill, lx0 + ex * 0.08, RS, 0, 0, 1));
+      }
+      for (var cs2 = -1; cs2 <= 1; cs2 += 2) {
+        for (var cx2 = -12; cx2 <= 12; cx2 += 6) {
+          var colH = roofY(11 * cs2) - (courtY - 0.9);
+          var col = new THREE.CylinderGeometry(0.42, 0.55, colH, 8);
+          tint(col, 0x2c2825, 0x4a4238, -colH / 2, colH / 2);
+          cp.push(placed(col, cx2, courtY - 0.9 + colH / 2, 11 * cs2, 0, 1));
+        }
+        var eave = new THREE.BoxGeometry(RL - 2, 0.5, 0.55);
+        tint(eave, COL.ink);
+        cp.push(placed(eave, 0, roofY(11 * cs2) + 0.1, 11 * cs2, 0, 1));
+        /* the warm light strip under each eave */
+        var strip = new THREE.BoxGeometry(RL - 1.5, 0.2, 0.2);
+        tint(strip, 0xffe2b0);
+        lit2.push(placed(strip, 0, RS - 0.12, (RH - 0.35) * cs2, 0, 1));
+      }
+      /* skylight along the ridge + the lamp rows hanging under the roof */
+      var sky = new THREE.BoxGeometry(RL - 3, 0.14, 1.1);
+      tint(sky, 0xfff3c4);
+      lit2.push(placed(sky, 0, RS + RISE + RT + 0.04, 0, 0, 1));
+      for (var lz = -1; lz <= 1; lz += 2) {
+        for (var lx = -12; lx <= 12; lx += 4) {
+          var lmp = new THREE.BoxGeometry(1.0, 0.28, 0.6);
+          tint(lmp, 0xfff1cf);
+          lit2.push(placed(lmp, lx, roofY(5.5) - 0.32, 5.5 * lz, 0, 1));
         }
       }
 
-      /* scoreboard beside the bleachers */
-      var sbX = -10.5, sbZ = -(CW / 2 + 3.6);
-      var sbPost = new THREE.CylinderGeometry(0.16, 0.22, 6.6, 6);
-      tint(sbPost, COL.ink);
-      placed(sbPost, sbX, courtY + 2.5, sbZ, 0, 1);
-      cp.push(sbPost);
-      var sbFrame = new THREE.BoxGeometry(4.9, 2.9, 0.4);
-      tint(sbFrame, COL.ink);
-      placed(sbFrame, sbX, courtY + 6.0, sbZ, 0, 1);
-      cp.push(sbFrame);
-      var sbFace = new THREE.Mesh(
-        new THREE.PlaneGeometry(4.5, 2.5),
-        new THREE.MeshBasicMaterial({ map: makeScoreTexture() })
-      );
-      sbFace.position.set(sbX, courtY + 6.0, sbZ + 0.22);
-      courtG.add(sbFace);
-
-      /* floodlights at the four corners — it's league night */
-      var lampHeads = [];
-      for (var fl = 0; fl < 4; fl++) {
-        var flx = (fl % 2 ? 1 : -1) * (CL / 2 + 2.6);
-        var flz = (fl < 2 ? 1 : -1) * (CW / 2 + 2.6);
-        var flPost = new THREE.CylinderGeometry(0.13, 0.2, 9.4, 6);
-        tint(flPost, COL.ink, 0x2c2825, -4.7, 4.7);
-        placed(flPost, flx, courtY + 3.7, flz, 0, 1);
-        cp.push(flPost);
-        var headL = new THREE.BoxGeometry(1.0, 0.55, 0.7);
-        tint(headL, 0xffe9a8);
-        placed(headL, flx - (fl % 2 ? 1 : -1) * 0.4, courtY + 8.35, flz - (fl < 2 ? 1 : -1) * 0.3, 0, 1);
-        lampHeads.push(headL);
-        var glowF = new THREE.Sprite(new THREE.SpriteMaterial({
-          map: makeGlowTexture(), color: 0xffc36a, blending: THREE.AdditiveBlending,
-          transparent: true, opacity: 0.5, depthWrite: false,
-        }));
-        glowF.position.set(flx, courtY + 8.4, flz);
-        glowF.scale.set(6, 6, 1);
-        courtG.add(glowF);
+      /* the league's name on the ridge, facing the spawn */
+      var signY = RS + RISE + RT + 1.75;
+      var signBack = new THREE.BoxGeometry(10.2, 2.9, 0.3);
+      tint(signBack, COL.ink);
+      cp.push(placed(signBack, 0, signY, -0.1, 0, 1));
+      for (var sgl = -1; sgl <= 1; sgl += 2) {
+        var sleg2 = new THREE.BoxGeometry(0.22, 1.3, 0.22);
+        tint(sleg2, COL.ink);
+        cp.push(placed(sleg2, sgl * 3.6, RS + RISE + RT + 0.2, -0.1, 0, 1));
       }
-      courtG.add(new THREE.Mesh(mergeGeos(lampHeads), new THREE.MeshBasicMaterial({ vertexColors: true })));
+      var sign = new THREE.Mesh(new THREE.PlaneGeometry(9.8, 2.5), new THREE.MeshBasicMaterial({ map: makeLeagueSignTexture() }));
+      sign.position.set(0, signY, 0.07);
+      courtG.add(sign);
+
+      /* stands: a tall one behind the court (it backs the tv shot), a low
+         one on the spawn side so it never hides the game */
+      var crowd = [];
+      var shirt = [COL.yellow, COL.coral, COL.blue, COL.cream, COL.yellow, 0x2b2b33];
+      var skinT = [0xe8b17e, 0xc98d5c, 0x8d5a3a, 0xf1c9a0];
+      [[-1, 5], [1, 2]].forEach(function (sd) {
+        for (var row = 0; row < sd[1]; row++) {
+          var stepH = 0.62 * (row + 1);
+          var stz = sd[0] * (8.1 + row * 0.95);
+          var step = new THREE.BoxGeometry(23, stepH, 0.95);
+          tint(step, row % 2 ? 0xbfae88 : 0xd2c39f);
+          cp.push(placed(step, 0, courtY - 0.45 + stepH / 2, stz, 0, 1));
+          for (var fx = -10.35; fx <= 10.4; fx += 0.9) {
+            if (hash2(fx * 3.1 + row, sd[0] + row * 7) < 0.22) continue;
+            var fy = courtY - 0.45 + stepH;
+            var body = new THREE.BoxGeometry(0.5, 0.62, 0.4);
+            tint(body, shirt[Math.floor(hash2(fx, row + sd[0] * 3) * shirt.length)]);
+            crowd.push(placed(body, fx, fy + 0.31, stz, 0, 1));
+            var head = new THREE.BoxGeometry(0.34, 0.34, 0.34);
+            tint(head, skinT[Math.floor(hash2(row * 5 + sd[0], fx) * skinT.length)]);
+            crowd.push(placed(head, fx, fy + 0.8, stz, 0, 1));
+          }
+        }
+      });
+      /* the crowd is its own mesh: it does the wave when you sail in */
+      var crowdMesh = new THREE.Mesh(mergeGeos(crowd), toonMat(0xffffff, { vc: true, rim: 0.35, wave: true, key: "crowd" }));
+      courtG.add(crowdMesh);
+
+      /* the center-hung scoreboard: ink cube, four faces, hanging from the roof */
+      var sbY = courtY + 8.9;
+      var sbBox = new THREE.BoxGeometry(3.7, 2.3, 3.7);
+      tint(sbBox, COL.ink);
+      cp.push(placed(sbBox, 0, sbY, 0, 0, 1));
+      var cable = new THREE.CylinderGeometry(0.06, 0.06, roofY(0) - sbY - 1.1, 4);
+      tint(cable, COL.ink);
+      cp.push(placed(cable, 0, (roofY(0) + sbY + 1.1) / 2, 0, 0, 1));
+      var sbFace = new THREE.Mesh(boxFacesGeo(3.72, 1.95, 3.72), new THREE.MeshBasicMaterial({ map: makeScoreTexture() }));
+      sbFace.position.set(0, sbY, 0);
+      courtG.add(sbFace);
 
       /* the friendly ball waits at center court */
       var ballG = new THREE.SphereGeometry(0.85, 12, 10);
@@ -2336,57 +2668,27 @@
       placed(seam2, 2.6, courtY + 0.85, 1.4, 0, 1);
       cp.push(seam2);
       courtG.add(new THREE.Mesh(mergeGeos(cp), propMat()));
+      var litMat2 = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+      courtG.add(new THREE.Mesh(mergeGeos(lit2), litMat2));
 
-      /* bunting strung floodlight-to-floodlight down both sidelines */
-      var buntY = courtY + 7.9;
-      var bunt1 = buntingGeo({ x: -(CL / 2 + 2.6), y: buntY, z: CW / 2 + 2.6 }, { x: CL / 2 + 2.6, y: buntY, z: CW / 2 + 2.6 }, 11, [COL.yellow, COL.coral, COL.cream, COL.blue]);
-      var bunt2 = buntingGeo({ x: -(CL / 2 + 2.6), y: buntY, z: -(CW / 2 + 2.6) }, { x: CL / 2 + 2.6, y: buntY, z: -(CW / 2 + 2.6) }, 11, [COL.blue, COL.cream, COL.coral, COL.yellow]);
+      /* game-night bunting hanging from both eaves */
+      var buntY = RS - 0.35;
+      var bunt1 = buntingGeo({ x: -RL / 2 + 1, y: buntY, z: RH - 0.6 }, { x: RL / 2 - 1, y: buntY, z: RH - 0.6 }, 13, [COL.yellow, COL.coral, COL.cream, COL.blue]);
+      var bunt2 = buntingGeo({ x: -RL / 2 + 1, y: buntY, z: -(RH - 0.6) }, { x: RL / 2 - 1, y: buntY, z: -(RH - 0.6) }, 13, [COL.blue, COL.cream, COL.coral, COL.yellow]);
       courtG.add(new THREE.Mesh(mergeGeos([bunt1, bunt2]), flagMat()));
-      courtG.add(buntingString(new THREE.Vector3(-(CL / 2 + 2.6), buntY, CW / 2 + 2.6), new THREE.Vector3(CL / 2 + 2.6, buntY, CW / 2 + 2.6)));
-      courtG.add(buntingString(new THREE.Vector3(-(CL / 2 + 2.6), buntY, -(CW / 2 + 2.6)), new THREE.Vector3(CL / 2 + 2.6, buntY, -(CW / 2 + 2.6))));
 
-      /* THE floating hoop — standing in the sea on the approach lane,
-         big enough to read from spawn. coral rim, cream board, net in
-         the wind shader. this is the "a league lives here" sign. */
-      var hoopG = new THREE.Group();
-      var hpR = 36;
-      hoopG.position.set(Math.sin(hpA) * hpR, 0, Math.cos(hpA) * hpR);
-      hoopG.rotation.y = hpA;   // board faces the incoming canoe
-      g.add(hoopG);
-      var hoopParts = [];
-      var poleG = new THREE.CylinderGeometry(0.3, 0.42, 14.5, 7);
-      tint(poleG, COL.ink, 0x2c2825, 0, 12);
-      placed(poleG, 0, 5.2, -0.6, 0, 1);
-      hoopParts.push(poleG);
-      // cross brace
-      var braceG = new THREE.CylinderGeometry(0.14, 0.14, 2.4, 5);
-      tint(braceG, COL.ink);
-      var brM = new THREE.Matrix4().makeRotationX(0.9);
-      braceG.applyMatrix4(brM);
-      placed(braceG, 0, 10.6, 0.2, 0, 1);
-      hoopParts.push(braceG);
-      var boardG = new THREE.BoxGeometry(5.6, 3.7, 0.28);
-      tint(boardG, COL.cream, 0xfffdf6, 9, 14);
-      placed(boardG, 0, 11.6, 0.55, 0, 1);
-      hoopParts.push(boardG);
-      // ink target square on the board
-      var sqG = new THREE.BoxGeometry(2.0, 1.5, 0.32);
-      tint(sqG, COL.ink);
-      placed(sqG, 0, 11.1, 0.57, 0, 1);
-      hoopParts.push(sqG);
-      hoopG.add(new THREE.Mesh(mergeGeos(hoopParts), propMat()));
-      var rimT = new THREE.Mesh(tint(new THREE.TorusGeometry(1.15, 0.13, 6, 18), COL.coral), propMat());
-      rimT.rotation.x = Math.PI / 2;
-      rimT.position.set(0, 10.15, 1.9);
-      hoopG.add(rimT);
-      var netG = new THREE.CylinderGeometry(1.1, 0.6, 1.9, 9, 2, true);
-      netG.translate(0, -0.95, 0);
-      tint(netG, 0xfffdf6, COL.cream, 7, 10.5);
-      var net = new THREE.Mesh(netG, toonMat(0xffffff, { vc: true, wind: true, ds: true, key: "hoopnet" }));
-      net.position.set(0, 10.15, 1.9);
-      hoopG.add(net);
-      // the canoe shouldn't sail through the pole
-      rocks.push({ x: isl.def.pos[0] + Math.sin(hpA) * hpR, z: isl.def.pos[1] + Math.cos(hpA) * hpR, r: 2.6 });
+      /* the light spilling out from under the roof */
+      var glows2 = [];
+      for (var gl2 = -1; gl2 <= 1; gl2 += 2) {
+        var glw = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: makeGlowTexture(), color: 0xffd58a, blending: THREE.AdditiveBlending,
+          transparent: true, opacity: 0.15, depthWrite: false,
+        }));
+        glw.position.set(gl2 * 7.5, roofY(0) - 2.2, 0);
+        glw.scale.set(12, 7, 1);
+        courtG.add(glw);
+        glows2.push(glw);
+      }
 
       /* dry ochre tufts + shore pebbles so the beach isn't bald —
          v7: scattered OFF the court pad (rMin past the deck) */
@@ -2396,165 +2698,227 @@
       }
       addShorePebbles(g, hFn2, 0xa89264, 0xd9c491, seed);
 
-      /* striped lane buoys bobbing around the island (kept from the
-         works era — they mark the swim lanes on league night) */
-      for (var wb = 0; wb < 4; wb++) {
-        var ba = wb * 1.57 + 0.8;
-        var bParts = [];
-        var bb = tint(new THREE.CylinderGeometry(0.9, 1.1, 1.6, 8), COL.coral);
-        placed(bb, 0, 0.9, 0, 0, 1);
-        bParts.push(bb);
-        var bt = tint(new THREE.CylinderGeometry(0.7, 0.9, 1.0, 8), COL.cream);
-        placed(bt, 0, 2.1, 0, 0, 1);
-        bParts.push(bt);
-        var buoy = new THREE.Mesh(mergeGeos(bParts), propMat());
-        var bx2 = isl.def.pos[0] + Math.cos(ba) * 36;
-        var bz2 = isl.def.pos[1] + Math.sin(ba) * 36;
-        buoy.position.set(bx2, 0, bz2);
-        scene.add(buoy);
-        buoys.push({ obj: buoy, x: bx2, z: bz2, amp: 0.9 });
-      }
-      isl.props.boardY = 23;
+      /* the lights come on as you sail in (animateWorld); they start dim */
+      isl.props.lights = { mat: litMat2, glows: glows2, score: sbFace.material, wave: crowdMesh.material.userData.uWave };
+      isl.props.power = 0.3;
+      litMat2.color.setScalar(0.3);
+      sbFace.material.color.setScalar(0.3);
+      isl.props.boardY = 27;
 
     } else if (id === "talens-pantone") {
-      /* -- the gallery: grayscale mesa. only the pantone chips carry color. -- */
+      /* -- v9 · "color is art. not a barrier." a wire fence splits the
+         island in two: one half is color and joy (grass, flowers,
+         bunting, the swatch fan), the other is grey misery (dead trees,
+         puddles, rubble). sail in and the fan opens, and swatches of
+         color start jumping the fence to land on the grey side. -- */
       var hFn3 = beachify(function (r01, x, z) {
         var e = edgeMask(r01);
-        var raw = 1.5 + gauss(x, z, 0, -1, 11) * 9.5 + fbm2(x * 0.18 + seed, z * 0.18, 3) * 2.2;
+        var raw = 1.5 + gauss(x, z, 0, -1, 11) * 6.5 + fbm2(x * 0.18 + seed, z * 0.18, 3) * 1.6;
         var strata = Math.floor(raw / 2.4) * 2.4;
-        var h = lerp(raw, strata + 0.9, 0.6);
+        var h = lerp(raw, strata + 0.9, 0.45);
         return h * e - (1 - e) * 3.5;
       });
-      /* cool greys, strongly overcorrected: the warm hemi/sun light was
-         washing v3's greys into beige — push them darker + bluer so the
-         island actually reads "black & white photo" against the chips */
-      var ramp3 = [
+      /* the fence runs toward the spawn, so sailing in you read both
+         halves side by side with the wire in the middle. it stops 11u
+         short of the center on the spawn side: every route in arrives
+         from that quadrant, and a beaching paddler (who walks to r≈17)
+         never meets the wire */
+      var tSpA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);
+      var fA = tSpA + 0.12;
+      var fX = Math.sin(fA), fZ = Math.cos(fA);       // along the fence
+      var nX = fZ, nZ = -fX;                          // across it: + = color side (away from the spawn)
+      var sideOf = function (x, z) { return x * nX + z * nZ; };
+      var rampJoy = [
+        [0.4, COL.sand], [1.8, 0xe9d296], [3.2, 0x8fe39a],
+        [6, COL.green], [10, 0x2f9e55],
+      ];
+      var rampGrey = [
         [0.4, 0x878ca6], [2.0, 0x6d7290], [4.0, 0x545974],
         [6.5, 0x3f435a], [10, 0x2b2e40],
       ];
-      var terr3 = buildTerrain(hFn3, rampFn(ramp3, 0x555a72, 1.2), true);
-      // own material: barely-there rim so the warm sun can't cook the
-      // greys into beige — this island must stay a black & white photo
+      var joyFn = rampFn(rampJoy, COL.sandWet, 0.9), greyFn = rampFn(rampGrey, 0x555a72, 1.2);
+      var _cg = new THREE.Color();
+      var terr3 = buildTerrain(hFn3, function (h, slope, x, z, out) {
+        joyFn(h, slope, x, z, out);
+        greyFn(h, slope, x, z, _cg);
+        out.lerp(_cg, smoothstep(0.8, -0.8, sideOf(x, z)));
+      }, true);
+      // barely-there rim so the warm sun can't cook the grey half into beige
       terr3.material = toonMat(0xffffff, { vc: true, rim: 0.15, flat: true, key: "terrainGrey" });
       g.add(terr3);
       isl.props.heightFn = hFn3;
+      var gy = function (x, z) { return Math.max(hFn3(Math.sqrt(x * x + z * z) / ISLAND_R, x, z), 0.6); };
+      var at = function (a, s) { return [fX * a + nX * s, fZ * a + nZ * s]; };   // fence coords → island xz
 
-      /* grey cypress trees — a gallery garden with no color */
-      var cyp = [];
-      var cypSpots = scatterOn(hFn3, 5, 0.35, 0.72, 2.2, 6.5, seed + 4);
-      cypSpots.forEach(function (pt, ci2) {
-        var ch2 = 5.5 + hash2(ci2, 1) * 2.2;
-        var cone = new THREE.ConeGeometry(1.15, ch2, 7);
-        tint(cone, 0x44444b, 0x6e6e76, 0, ch2 * 0.9);
-        cyp.push(placed(cone, pt.x, pt.y + ch2 / 2 + 0.7, pt.z, 0, 1));
-        var tr = new THREE.CylinderGeometry(0.16, 0.2, 1.4, 5);
-        tint(tr, 0x35353b);
-        cyp.push(placed(tr, pt.x, pt.y + 0.5, pt.z, 0, 1));
-      });
-      if (cyp.length) g.add(new THREE.Mesh(mergeGeos(cyp), propMat()));
-
-      /* the pantone chips on easels — the only color on the island */
-      var chipCols = [COL.blue, 0xff7a1a, COL.yellow];
-      isl.props.chips = [];
-      for (var c3 = 0; c3 < 3; c3++) {
-        var chip = new THREE.Group();
-        var slabParts = [];
-        var slab = new THREE.BoxGeometry(6.4, 6.6, 0.7);
-        tint(slab, chipCols[c3]);
-        slabParts.push(placed(slab, 0, 5.9, 0, 0, 1));
-        var band = new THREE.BoxGeometry(6.4, 2.5, 0.74);
-        tint(band, 0xfffdf6);
-        slabParts.push(placed(band, 0, 1.35, 0, 0, 1));
-        // easel legs
-        for (var lg = -1; lg <= 1; lg += 2) {
-          var leg = new THREE.CylinderGeometry(0.15, 0.18, 8.4, 5);
-          tint(leg, 0x55504a);
-          var lgeo = placed(leg, lg * 2.6, 3.4, -0.9, 0, 1);
-          lgeo.applyMatrix4(new THREE.Matrix4().makeRotationX(0.18));
-          slabParts.push(lgeo);
-        }
-        chip.add(new THREE.Mesh(mergeGeos(slabParts), propMat()));
-        var ca = -0.85 + c3 * 0.85;
-        var chx = Math.sin(ca) * 6.5, chz = Math.cos(ca) * 6.5 - 1;
-        var chy = hFn3(Math.sqrt(chx * chx + chz * chz) / ISLAND_R, chx, chz);
-        chip.position.set(chx, Math.max(chy, 1) - 0.7, chz);
-        chip.rotation.y = -ca + (c3 - 1) * 0.12;
-        g.add(chip);
-        isl.props.chips.push(chip);
+      var solid = [];   // posts, wire, trees, rubble, stand → ONE toon mesh
+      /* the fence: posts, a chain-link strip that follows the ground, and
+         a concertina coil of barbed wire along the top */
+      var FA0 = -22, FA1 = 11, FST = (FA1 - FA0) / 10, FH = 4.6, posts = [];
+      for (var fa2 = FA0; fa2 <= FA1 + 0.01; fa2 += FST) {
+        var fp2 = at(fa2, 0), fy2 = gy(fp2[0], fp2[1]);
+        posts.push({ a: fa2, y: fy2 });
+        var fpost = new THREE.CylinderGeometry(0.11, 0.14, FH + 1.6, 5);
+        solid.push(placed(tint(fpost, 0x3a3d48, 0x5a5e6c, -FH / 2, FH / 2), fp2[0], fy2 + (FH + 1.6) / 2 - 1.2, fp2[1], 0, 1));
       }
+      var topAt = function (a) {
+        var k = clamp((a - FA0) / FST, 0, posts.length - 1.001), i0 = Math.floor(k);
+        return lerp(posts[i0].y, posts[i0 + 1].y, k - i0) + FH;
+      };
+      var mPos = [], mUv = [], mIdx = [];
+      for (var mi = 0; mi < posts.length; mi++) {
+        var mp = at(posts[mi].a, 0);
+        mPos.push(mp[0], posts[mi].y - 1.0, mp[1], mp[0], posts[mi].y + FH - 0.1, mp[1]);
+        mUv.push((posts[mi].a - FA0) / 1.6, 0, (posts[mi].a - FA0) / 1.6, (FH + 0.9) / 1.6);
+        if (mi < posts.length - 1) { var m0 = mi * 2; mIdx.push(m0, m0 + 2, m0 + 1, m0 + 1, m0 + 2, m0 + 3); }
+      }
+      var meshGeo = new THREE.BufferGeometry();
+      meshGeo.setAttribute("position", new THREE.Float32BufferAttribute(mPos, 3));
+      meshGeo.setAttribute("uv", new THREE.Float32BufferAttribute(mUv, 2));
+      meshGeo.setIndex(mIdx);
+      g.add(new THREE.Mesh(meshGeo, new THREE.MeshBasicMaterial({
+        map: makeChainLinkTexture(), color: 0x3a3d48, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide,
+      })));
+      var coil = new THREE.Curve();
+      coil.getPoint = function (u, target) {
+        var a = lerp(FA0, FA1, u), ang = u * 52 * Math.PI * 2;
+        var p = at(a, Math.cos(ang) * 0.5);
+        return (target || new THREE.Vector3()).set(p[0], topAt(a) + 0.55 + Math.sin(ang) * 0.5, p[1]);
+      };
+      solid.push(tint(new THREE.TubeGeometry(coil, 420, 0.05, 3, false), 0x6b6f7c));
+      var rail = new THREE.Curve();
+      rail.getPoint = function (u, target) { var a = lerp(FA0, FA1, u), p = at(a, 0); return (target || new THREE.Vector3()).set(p[0], topAt(a) - 0.05, p[1]); };
+      solid.push(tint(new THREE.TubeGeometry(rail, 40, 0.07, 4, false), 0x3a3d48));
+
+      /* misery: dead trees, rubble, a couple of puddles */
+      [[-7, -9, 1.1], [6, -13, 0.9], [-14, -6, 0.8]].forEach(function (dt2, di) {
+        var dp = at(dt2[0], dt2[1]), dy = gy(dp[0], dp[1]) - 0.2, sc = dt2[2];
+        var trunk = new THREE.CylinderGeometry(0.16 * sc, 0.32 * sc, 4.6 * sc, 5);
+        solid.push(placed(tint(trunk, 0x45464f, 0x5d5f6a, -2, 2), dp[0], dy + 2.3 * sc, dp[1], 0, 1));
+        for (var br3 = 0; br3 < 3; br3++) {
+          var brl = (1.6 + hash2(di, br3) * 1.2) * sc;
+          var branch = new THREE.CylinderGeometry(0.05 * sc, 0.12 * sc, brl, 4);
+          branch.translate(0, brl / 2, 0);
+          branch.applyMatrix4(new THREE.Matrix4().makeRotationZ(0.7 + hash2(br3, di) * 0.5));
+          branch.applyMatrix4(new THREE.Matrix4().makeRotationY(br3 * 2.1 + di));
+          solid.push(placed(tint(branch, 0x45464f, 0x60626d, 0, brl), dp[0], dy + (2.2 + br3 * 0.9) * sc, dp[1], 0, 1));
+        }
+      });
+      for (var rb3 = 0; rb3 < 7; rb3++) {
+        var rp3 = at((hash2(rb3, 1.3) - 0.5) * 30, -3 - hash2(rb3, 2.9) * 14);
+        var rub = new THREE.DodecahedronGeometry(0.5 + hash2(rb3, 4.1) * 0.7, 0);
+        rub.scale(1, 0.6, 1);
+        solid.push(placed(tint(rub, 0x5a5d68, 0x80838f, -0.4, 0.4), rp3[0], gy(rp3[0], rp3[1]) + 0.1, rp3[1], rb3, 1));
+      }
+      [[2, -7, 2.4], [-11, -12, 1.8]].forEach(function (pd) {
+        var pp = at(pd[0], pd[1]);
+        var pud = new THREE.CylinderGeometry(pd[2], pd[2], 0.06, 10);
+        pud.scale(1, 1, 0.6);
+        solid.push(placed(tint(pud, 0x3a3e52), pp[0], gy(pp[0], pp[1]) + 0.08, pp[1], fA, 1));
+      });
+
+      /* joy: two round trees and a string of flags between two poles */
+      [[-9, 10], [9, 13]].forEach(function (tp, ti2) {
+        var tq = at(tp[0], tp[1]);
+        solid.push(treeGeo(tq[0], tq[1], gy(tq[0], tq[1]) - 0.3, 1.0 + ti2 * 0.2, COL.green, COL.greenLight));
+      });
+      var bP1 = at(-15, 6), bP2 = at(1, 15);
+      [bP1, bP2].forEach(function (bp3) {
+        var bpost = new THREE.CylinderGeometry(0.1, 0.13, 5.2, 5);
+        solid.push(placed(tint(bpost, COL.woodDark), bp3[0], gy(bp3[0], bp3[1]) + 2.4, bp3[1], 0, 1));
+      });
+      var bfl = buntingGeo(
+        { x: bP1[0], y: gy(bP1[0], bP1[1]) + 4.9, z: bP1[1] },
+        { x: bP2[0], y: gy(bP2[0], bP2[1]) + 4.9, z: bP2[1] },
+        12, [COL.coral, COL.yellow, COL.blue, COL.green, 0xff7a1a, 0x9c5bd9]);
+      g.add(new THREE.Mesh(bfl, flagMat()));
+
+      /* the swatch fan on the color side: 7 blades on one pivot, ONE
+         unlit mesh. the vertex shader fans them by blade index × uOpen */
+      /* swatch-guide colors in no spectral order (a fanned spectrum reads
+         as a rainbow flag, not a color guide) */
+      var fanCols = [COL.coral, COL.blue, COL.yellow, 0x1fa38a, 0xff7ab8, 0xff7a1a, 0x7b4fd6];
+      var blades = [], FBL = 9.4;
+      for (var bi3 = 0; bi3 < 7; bi3++) {
+        /* three tints per blade, deep at the tip → pale toward the label */
+        var chipH = (FBL - 2.4) / 3;
+        for (var tn = 0; tn < 3; tn++) {
+          var chipG2 = new THREE.BoxGeometry(2.1, chipH - 0.08, 0.12);
+          var tc = new THREE.Color(fanCols[bi3]).lerp(new THREE.Color(0xffffff), (2 - tn) * 0.28);
+          blades.push(placed(tint(chipG2, tc.getHex()), 0, 3.0 + chipH * (tn + 0.5), bi3 * 0.13, 0, 1));
+        }
+        var label = new THREE.BoxGeometry(2.1, 2.4, 0.12);
+        blades.push(placed(tint(label, 0xfffdf6), 0, 1.8, bi3 * 0.13, 0, 1));
+      }
+      var fanGeo = mergeGeos(blades);
+      var vpb = fanGeo.attributes.position.count / 7, bIdxA = new Float32Array(fanGeo.attributes.position.count);
+      for (var vb = 0; vb < bIdxA.length; vb++) bIdxA[vb] = Math.floor(vb / vpb) - 3;
+      fanGeo.setAttribute("aBlade", new THREE.BufferAttribute(bIdxA, 1));
+      var fanMat = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide });
+      var uOpen = { value: 0.12 };
+      fanMat.onBeforeCompile = function (shader) {
+        shader.uniforms.uOpen = uOpen;
+        shader.vertexShader = shader.vertexShader
+          .replace("#include <common>", "#include <common>\nattribute float aBlade;\nuniform float uOpen;")
+          .replace("#include <begin_vertex>", [
+            "#include <begin_vertex>",
+            "float fan = -aBlade * 0.34 * uOpen;",
+            "transformed.xy = mat2(cos(fan), sin(fan), -sin(fan), cos(fan)) * transformed.xy;",
+          ].join("\n"));
+      };
+      fanMat.customProgramCacheKey = function () { return "swatchfan"; };
+      var fanP = at(-2, 7.5), fanY = gy(fanP[0], fanP[1]) + 1.2;
+      var fan = new THREE.Mesh(fanGeo, fanMat);
+      fan.position.set(fanP[0], fanY, fanP[1]);
+      fan.rotation.y = tSpA;
+      g.add(fan);
+      var fStand = new THREE.CylinderGeometry(0.22, 0.36, 2.0, 6);
+      solid.push(placed(tint(fStand, 0x55504a), fanP[0], fanY - 0.9, fanP[1], 0, 1));
+      var bolt = new THREE.CylinderGeometry(0.35, 0.35, 1.4, 8);
+      bolt.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      solid.push(placed(tint(bolt, 0x55504a), fanP[0] + Math.sin(tSpA) * 0.4, fanY + 0.6, fanP[1] + Math.cos(tSpA) * 0.4, tSpA, 1));
+      g.add(new THREE.Mesh(mergeGeos(solid), propMat()));
+
+      /* flowers + grass on the joy side only */
+      if (tier !== "low") {
+        var joyPts = scatterOn(hFn3, tier === "high" ? 110 : 60, 0.1, 0.82, 1.6, 12, seed + 9).filter(function (p) { return sideOf(p.x, p.z) > 1.4; });
+        instancedOn(g, bladeGeo(), joyPts, 0.9, 1.5, windMat(), seed);
+        var flPts = scatterOn(hFn3, tier === "high" ? 60 : 34, 0.1, 0.8, 1.6, 12, seed + 17).filter(function (p) { return sideOf(p.x, p.z) > 1.6; });
+        var tuft = [];
+        [COL.coral, COL.yellow, 0x9c5bd9].forEach(function (fc2, fi2) {
+          var head2 = new THREE.SphereGeometry(0.3, 7, 6);
+          head2.translate((fi2 - 1) * 0.35, 0.9 + fi2 * 0.15, (fi2 % 2) * 0.3);
+          tuft.push(tint(head2, fc2));
+          var st2 = new THREE.PlaneGeometry(0.08, 0.95 + fi2 * 0.15, 1, 2);
+          st2.translate((fi2 - 1) * 0.35, (0.95 + fi2 * 0.15) / 2, (fi2 % 2) * 0.3);
+          tuft.push(tint(st2, COL.greenDark));
+        });
+        instancedOn(g, mergeGeos(tuft), flPts, 0.9, 1.4, windMat(), seed + 5);
+      }
+
+      /* the swatches that jump the fence: one instanced, unlit quad each.
+         they start on the joy side, arc over the wire and land flat on
+         the grey side, where they stay as splats of color */
+      var NJ = 10, jumps = [];
+      var jGeo = new THREE.BoxGeometry(1.15, 0.08, 1.5);
+      var jMesh = new THREE.InstancedMesh(jGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), NJ);
+      for (var jj = 0; jj < NJ; jj++) {
+        var ja = -18 + jj / (NJ - 1) * 26;
+        var s0 = at(ja + (hash2(jj, 1) - 0.5) * 3, 3 + hash2(jj, 2) * 5);
+        var s1 = at(ja + (hash2(jj, 3) - 0.5) * 5, -3.5 - hash2(jj, 4) * 9);
+        jumps.push({
+          x0: s0[0], y0: gy(s0[0], s0[1]) + 0.1, z0: s0[1],
+          x1: s1[0], y1: gy(s1[0], s1[1]) + 0.1, z1: s1[1],
+          peak: topAt(ja) + 2.5, ph: hash2(jj, 5) * 6, spin: hash2(jj, 6) * 6,
+        });
+        jMesh.setColorAt(jj, new THREE.Color(fanCols[jj % fanCols.length]));
+      }
+      jMesh.instanceColor.needsUpdate = true;
+      g.add(jMesh);
+      isl.props.jump = { list: jumps, mesh: jMesh, open: uOpen, cyc: 0 };
+      updateJumps(isl.props.jump, "start");
 
       addShorePebbles(g, hFn3, 0x77777d, 0xacacb2, seed);
-
-      /* v4 memorable moment: "the color orbit" — a tilted ring of paint
-         chips circling the grey mesa like day/013's daydream planet.
-         the only color in the sky, orbiting an island that refuses it. */
-      var orbitParts = [];
-      var orbitCols = [COL.blue, 0xff7a1a, COL.yellow, COL.coral, COL.green, 0x9c5bd9];
-      var N_ORBIT = 26;
-      for (var ob = 0; ob < N_ORBIT; ob++) {
-        var oa = (ob / N_ORBIT) * Math.PI * 2;
-        var orr = 15 + hash2(ob, 2) * 0.9;
-        var chipG = new THREE.BoxGeometry(1.05 + hash2(ob, 5) * 0.45, 1.4 + hash2(ob, 8) * 0.55, 0.1);
-        tint(chipG, orbitCols[ob % orbitCols.length]);
-        placed(chipG, Math.cos(oa) * orr, (hash2(ob, 3) - 0.5) * 1.0, Math.sin(oa) * orr, -oa + (hash2(ob, 7) - 0.5) * 0.5, 1);
-        orbitParts.push(chipG);
-      }
-      var orbit = new THREE.Mesh(mergeGeos(orbitParts), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
-      orbit.position.y = 15.5;
-      orbit.rotation.z = 0.16;   // tilted, like a planet ring
-      g.add(orbit);
-      isl.props.orbit = orbit;
-
-      /* the empty gallery frame on the summit: it frames the golden sea.
-         color is art, not a barrier — walk up and the horizon IS the art */
-      var GOLD = 0xa9741f, GOLD_LIT = 0xe3b95e;
-      var frParts = [];
-      var FW = 12, FH = 13, FT = 1.15;   // frame outer w/h, bar thickness
-      var frBars = [
-        [0, FH / 2 - FT / 2, FW, FT],    // top
-        [0, -FH / 2 + FT / 2, FW, FT],   // bottom
-        [-FW / 2 + FT / 2, 0, FT, FH],   // left
-        [FW / 2 - FT / 2, 0, FT, FH],    // right
-      ];
-      frBars.forEach(function (b) {
-        var bar = new THREE.BoxGeometry(b[2], b[3], 0.9);
-        tint(bar, GOLD, GOLD_LIT, b[1] - 1, b[1] + 3);
-        placed(bar, b[0], b[1], 0, 0, 1);
-        frParts.push(bar);
-      });
-      // little plinth feet
-      for (var ff = -1; ff <= 1; ff += 2) {
-        var foot = new THREE.BoxGeometry(1.4, 1.2, 1.6);
-        tint(foot, 0x55504a);
-        placed(foot, ff * (FW / 2 - FT / 2), -FH / 2 - 0.5, 0, 0, 1);
-        frParts.push(foot);
-      }
-      var frame = new THREE.Mesh(mergeGeos(frParts), toonMat(0xffffff, { vc: true, rim: 1.1, key: "goldframe" }));
-      var frTopY = hFn3(2 / ISLAND_R, 0, -2);
-      frame.position.set(0, Math.max(frTopY, 8) + FH / 2 + 0.9, -2);
-      // face the open water toward spawn so you meet it head-on when sailing in
-      frame.rotation.y = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);
-      g.add(frame);
-
-      /* paint splats on the grey ground — color leaking back in */
-      var splatCols = [COL.blue, 0xff7a1a, COL.yellow];
-      for (var sp2 = 0; sp2 < 3; sp2++) {
-        var splatGeo = new THREE.CircleGeometry(2.0 + sp2 * 0.5, 9);
-        var spp = splatGeo.attributes.position;
-        for (var sv = 1; sv < spp.count; sv++) {
-          var k2 = 0.75 + hash2(sv, sp2) * 0.55;
-          spp.setXY(sv, spp.getX(sv) * k2, spp.getY(sv) * k2);
-        }
-        var splat = new THREE.Mesh(splatGeo, new THREE.MeshBasicMaterial({ color: splatCols[sp2] }));
-        splat.rotation.x = -Math.PI / 2;
-        var sa2 = sp2 * 2.1 + 0.6;
-        var spx = Math.cos(sa2) * 19, spz = Math.sin(sa2) * 19;
-        var spy = hFn3(19 / ISLAND_R, spx, spz);
-        splat.position.set(spx, Math.max(spy, 0.6) + 0.12, spz);
-        g.add(splat);
-      }
       isl.props.boardY = 26;
-
     } else if (id === "ministerie") {
       /* -- the watchtower: jagged dark crag, obsidian spire, the eye -- */
       var hFn4 = beachify(function (r01, x, z) {
@@ -2571,33 +2935,50 @@
       g.add(buildTerrain(hFn4, rampFn(ramp4, 0x3f3a58, 0.7), true));
       isl.props.heightFn = hFn4;
 
-      /* obsidian spire: lathe with a gentle concave curve */
+      /* v9 · "the watcher". a faceted obsidian shard with red slit windows,
+         the eye on top in a solid lens bezel (no more wire cage), a red
+         scan ring that rides up and down the shard, a searchlight that
+         sweeps the sea, and a ring of cctv cameras on poles. sail within
+         90 and every camera snaps to the canoe, the light finds you.
+         un-usual suspects. -- */
+      var mSpA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);
+      var dark = [];   // shard + thorns + camera poles → ONE toon mesh
+      var red = [];    // slit windows → ONE unlit mesh
+      var SP0 = 8.6, SPH = 21;
+      var spR = function (y) { var kk = clamp((y - SP0) / SPH, 0, 1); return 6.6 * Math.pow(1 - kk, 1.25) + 0.45; };
       var profile = [];
-      var spireH = 17;
-      for (var pv2 = 0; pv2 <= 8; pv2++) {
-        var kk = pv2 / 8;
-        var rad = 7.2 * Math.pow(1 - kk, 1.45) + 0.55;
-        profile.push(new THREE.Vector2(rad, kk * spireH));
+      for (var pv2 = 0; pv2 <= 7; pv2++) {
+        var kk2 = pv2 / 7;
+        profile.push(new THREE.Vector2(spR(SP0 + kk2 * SPH), kk2 * SPH));
       }
-      var spireGeo = new THREE.LatheGeometry(profile, 9);
-      tint(spireGeo, 0x1d1a28, 0x322e44, 0, spireH);
-      var spire = new THREE.Mesh(spireGeo, toonMat(0xffffff, { vc: true, rim: 1.2, flat: true, key: "spire" }));
-      spire.position.y = 9;
-      g.add(spire);
-
-      /* glowing red window slits on the spire */
-      for (var wnd = 0; wnd < 3; wnd++) {
-        var wgeo = new THREE.PlaneGeometry(0.6, 1.6);
-        var wm = new THREE.Mesh(wgeo, new THREE.MeshBasicMaterial({ color: 0xff3a24 }));
-        var wa = 0.8 + wnd * 1.9;
-        var wr = 7.2 * Math.pow(1 - (0.35 + wnd * 0.14), 1.45) + 0.72;
-        wm.position.set(Math.cos(wa) * wr, 9 + (0.35 + wnd * 0.14) * spireH, Math.sin(wa) * wr);
-        wm.lookAt(Math.cos(wa) * 30, wm.position.y, Math.sin(wa) * 30);
-        g.add(wm);
+      var spireGeo = new THREE.LatheGeometry(profile, 6).toNonIndexed();
+      spireGeo.computeVertexNormals();   // faceted: every face keeps its own normal
+      tint(spireGeo, 0x1a1724, 0x3a3550, 0, SPH);
+      dark.push(placed(spireGeo, 0, SP0, 0, 0.26, 1));
+      /* two smaller shards leaning out of the base: a crystal cluster */
+      [[-1, 0.9, 0.62, 2.0], [1, -0.7, 0.5, 3.6]].forEach(function (sd2) {
+        var sub = new THREE.LatheGeometry(profile.map(function (v) { return new THREE.Vector2(v.x * sd2[2], v.y * sd2[2]); }), 5).toNonIndexed();
+        sub.computeVertexNormals();
+        tint(sub, 0x1a1724, 0x3a3550, 0, SPH * sd2[2]);
+        sub.applyMatrix4(new THREE.Matrix4().makeRotationZ(sd2[0] * 0.38));
+        sub.applyMatrix4(new THREE.Matrix4().makeRotationY(sd2[3]));
+        sub.translate(Math.sin(sd2[3]) * 3.2 * sd2[1], SP0 - 1.5, Math.cos(sd2[3]) * 3.2 * sd2[1]);
+        dark.push(sub);
+      });
+      /* slit windows: two or three per face, at staggered heights */
+      for (var fc = 0; fc < 6; fc++) {
+        var fa = 0.26 + (fc + 0.5) / 6 * Math.PI * 2;
+        for (var sl2 = 0; sl2 < 3; sl2++) {
+          if ((fc + sl2) % 3 === 2) continue;
+          var sy = SP0 + 3.5 + sl2 * 4.6 + (fc % 2) * 1.6;
+          var sr = spR(sy) * Math.cos(Math.PI / 6) + 0.04;
+          var slitG = new THREE.BoxGeometry(0.5, 2.4 - sl2 * 0.45, 0.12);
+          tint(slitG, 0xff3a24, 0xff8a5c, -1, 1);
+          red.push(placed(slitG, Math.sin(fa) * sr, sy, Math.cos(fa) * sr, fa, 1));
+        }
       }
 
       /* thorny rocks around the base */
-      var thorns = [];
       for (var r2 = 0; r2 < 6; r2++) {
         var rk = new THREE.ConeGeometry(1.6 + hash2(r2, 3) * 1.4, 4 + hash2(r2, 7) * 4, 5);
         tint(rk, 0x232033, 0x3c3752, 0, 6);
@@ -2606,77 +2987,119 @@
         var rry = hFn4(Math.sqrt(rx2 * rx2 + rz2 * rz2) / ISLAND_R, rx2, rz2);
         var rgeo = placed(rk, rx2, Math.max(rry, 1) + 1.2, rz2, hash2(r2, 9) * 3, 1);
         rgeo.applyMatrix4(new THREE.Matrix4().makeRotationZ((hash2(r2, 11) - 0.5) * 0.35));
-        thorns.push(rgeo);
+        dark.push(rgeo);
       }
-      g.add(new THREE.Mesh(mergeGeos(thorns), toonMat(0xffffff, { vc: true, rim: 0.8, flat: true, key: "thorn" })));
+
+      /* cctv: poles in the dark mesh, heads in one InstancedMesh */
+      var cams = [];
+      for (var cm = 0; cm < 7; cm++) {
+        var ca2 = mSpA + 0.3 + cm / 7 * Math.PI * 2;
+        var cr2 = 15.5 + hash2(cm, 4.4) * 2;
+        var cx3 = Math.sin(ca2) * cr2, cz3 = Math.cos(ca2) * cr2;
+        var cy3 = Math.max(hFn4(cr2 / ISLAND_R, cx3, cz3), 1) - 0.3;
+        var poleH = 4.2 + hash2(cm, 2) * 1.6;
+        var cPole = new THREE.CylinderGeometry(0.12, 0.16, poleH, 5);
+        dark.push(placed(tint(cPole, 0x1d1a28, 0x3a3550, -poleH / 2, poleH / 2), cx3, cy3 + poleH / 2, cz3, 0, 1));
+        var arm3 = new THREE.BoxGeometry(0.14, 0.14, 0.8);
+        dark.push(placed(tint(arm3, 0x1d1a28), cx3, cy3 + poleH, cz3, ca2, 1));
+        cams.push({ x: cx3, y: cy3 + poleH + 0.25, z: cz3, yaw: ca2, pitch: -0.15, home: ca2, k: 4 + hash2(cm, 6) * 6 });
+      }
+      var cg = [];
+      var cBody = new THREE.BoxGeometry(0.9, 0.85, 1.9);
+      cg.push(placed(tint(cBody, 0xcfcbd8, 0xf2f0f6, -0.4, 0.4), 0, 0, 0.35, 0, 1));
+      var cHood = new THREE.BoxGeometry(1.1, 0.14, 2.3);
+      cg.push(placed(tint(cHood, 0x2c2838), 0, 0.5, 0.45, 0, 1));
+      var cLens = new THREE.CylinderGeometry(0.34, 0.38, 0.3, 8);
+      cLens.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      cg.push(placed(tint(cLens, 0x14120f), 0, 0, 1.38, 0, 1));
+      var cLed = new THREE.BoxGeometry(0.16, 0.16, 0.1);
+      cg.push(placed(tint(cLed, 0xff2a1a), 0.3, 0.26, 1.32, 0, 1));
+      var camMesh = new THREE.InstancedMesh(mergeGeos(cg), propMat(), cams.length);
+      g.add(camMesh);
+
+      g.add(new THREE.Mesh(mergeGeos(dark), toonMat(0xffffff, { vc: true, rim: 1.0, flat: true, key: "spire" })));
+      g.add(new THREE.Mesh(mergeGeos(red), new THREE.MeshBasicMaterial({ vertexColors: true })));
+
+      /* the scan ring: one red ring that rides the shard (animateWorld
+         rescales it to the shard's radius at its height) */
+      var scanG = new THREE.TorusGeometry(1, 0.06, 4, 6);
+      scanG.rotateX(Math.PI / 2);
+      scanG.rotateY(-(Math.PI / 6 - 0.26));   // hexagon corners on the shard's edges
+      var scan = new THREE.Mesh(scanG, new THREE.MeshBasicMaterial({ color: 0xff3a24, transparent: true, opacity: 0.9 }));
+      g.add(scan);
 
       addShorePebbles(g, hFn4, 0x2b2740, 0x4d4766, seed);
 
-      /* the all-seeing eye — v4: it now floats inside "the surveillance
-         monolith", a slowly counter-rotating faceted cage with a red
-         neon energy coil (p5aholic day/028's dark crystal + neon,
-         translated to toon). they are watching. */
+      /* the eye: sclera + iris + pupil + a red inner ring in ONE unlit
+         mesh, inside a solid lens bezel on a yoke. the whole group turns */
+      var EYE_Y = SP0 + SPH + 3.4;
       var eyeGroup = new THREE.Group();
-      eyeGroup.position.set(0, 30.5, 0);
-      var eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(3.0, 14, 12), new THREE.MeshBasicMaterial({ color: 0xfffdf6 }));
-      eyeGroup.add(eyeWhite);
-      var iris = new THREE.Mesh(new THREE.SphereGeometry(1.55, 12, 10), new THREE.MeshBasicMaterial({ color: 0x2b47d9 }));
-      iris.position.z = 1.75;
-      eyeGroup.add(iris);
-      var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.85, 10, 8), new THREE.MeshBasicMaterial({ color: 0x14120f }));
-      pupil.position.z = 2.35;
-      eyeGroup.add(pupil);
+      eyeGroup.position.set(0, EYE_Y, 0);
+      var ey = [];
+      ey.push(tint(new THREE.SphereGeometry(3.0, 16, 12), 0xfffdf6));
+      var irisG = new THREE.SphereGeometry(1.55, 14, 10);
+      irisG.scale(1, 1, 0.5);
+      ey.push(placed(tint(irisG, 0x2b47d9, 0x5b72f0, -1.5, 1.5), 0, 0, 2.62, 0, 1));
+      var pupG = new THREE.SphereGeometry(0.8, 12, 8);
+      pupG.scale(1, 1, 0.45);
+      ey.push(placed(tint(pupG, 0x14120f), 0, 0, 3.08, 0, 1));
+      var inner = new THREE.TorusGeometry(2.75, 0.09, 4, 28);
+      ey.push(placed(tint(inner, 0xff3a24), 0, 0, 1.25, 0, 1));
+      eyeGroup.add(new THREE.Mesh(mergeGeos(ey), new THREE.MeshBasicMaterial({ vertexColors: true })));
+      var bz = [];
+      var bezel = new THREE.TorusGeometry(3.15, 0.62, 6, 24);
+      bz.push(placed(tint(bezel, 0x1d1a28, 0x3a3550, -3, 3), 0, 0, 0.9, 0, 1));
+      for (var bl2 = 0; bl2 < 8; bl2++) {
+        var notch = new THREE.BoxGeometry(0.5, 0.9, 0.5);
+        notch.translate(0, 3.15, 0);
+        notch.applyMatrix4(new THREE.Matrix4().makeRotationZ(bl2 / 8 * Math.PI * 2));
+        bz.push(placed(tint(notch, 0x4d4766), 0, 0, 1.4, 0, 1));
+      }
+      for (var yk = -1; yk <= 1; yk += 2) {
+        var yArm = new THREE.BoxGeometry(0.45, 4.4, 0.7);
+        bz.push(placed(tint(yArm, 0x1d1a28, 0x3a3550, -2, 2), yk * 3.75, -1.6, 0, 0, 1));
+      }
+      var yBase = new THREE.BoxGeometry(8.0, 0.5, 0.9);
+      bz.push(placed(tint(yBase, 0x1d1a28), 0, -3.8, 0, 0, 1));
+      var yPin = new THREE.CylinderGeometry(0.5, 0.7, 1.2, 6);
+      bz.push(placed(tint(yPin, 0x1d1a28), 0, -4.4, 0, 0, 1));
+      eyeGroup.add(new THREE.Mesh(mergeGeos(bz), toonMat(0xffffff, { vc: true, rim: 1.0, flat: true, key: "spire" })));
+      eyeGroup.rotation.y = mSpA;
       g.add(eyeGroup);
       isl.props.eyeGroup = eyeGroup;
-      isl.props.pupil = pupil;
 
-      /* faceted wireframe cage around the eye */
-      var cageGeo = new THREE.EdgesGeometry(new THREE.OctahedronGeometry(6.6, 1));
-      var cage = new THREE.LineSegments(cageGeo, new THREE.LineBasicMaterial({
-        color: 0x6d6488, transparent: true, opacity: 0.85,
-      }));
-      cage.position.y = 30.5;
-      g.add(cage);
-      isl.props.cage = cage;
-
-      /* red neon energy coil pulsing inside the cage */
-      var coil = new THREE.Mesh(
-        new THREE.TorusKnotGeometry(4.3, 0.1, 72, 5, 2, 3),
-        new THREE.MeshBasicMaterial({ color: 0xff3a24, transparent: true, opacity: 0.85 })
-      );
-      coil.position.y = 30.5;
-      g.add(coil);
-      isl.props.coil = coil;
-
-      /* dim red halo behind the whole thing */
+      /* dim red halo behind the eye */
       var halo = new THREE.Sprite(new THREE.SpriteMaterial({
         map: makeGlowTexture(), color: 0xff3a24, blending: THREE.AdditiveBlending,
         transparent: true, opacity: 0.22, depthWrite: false,
       }));
-      halo.position.y = 30.5;
-      halo.scale.set(26, 26, 1);
+      halo.position.y = EYE_Y;
+      halo.scale.set(20, 20, 1);
       g.add(halo);
 
-      /* sweeping searchlight cone */
-      var beamGeo = new THREE.ConeGeometry(9, 30, 16, 1, true);
-      var beamMat = new THREE.MeshBasicMaterial({
-        color: 0xfff2c0, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false,
-      });
-      var beam = new THREE.Mesh(beamGeo, beamMat);
-      beam.position.set(0, 30.5, 0);
-      beam.geometry.translate(0, -15, 0);
-      g.add(beam);
-      searchlight = { beam: beam, isl: isl };
+      /* the searchlight: a cone out of the eye, alpha from the beam
+         texture's core column (source strong → far end gone) */
+      var SLH = 10;
+      var slGeo = new THREE.CylinderGeometry(2.8, 0.5, SLH, 12, 1, true);
+      slGeo.translate(0, SLH / 2, 0);
+      var slUv = slGeo.attributes.uv;
+      for (var su = 0; su < slUv.count; su++) slUv.setX(su, 0.25);
+      var slight = new THREE.Mesh(slGeo, new THREE.MeshBasicMaterial({
+        map: makeBeamTexture(), color: 0xfff2c0, transparent: true, opacity: 0.5,
+        depthWrite: false, side: THREE.DoubleSide,
+      }));
+      slight.position.set(0, EYE_Y, 0);
+      g.add(slight);
 
-      /* blinking red beacon */
-      var bpole = new THREE.Mesh(tint(new THREE.CylinderGeometry(0.18, 0.18, 5, 5), 0x1d1a28), propMat());
-      bpole.position.set(9, 6.5, -7);
-      g.add(bpole);
-      var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.75, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2a1a }));
-      lamp.position.set(9, 9.4, -7);
-      g.add(lamp);
-      beacon = lamp;
-      isl.props.boardY = 41;
+      isl.props.watch = {
+        cams: cams, camMesh: camMesh, scan: scan, spR: spR, y0: SP0 + 2, y1: SP0 + SPH - 3,
+        light: slight, lightH: SLH, eyeY: EYE_Y, home: mSpA, aim: new THREE.Vector3(), on: 0,
+      };
+      updateCams(isl.props.watch);
+      aimLight(isl.props.watch, isl.props.watch.aim.set(Math.sin(mSpA + 0.9) * 40, 0, Math.cos(mSpA + 0.9) * 40));
+      scan.position.y = SP0 + SPH * 0.45;
+      scan.scale.setScalar(spR(scan.position.y) + 0.15);
+      isl.props.boardY = 44;
 
     } else if (id === "ai-direction") {
       /* -- v8.9: ai direction — the one island where it's already night.
@@ -2861,6 +3284,123 @@
     }
   }
 
+  /* v9 · capullos: write the small punks' instance matrices from their yaws */
+  var _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pv = new THREE.Vector3(), _ps = new THREE.Vector3();
+  function updatePunks(G) {
+    for (var i = 0; i < G.punks.length; i++) {
+      var p = G.punks[i];
+      _pe.set(0, p.yaw, 0);
+      _pq.setFromEuler(_pe);
+      _pm.compose(_pv.set(p.x, p.y, p.z), _pq, _ps.set(p.s, p.s, p.s));
+      G.mesh.setMatrixAt(i, _pm);
+    }
+    G.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /* v9 · talens: the swatches that jump the fence. mode "start" = all
+     waiting on the joy side, "land" = all lying on the grey side, a
+     number = the flight clock (1.6s arc, then 3.4s on the grey ground) */
+  var _jq = new THREE.Quaternion(), _je = new THREE.Euler();
+  function updateJumps(J, mode) {
+    for (var i = 0; i < J.list.length; i++) {
+      var j = J.list[i], u = 1, x, y, z;
+      if (mode === "start") u = 0;
+      else if (typeof mode === "number") u = Math.min(1, ((mode + j.ph) % 5) / 1.6);
+      x = lerp(j.x0, j.x1, u); z = lerp(j.z0, j.z1, u);
+      var base = lerp(j.y0, j.y1, u);
+      y = base + (j.peak - Math.max(j.y0, j.y1)) * 4 * u * (1 - u) + (u > 0 && u < 1 ? 0.6 : 0);
+      var fly = u > 0 && u < 1;
+      _je.set(fly ? u * 9 : 0, j.spin + (fly ? u * 4 : 0), fly ? u * 3 : 0);
+      _jq.setFromEuler(_je);
+      _pm.compose(_pv.set(x, y, z), _jq, _ps.set(1, 1, 1));
+      J.mesh.setMatrixAt(i, _pm);
+    }
+    J.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /* v9 · chain-link for talens' fence: a 64px diamond, tiled along the strip */
+  var _linkTex = null;
+  function makeChainLinkTexture() {
+    if (_linkTex) return _linkTex;
+    var cv = document.createElement("canvas");
+    cv.width = 64; cv.height = 64;
+    var ctx = cv.getContext("2d");
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 32); ctx.lineTo(32, 0); ctx.lineTo(64, 32); ctx.lineTo(32, 64); ctx.closePath();
+    ctx.stroke();
+    _linkTex = new THREE.CanvasTexture(cv);
+    _linkTex.wrapS = _linkTex.wrapT = THREE.RepeatWrapping;
+    return _linkTex;
+  }
+
+  /* v9 · ministerie: cctv head matrices from yaw/pitch, and the
+     searchlight cone stretched from the eye to a point on the water */
+  var _ce = new THREE.Euler(0, 0, 0, "YXZ"), _up = new THREE.Vector3(0, 1, 0), _ld = new THREE.Vector3(), _v3 = new THREE.Vector3();
+  function updateCams(W2) {
+    for (var i = 0; i < W2.cams.length; i++) {
+      var c = W2.cams[i];
+      _ce.set(c.pitch, c.yaw, 0, "YXZ");
+      _pq.setFromEuler(_ce);
+      _pm.compose(_pv.set(c.x, c.y, c.z), _pq, _ps.set(1, 1, 1));
+      W2.camMesh.setMatrixAt(i, _pm);
+    }
+    W2.camMesh.instanceMatrix.needsUpdate = true;
+  }
+  function aimLight(W2, p) {
+    _ld.set(p.x, p.y - W2.eyeY, p.z);
+    var len = _ld.length() || 1;
+    W2.light.quaternion.setFromUnitVectors(_up, _ld.multiplyScalar(1 / len));
+    W2.light.scale.set(1, len / W2.lightH, 1);
+  }
+
+  /* v9 · the tag on capullos' garden wall: fuchsia spray with an ink
+     outline and drips. 512×128, transparent; redrawn once anton lands */
+  var _tagTex = null;
+  function makeTagTexture() {
+    if (_tagTex) return _tagTex;
+    var cv = document.createElement("canvas");
+    cv.width = 512; cv.height = 128;
+    var draw = function () {
+      var ctx = cv.getContext("2d");
+      ctx.clearRect(0, 0, 512, 128);
+      ctx.save();
+      ctx.translate(256, 70);
+      ctx.rotate(-0.05);
+      ctx.transform(1, 0, -0.18, 1, 0, 0);
+      ctx.font = "400 84px Anton, Impact, 'Arial Narrow', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = "#14120f";
+      ctx.strokeText("capullos", 0, 0);
+      ctx.fillStyle = "#ff2f8a";
+      ctx.fillText("capullos", 0, 0);
+      ctx.restore();
+      ctx.strokeStyle = "#ff2f8a";
+      ctx.lineCap = "round";
+      ctx.lineWidth = 5;
+      [[118, 98, 116], [205, 100, 124], [300, 97, 112], [372, 96, 121]].forEach(function (d) {
+        ctx.beginPath(); ctx.moveTo(d[0], d[1]); ctx.lineTo(d[0], d[2]); ctx.stroke();
+      });
+      ctx.fillStyle = "#ffd23f";
+      ctx.beginPath();
+      for (var k = 0; k < 10; k++) {
+        var r = k % 2 ? 7 : 16, a = k / 10 * Math.PI * 2 - Math.PI / 2;
+        ctx.lineTo(462 + Math.cos(a) * r, 30 + Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      if (_tagTex) _tagTex.needsUpdate = true;
+    };
+    draw();
+    _tagTex = new THREE.CanvasTexture(cv);
+    if (document.fonts && document.fonts.load) document.fonts.load("400 84px Anton").then(draw, function () {});
+    return _tagTex;
+  }
+
   /* v8.9 · the beam's alpha: column 1 (u<.5) = the core, column 2 = the
      halo. bottom opaque → top transparent (CylinderGeometry v runs 0 at
      the base to 1 at the top; the canvas is flipped, so draw top-down). */
@@ -2948,6 +3488,37 @@
       ]).then(draw, function () {});
     }
     return _reelTex;
+  }
+
+  /* v9 · the league's name on the pavilion roof: ink board, yellow anton.
+     512×128; redrawn once anton lands, like the reel poster. */
+  var _signTex = null;
+  function makeLeagueSignTexture() {
+    if (_signTex) return _signTex;
+    var cv = document.createElement("canvas");
+    cv.width = 512; cv.height = 128;
+    var draw = function () {
+      var ctx = cv.getContext("2d");
+      ctx.fillStyle = "#14120f";
+      ctx.fillRect(0, 0, 512, 128);
+      ctx.strokeStyle = "#ffd23f";
+      ctx.lineWidth = 5;
+      roundRect(ctx, 10, 10, 492, 108, 14);
+      ctx.stroke();
+      ctx.fillStyle = "#ffd23f";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "400 86px Anton, Impact, 'Arial Narrow', sans-serif";
+      ctx.fillText("liga u", 256, 68, 440);
+      ctx.fillStyle = "#ff5a3c";
+      ctx.beginPath(); ctx.arc(52, 64, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(460, 64, 9, 0, Math.PI * 2); ctx.fill();
+      if (_signTex) _signTex.needsUpdate = true;
+    };
+    draw();
+    _signTex = new THREE.CanvasTexture(cv);
+    if (document.fonts && document.fonts.load) document.fonts.load("400 86px Anton").then(draw, function () {});
+    return _signTex;
   }
 
   /* v7: FULL-court parquet + painted lines, one 512px canvas.
@@ -4610,18 +5181,6 @@
       p.rotation.set(t * 0.6 + i, a, Math.sin(t + i));
     });
 
-    if (searchlight) {
-      var beam = searchlight.beam;
-      beam.rotation.z = Math.PI / 5.2;
-      beam.rotation.y = t * 0.45;
-      beam.material.opacity = 0.11 + Math.sin(t * 2.2) * 0.03;
-    }
-    if (beacon) {
-      var blink = (Math.sin(t * 4.2) > 0.2) ? 1 : 0.15;
-      beacon.material.color.setHex(blink === 1 ? 0xff2a1a : 0x5c1410);
-      beacon.scale.setScalar(blink === 1 ? 1.15 : 0.9);
-    }
-
     fishes.forEach(function (f) {
       f.t += dt;
       if (f.t > f.dur) {
@@ -4691,15 +5250,64 @@
         pr.nameBoard.position.y = (pr.boardY || 26) + Math.sin(t * 0.9 + isl.group.position.x) * 0.5;
       }
 
-      if (id === "capullos") {
-        if (pr.buds) {
-          var targetOpen = isl.dist < 80 ? 1 : 0;
-          pr.buds.forEach(function (b) {
-            b.open += (targetOpen - b.open) * dt * (1.2 + b.phase * 0.15);
-            var o = b.open;
-            b.head.scale.set(1 + o * 1.05, 1 - o * 0.34, 1 + o * 1.05);
-            b.head.rotation.y = o * 0.5 + b.phase;
+      /* v9 · capullos, the gang: far away they loaf about; within 85 every
+         head turns to stare at the canoe (each at its own speed) and the
+         boss blows a gum bubble that pops into petal confetti. reduced
+         motion: they face the spawn, the bubble just sits there. */
+      if (id === "capullos" && pr.gang) {
+        var GG = pr.gang;
+        if (rmQ && rmQ.matches) {
+          if (!GG.still) {
+            GG.still = true;
+            GG.punks.forEach(function (p) { p.yaw = GG.homeYaw; });
+            updatePunks(GG);
+            GG.boss.rotation.y = GG.homeYaw;
+            GG.gum.scale.setScalar(0.8);
+            GG.pop.visible = false;
+          }
+        } else if (isl.dist < 200) {
+          GG.still = false;
+          var nearC = isl.dist < 85;
+          var lbx = boat.x - isl.group.position.x, lbz = boat.z - isl.group.position.z;
+          GG.punks.forEach(function (p) {
+            var tgP = nearC ? Math.atan2(lbx - p.x, lbz - p.z) : GG.homeYaw + Math.sin(t * 0.4 + p.ph) * 0.5;
+            p.yaw += normAngle(tgP - p.yaw) * Math.min(1, dt * (nearC ? p.k : 1));
           });
+          updatePunks(GG);
+          var bb = GG.boss.position;
+          var tgB = nearC ? Math.atan2(lbx - bb.x, lbz - bb.z) : GG.homeYaw + Math.sin(t * 0.25) * 0.3;
+          GG.boss.rotation.y += normAngle(tgB - GG.boss.rotation.y) * Math.min(1, dt * 1.6);
+          if (nearC) {
+            GG.cyc += dt;
+            var cy = GG.cyc % 6.5, gs = 0.01;
+            if (cy < 2.6) gs = 0.15 + Math.pow(cy / 2.6, 1.5) * 1.45;
+            else if (cy < 3.0) gs = 1.6 + Math.sin(t * 30) * 0.04;
+            else if (!GG.popped) {
+              GG.popped = true;
+              GG.gum.getWorldPosition(GG.origin);
+              GG.origin.sub(isl.group.position);
+              GG.origin.x += Math.sin(GG.boss.rotation.y) * 1.6;
+              GG.origin.z += Math.cos(GG.boss.rotation.y) * 1.6;
+              GG.popT = 0;
+              GG.pop.visible = true;
+            }
+            if (cy < 3.0) GG.popped = false;
+            GG.gum.scale.set(gs * (1 + Math.sin(t * 7) * 0.03), gs, gs);
+          } else {
+            GG.cyc = 0;
+            GG.gum.scale.setScalar(Math.max(0.01, GG.gum.scale.x - dt));
+          }
+          if (GG.popT !== undefined && GG.popT !== null) {
+            GG.popT += dt;
+            var pp3 = GG.pop.geometry.attributes.position, T = GG.popT;
+            for (var pi3 = 0; pi3 < GG.vel.length; pi3++) {
+              var vv = GG.vel[pi3];
+              pp3.setXYZ(pi3, GG.origin.x + vv.x * T, GG.origin.y + vv.y * T - 4.5 * T * T, GG.origin.z + vv.z * T);
+            }
+            pp3.needsUpdate = true;
+            GG.pop.material.opacity = Math.max(0, 1 - T / 1.5);
+            if (T > 1.5) { GG.popT = null; GG.pop.visible = false; }
+          }
         }
         /* fireflies: lazy loops between the buds, twinkling */
         if (pr.fireflies && isl.dist < 160) {
@@ -4718,33 +5326,78 @@
         }
       }
 
-      if (id === "talens-pantone") {
-        if (pr.chips) {
-          pr.chips.forEach(function (c, ci) {
-            c.rotation.z = Math.sin(t * 0.6 + ci * 1.3) * 0.02;
-          });
-        }
-        if (pr.orbit) {
-          pr.orbit.rotation.y = t * 0.22;
-          pr.orbit.position.y = 15.5 + Math.sin(t * 0.5) * 0.7;
+      /* v9 · liga u: the pavilion lights come on as you sail in (a short
+         flicker, then steady) and the crowd does the wave. reduced motion:
+         lights simply on, nobody stands up. */
+      if (id === "liga-u-strategy" && pr.lights) {
+        var LG = pr.lights;
+        if (rmQ && rmQ.matches) {
+          if (pr.power !== 1) { pr.power = 1; LG.mat.color.setScalar(1); LG.score.color.setScalar(1); }
+          LG.wave.value = 0;
+        } else if (isl.dist < 200) {
+          var onL = isl.dist < 100 ? 1 : 0.3;
+          pr.power += (onL - pr.power) * Math.min(1, dt * 1.2);
+          var flL = (pr.power > 0.4 && pr.power < 0.8) ? 0.75 + 0.25 * (Math.sin(t * 41) > 0 ? 1 : 0) : 1;
+          LG.mat.color.setScalar(pr.power * flL);
+          LG.score.color.setScalar(pr.power);
+          LG.glows.forEach(function (gw) { gw.material.opacity = 0.5 * pr.power; });
+          LG.wave.value += ((isl.dist < 90 ? 1 : 0) - LG.wave.value) * Math.min(1, dt * 0.8);
         }
       }
 
-      if (id === "ministerie" && pr.eyeGroup) {
-        var ex = boat.x - isl.group.position.x;
-        var ez = boat.z - isl.group.position.z;
-        var eyeTarget = Math.atan2(ex, ez);
-        pr.eyeGroup.rotation.y += normAngle(eyeTarget - pr.eyeGroup.rotation.y) * Math.min(1, dt * 2.5);
-        if (pr.cage) {
-          pr.cage.rotation.y = t * 0.3;
-          pr.cage.rotation.x = Math.sin(t * 0.23) * 0.18;
+      /* v9 · talens: within 90 the swatch fan opens and the swatches start
+         jumping the fence into the grey half. reduced motion: fan open,
+         the swatches already lying on the grey side. */
+      if (id === "talens-pantone" && pr.jump) {
+        var JP = pr.jump;
+        if (rmQ && rmQ.matches) {
+          if (!JP.still) { JP.still = true; JP.open.value = 1; updateJumps(JP, "land"); }
+        } else if (isl.dist < 200) {
+          JP.still = false;
+          var nearT = isl.dist < 90;
+          JP.open.value += ((nearT ? 1 : 0.12) - JP.open.value) * Math.min(1, dt * 1.6);
+          if (nearT) { JP.cyc += dt; updateJumps(JP, JP.cyc); }
+          else if (JP.cyc !== 0) { JP.cyc = 0; updateJumps(JP, "start"); }
         }
-        if (pr.coil) {
-          pr.coil.rotation.y = -t * 0.55;
-          pr.coil.rotation.z = t * 0.19;
-          pr.coil.material.opacity = 0.6 + Math.sin(t * 2.7) * 0.3;
-          var cs = 1 + Math.sin(t * 2.7) * 0.05;
-          pr.coil.scale.setScalar(cs);
+      }
+
+      /* v9 · ministerie, the watcher: the eye always follows you; within 90
+         every camera snaps onto the canoe (each at its own speed), the
+         searchlight leaves its sweep to find you and the scan ring speeds
+         up. reduced motion: everything faces the spawn and holds still. */
+      if (id === "ministerie" && pr.watch) {
+        var WT = pr.watch;
+        if (rmQ && rmQ.matches) {
+          if (!WT.still) {
+            WT.still = true;
+            WT.cams.forEach(function (c) { c.yaw = c.home; c.pitch = -0.15; });
+            updateCams(WT);
+            pr.eyeGroup.rotation.y = WT.home;
+            aimLight(WT, WT.aim.set(Math.sin(WT.home + 0.9) * 40, 0, Math.cos(WT.home + 0.9) * 40));
+          }
+        } else if (isl.dist < 220) {
+          WT.still = false;
+          var nearM = isl.dist < 90;
+          WT.on += ((nearM ? 1 : 0) - WT.on) * Math.min(1, dt * 1.5);
+          var lmx = boat.x - isl.group.position.x, lmz = boat.z - isl.group.position.z;
+          pr.eyeGroup.rotation.y += normAngle(Math.atan2(lmx, lmz) - pr.eyeGroup.rotation.y) * Math.min(1, dt * 2.5);
+          WT.cams.forEach(function (c) {
+            var dxc = lmx - c.x, dzc = lmz - c.z;
+            var tgY = nearM ? Math.atan2(dxc, dzc) : c.home + Math.sin(t * 0.5 + c.k) * 0.6;
+            var tgP = nearM ? -Math.atan2(c.y - 0.5, Math.sqrt(dxc * dxc + dzc * dzc)) : -0.15;
+            var kc = Math.min(1, dt * (nearM ? c.k : 1.2));
+            c.yaw += normAngle(tgY - c.yaw) * kc;
+            c.pitch += (tgP - c.pitch) * kc;
+          });
+          updateCams(WT);
+          var sy2 = lerp(WT.y0, WT.y1, 0.5 + 0.5 * Math.sin(t * lerp(0.5, 1.6, WT.on)));
+          WT.scan.position.y = sy2;
+          WT.scan.scale.setScalar(WT.spR(sy2) + 0.15);
+          WT.scan.material.opacity = 0.4 + 0.55 * WT.on;
+          var sw = t * 0.45;
+          _v3.set(nearM ? lmx : Math.sin(sw) * 42, 0, nearM ? lmz : Math.cos(sw) * 42);
+          aimLight(WT, WT.aim.lerp(_v3, Math.min(1, dt * 2.5)));
+          WT.light.material.opacity = 0.24 + 0.16 * WT.on;
         }
       }
 
@@ -4828,13 +5481,14 @@
 
   /* v6 · the beaching is a composed shot, one per island: each
      frame keeps the paddler in the foreground and the island's
-     memorable moment (buds / crane+hoop / gold frame / the eye)
-     in the top of the composition. hud tint does the palette. */
+     memorable moment (v9: the boss bud / the pavilion roof / the
+     swatch fan over the fence / the eye) in the top of the
+     composition. hud tint does the palette. */
   var LAND_CAMS = {
-    "capullos":        { side: 8,   back: 15, h: 5,   heroY: 9,  mix: 0.42 },
-    "liga-u-strategy": { side: -12, back: 19, h: 6.5, heroY: 7, mix: 0.6 },
-    "talens-pantone":  { side: 9,   back: 16, h: 6,   heroY: 16, mix: 0.5 },
-    "ministerie":      { side: 6,   back: 13, h: 3.4, heroY: 25, mix: 0.55 },
+    "capullos":        { side: 8,   back: 16, h: 5,   heroY: 15, mix: 0.45 },
+    "liga-u-strategy": { side: -12, back: 20, h: 6.5, heroY: 12, mix: 0.6 },
+    "talens-pantone":  { side: 9,   back: 17, h: 6,   heroY: 14, mix: 0.5 },
+    "ministerie":      { side: 6,   back: 14, h: 3.4, heroY: 27, mix: 0.55 },
     "ai-direction":    { side: -9,  back: 17, h: 5,   heroY: 13, mix: 0.5 },
   };
   function updateLandCamera(dt) {

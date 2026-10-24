@@ -77,7 +77,8 @@ placement rules (hard-won in v7 — don't rediscover them):
    `scatterOn`/`instancedOn`, `treeGeo`, `bladeGeo`, `dockGeo`, `addLantern`,
    `makeTextBoard`. MERGE geometry aggressively — one mesh per material family,
    instancing for repeats. set `isl.props.heightFn` (collision/beaching needs it).
-3. if the island has solid off-shore props (like liga u's giant hoop), push a
+3. if the island has solid off-shore props (none today — liga u's giant sea
+   hoop was removed in v9), push a
    collider into `rocks[] = {x, z, r}` in world coordinates.
 4. add its `LAND_CAMS` entry and screenshot the beaching from two angles.
 5. add the `<article>` case block and JSON-LD node (step 4/5 of §1).
@@ -94,8 +95,9 @@ placement rules (hard-won in v7 — don't rediscover them):
 - the render loop is `tick()` → `stepFrame(dt, t)` → `renderer.render`. all
   per-frame world life lives in `animateWorld(dt, t)`, which iterates
   `islands` and switches on `isl.def.id`. put your animation there, driven by
-  `isl.props` handles you stored at build time (see capullos' `buds`/
-  `fireflies`, talens' `orbit`/`chips`, ministerie's `eyeGroup`/`cage`/`coil`).
+  `isl.props` handles you stored at build time (see (v9) capullos' `gang`/
+  `fireflies`, liga u's `lights`, talens' `jump`, ministerie's `watch`/
+  `eyeGroup`, ai direction's `screen`/`beam`).
 - gate by distance (`isl.dist < 160`) so far islands cost nothing, and by tier
   (`tier !== "low"`) for anything with particles.
 - **reduced motion**: check
@@ -366,9 +368,10 @@ create such a skill, note its name here so the next model finds it.
   clients — proud, not apologetic.
 - `ISLANDS[]` order is importance (liga u first). the world only reads `pos`:
   terrain seeds, dock/hoop/frame orientation all derive from position, so
-  reordering moves nothing. swapping POSITIONS is a different story — liga
-  u's off-shore hoop sits 36u toward the spawn, so at capullos' spot it lands
-  at ≈(-13,126), right next to the welcome buoy. re-tune before trying.
+  reordering moves nothing. swapping POSITIONS is a different story — (v9)
+  the off-shore hoop that made it dangerous is gone, but every island now
+  orients its hero toward the spawn and talens' fence is placed against the
+  routes in (§8.10). re-verify §1 + the 25-route matrix before trying.
 - the liga u case ships draft holes as `<template class="case-draft">` —
   inert and unindexed; `?draft=1` renders them (main.js). never turn a hole
   into visible placeholder copy on the public page, and never invent numbers.
@@ -407,7 +410,8 @@ create such a skill, note its name here so the next model finds it.
   ONE geometry; alpha comes from a 2×128 gradient texture whose two columns
   (core strong / halo faint) are picked by forcing the uv.x of each cylinder
   — r128 vertex colors carry no alpha. `fog: false` on purpose: it's the
-  landmark you read from far away, like liga u's hoop.
+  landmark you read from far away (liga u's sea hoop, removed in v9, was
+  the other one; talens' swatch fan is fog-free too).
 - **animation** (`animateWorld`): the screen "powers on" when you're within
   95 (dim 0.35 → 1 with a short flicker on the way up) and the beam breathes.
   distance-gated (<200), and under `prefers-reduced-motion` the screen is
@@ -435,6 +439,75 @@ create such a skill, note its name here so the next model finds it.
 - route matrix is now 25 routes (spawn + off each of 5 islands → every
   other island). "off-ai-direction" starts 52u toward the SPAWN, not toward
   the origin — toward the origin lands inside liga u's dock zone.
+
+## 8.10 · v9 notes — the four original islands rebuilt to ai direction's level
+
+jorge loved island 03 and asked for the other four to be "tan chulas". the
+recipe (header comment of world.js, "ART DIRECTION (v9)"): one hero with a
+silhouette you read from the spawn, its own light in ONE unlit vertex-color
+mesh, clean ground with merged props, and a moment within ~90 that freezes
+under reduced motion. shading untouched (toonMat + 4-step ramp). positions
+untouched. directions approved by jorge on 24 oct 2026, with his notes.
+
+- **liga u — the pavilion.** the full court lives under a barrel roof
+  (`vaultGeo`: cream top, yellow raised ribs, wood underside, ink trims) on
+  ten columns, glazed lunettes at both arched ends, a skylight on the ridge,
+  the "liga u" sign on top (`makeLeagueSignTexture`, anton, 512×128). a tall
+  stand behind the court, a low one on the spawn side, a crowd (its own mesh,
+  `toonMat({wave:true})` — a vertex-only travelling crest driven by
+  `uWave`), a center-hung 4-face scoreboard (`boxFacesGeo`). **the giant sea
+  hoop is gone** (jorge: "no me gusta nada la canasta en el agua"), with its
+  `rocks[]` collider and the 4 lane buoys. moment: lights power on (<100)
+  and the crowd does the wave (<90). 14 objects.
+- **capullos — the gang** ("dale una vuelta, que tenga gracia" + "un toque
+  punk"). capullo = bud AND little punk: the boss is a giant bud on the
+  main mound (curved `TubeGeometry` stem) with a fuchsia petal mohawk and
+  shades; six small punks with angry brows are ONE `InstancedMesh`
+  (`updatePunks`); a garden wall tagged "capullos" (`makeTagTexture`); a
+  string of bulbs up the hill (lit mesh). moment (<85): every head turns
+  to stare at the canoe, each at its own speed, and the boss blows a gum
+  bubble that pops into confetti (one `Points`). reduced motion: they face
+  the spawn, the bubble just sits there. fireflies kept. 13 objects.
+- **talens x pantone — the two halves** (supersedes "only the chips have
+  color"; jorge: one half color and joy, the other misery, a wire fence in
+  between — he pointed at the poster of a series about immigration; ask
+  him for the name before re-composing). the terrain colorFn blends a joy
+  ramp and the old grey ramp across the fence line; chain-link strip
+  (`makeChainLinkTexture`, alphaTest) + concertina coil (helix
+  `TubeGeometry`). the swatch fan (7 blades × 3 tints, one unlit mesh, fog
+  off) opens via a vertex shader (`aBlade` × `uOpen`); swatches jump the
+  fence onto the grey side (`updateJumps`, instanced + `setColorAt`).
+  **placement rule**: the fence runs toward the spawn (side-by-side read)
+  but stops 11u short of the center on that side — every route arrives
+  from the east-northeast and a beaching paddler walks to r≈17, so no canoe
+  or paddler ever meets the wire. fan colors are deliberately NOT in
+  spectral order (a fanned spectrum reads as a rainbow flag). 10 objects.
+- **ministerie — the watcher.** a 6-sided faceted obsidian shard
+  (`toNonIndexed` lathe) + two leaning shards, red slit windows (lit mesh),
+  a hexagonal red scan ring that rescales to the shard at its height, the
+  eye as ONE unlit mesh inside a solid lens bezel on a yoke (no more wire
+  cage / torus knot / flat cone / beacon), a searchlight cone using the
+  beam texture's core column (`aimLight`), seven cctv cameras on poles
+  (one `InstancedMesh`, `updateCams`). moment (<90): every camera snaps to
+  the canoe, the light leaves its sweep to find you, the scan speeds up.
+  reduced motion: everything holds still facing the spawn (the eye too —
+  it used to follow you even under reduced motion). 10 objects.
+- `LAND_CAMS` re-tuned so each hero sits in the top of the postcard:
+  capullos heroY 15, liga u 12, talens 14, ministerie 27.
+- **budget (tier mobile, 390×844, swiftshader, calls / tris)**: spawn
+  73 / 42k · gijón 50 / 36k · 60u off each island toward the spawn: liga u
+  75 / 47k, capullos 72 / 48k, talens 53 / 37k, ministerie 55 / 35k, ai
+  57 / 34k · chart zoom 4.2 there: 53-74 / 34-48k, over the origin 60 /
+  34k, over the spawn **78 / 49k (worst; was 92 / 41k)** · beached 58-70 /
+  42-50k. objects per island: liga u 14, capullos 13, talens 10,
+  ministerie 10, ai 9 (were 19+4 buoys, 25, 12, 16). calls went down,
+  tris went up ~9k (crowd, roof, coil) — far inside 150 / 150k.
+- route matrix (25 routes, compass autopilot): **25/25**. talens'
+  beachings all land ≥0.45 rad off the fence line (spawn → (-113,-25),
+  the rest on the east side). touch flow (compass → beach → case → close
+  → sail) green at 390×844 (liga u), 375×667 (capullos), 844×390
+  (talens), 412×915 (ministerie). reduced motion verified static on all
+  four.
 
 ## 9 · known deltas
 
