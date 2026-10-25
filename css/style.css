@@ -790,7 +790,7 @@ body.mode-content #content { transform: translateZ(0); }
 body.js .about, body.js .about h2, body.js footer { color: var(--cream); }
 body.js .about .social a { border-color: rgba(246, 238, 221, .75); color: var(--cream); }
 body.js .about .social a:hover { background: var(--cream); color: var(--sea-deep); }
-body.js .about .contact a { color: var(--yellow); }
+body.js .about .contact a, body.js .about .press a { color: var(--yellow); }
 body.js .stamp circle { stroke: var(--cream); }
 body.js .stamp text { fill: var(--cream); }
 body.js .stamp path[fill="#2b47d9"] { fill: #7f96f2; }
@@ -1125,6 +1125,8 @@ body.js.mode-sea .case, body.js.mode-sea .about { opacity: 1; transform: none; t
 }
 .social a:hover { background: var(--ink); color: var(--cream); }
 .contact a { color: var(--coral-ink); font-weight: 700; }
+.press { font-size: .92rem; }
+.press a { color: var(--coral-ink); font-weight: 700; }
 
 footer {
   position: relative;

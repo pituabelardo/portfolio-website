@@ -14,7 +14,8 @@ the canoe to reach it (`WORLD.diveOut`) and climb back aboard to leave
   build step, no npm. all quality lives in shading/geometry, not in a newer three.
 - the SEO/content layer in `index.html` is untouchable except `aria-hidden`
   decorative nodes. it is simultaneously the dry-land mode, the no-webgl
-  fallback and what crawlers read.
+  fallback and what crawlers read. (v9.1) when its words or JSON-LD do have to
+  change, §8.11 (seo, entity data, honesty) is the rulebook.
 - all copy lowercase, in english, gamberro-but-professional.
 - mobile budget (hard): **<150 draw calls, <150k tris, textures ≤512px, no
   post-processing**, ≥25fps in software rendering at 390×844. the budget is
@@ -259,9 +260,9 @@ create such a skill, note its name here so the next model finds it.
   full of client assets that must never enter git history.
 - hosting: vercel project `portfolio-website` (team "38-0's projects"),
   auto-deploys `main` on push. production:
-  https://portfolio-website-nu-ebon-47.vercel.app (until jorge attaches
-  jorgeantolin.com — index.html/sitemap/robots already point at the final
-  domain on purpose).
+  https://portfolio-website-nu-ebon-47.vercel.app. index.html, sitemap and
+  robots point at THIS url until jorge buys and attaches his own domain
+  (§8.11 — `jorgeantolin.com` is NOT his).
 - `vercel.json` sets cache headers only (immutable assets, 1-day js/css). no
   rewrites: single page, hash-based deep links.
 - **cache busting (v8.2.1, load-bearing)**: js/css are cached for a day on
@@ -325,9 +326,10 @@ create such a skill, note its name here so the next model finds it.
 
 ## 8.7 · v8.7 red-team notes (read before touching deploy/a11y)
 
-- origin in index/sitemap/robots is the VERCEL url until `jorgeantolin.com` is
-  attached (it was parked at ionos and served no og image). swap with one
-  search-and-replace when the domain lands.
+- origin in index/sitemap/robots is the VERCEL url until jorge attaches a
+  domain of his own (v9.1: `jorgeantolin.com` belongs to someone else — parked
+  at ionos since feb 2025; see §8.11). swap with one search-and-replace when
+  the domain lands.
 - `vercel.json` now carries a CSP. allowed: self, cdnjs (three), google fonts,
   youtube-nocookie (frames), i.ytimg.com (thumbs). a new third-party host needs
   a CSP entry or it silently fails. three.js is pinned with SRI in main.js
@@ -358,14 +360,16 @@ create such a skill, note its name here so the next model finds it.
 
 ## 8.8 · v8.8 notes — liga u is the axis
 
-- **honesty rule (content)**: only liga u (island 01, the main case) and
-  capullos (island 02, a liga u campaign) are professional work. talens x
-  pantone and ministerie are STUDENT CONCEPTS (hogeschool utrecht, fictional
-  briefs). every surface says so: case tag, a `.case-honest` line, case-meta
-  "for: a fictional brief", JSON-LD (`genre: student work`,
-  `sourceOrganization`), hero lede, meta descriptions, and the captain's
-  "land ho" (config `ISLANDS[].tag`). never write copy implying they were
-  clients — proud, not apologetic.
+- **honesty rule (content) — rewritten in v9.1, see §8.11**: only liga u
+  (island 01, the main case), capullos (island 02, a liga u campaign) and ai
+  direction (island 03) are professional work. talens x pantone and
+  ministerie are CONCEPT CAMPAIGNS written to fictional briefs, never
+  commissioned. every surface says so — without the word "student": case tag
+  ("concept campaign · never commissioned"), a `.case-honest` line, case-meta
+  "for: a fictional brief" + "concept work", JSON-LD (`genre: concept work`),
+  hero lede ("two islands of concept work, labelled as such") and the
+  captain's "land ho" (config `ISLANDS[].tag: "concept campaign"`). never
+  write copy implying they were clients — proud, not apologetic.
 - `ISLANDS[]` order is importance (liga u first). the world only reads `pos`:
   terrain seeds, dock/hoop/frame orientation all derive from position, so
   reordering moves nothing. swapping POSITIONS is a different story — (v9)
@@ -509,6 +513,63 @@ untouched. directions approved by jorge on 24 oct 2026, with his notes.
   (talens), 412×915 (ministerie). reduced motion verified static on all
   four.
 
+## 8.11 · v9.1 notes — seo, entity data and the honesty rule (approved by jorge, 25 oct 2026)
+
+the site's job in search: when someone types "jorge antolín", or asks google's
+ai mode / chatgpt / perplexity "who runs liga u's communication / strategy /
+community", jorge's name and this page come back. read this before touching
+the head, the JSON-LD, the hero, the about section or any case tag.
+
+- **never "student"**. no surface calls jorge a student or dates his
+  education: no years, no "homework", no school as `sourceOrganization` of a
+  work. education lives only as `alumniOf` (upv/ehu + hogeschool utrecht, no
+  dates) and the about line "i specialized in brand design at hogeschool
+  utrecht". the work speaks, not the cv timeline.
+- **concept work, never a client**. talens and ministerie are "concept
+  campaign" / "concept work" written to a fictional brief and "never
+  commissioned" (§8.8). don't swap that for anything that hints a real client.
+- **the title, said honestly**. his job title is **head of content &
+  communication, liga u** (linkedin: "responsable de contenidos y
+  comunicación liga u"; the press: "responsable de comunicación de liga u en
+  acb", reason why, 29 jul 2026). "creative director & brand strategist" is
+  the craft/positioning (h1, `<title>`, og, `hasOccupation`), never the
+  `jobTitle`. never inflate (not "head of brand", not "director of").
+- **query vocabulary lives in visible text**: the about paragraph names the
+  spanish job names people search ("responsable de comunicación",
+  "responsable de contenidos", "community manager de la liga u") and the
+  Person `description` repeats "responsable de comunicación y contenidos de
+  la liga u". keep both if you rewrite either.
+- **no personal plans on the page.** no copy, meta, schema or comment about
+  availability or what jorge wants next. the site shows the work; it never
+  asks.
+- **entity data (JSON-LD `@graph`)**: `ProfilePage` (`#profile`, mainEntity →
+  `#jorge`, `dateModified` = the day you change it), `WebSite`,
+  `SportsOrganization` liga u, `Organization` acb, `Person` `#jorge`, one
+  `CreativeWork` per case. the Person is in proper case ("Jorge Antolín") on
+  purpose — visible copy stays lowercase, entity data matches how the name is
+  written everywhere else. `alternateName` carries the full name and both
+  no-tilde spellings. `subjectOf` lists press that NAMES him (only real,
+  linkable articles; add new ones there and in the about's `.press` line).
+  `sameAs` = profiles that are verifiably his (today: linkedin only; jorge
+  will send more). `image` is still the og illustration — swap for a real
+  headshot when jorge sends one.
+- **what doesn't move without a reason**: the vercel origin in canonical/og/
+  sitemap/robots (until his domain lands), `meta description` (written for
+  "jorge antolín" + "liga u" + "comunicación"), the h1. bump `dateModified`
+  and `sitemap.xml` `lastmod` whenever the page's text changes.
+- **domain**: `jorgeantolin.com` is registered to someone else (ionos, since
+  13 feb 2025). jorge will buy his own (free on 25 oct 2026:
+  jorgeantolinarribas.com, jorgeantolin.net/.co/.me). when it's attached in
+  vercel: replace the vercel origin in index.html (canonical, og, twitter,
+  every JSON-LD `@id`/url), sitemap.xml, robots.txt; make the vercel.app
+  host 301 to it (vercel → domains → redirect); add the domain property in
+  search console and resubmit the sitemap.
+- **checks after any change here**: JSON-LD parses (`python3 -c json.loads`
+  on the block), `grep -i "student\|homework\|graduat"` over index.html and
+  js/ returns nothing public, and the live page answers 200 to googlebot,
+  gptbot, perplexitybot and claudebot user agents (vercel firewall/bot
+  settings must never block them).
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts
@@ -533,6 +594,6 @@ untouched. directions approved by jorge on 24 oct 2026, with his notes.
   frames a panorama) and ~154 at zoom 4.2, i.e. the chart view adds ~1 call
   to an already-over-ceiling orientation. the canonical budget viewport
   (390×844) stays comfortably inside at every zoom (worst ~100/61k).
-- (v8) production url is the auto-assigned vercel domain until jorge buys and
-  attaches jorgeantolin.com; canonical/og/sitemap urls intentionally already
-  point at jorgeantolin.com and will be correct the moment the domain lands.
+- (v8 → v9.1) production url is the auto-assigned vercel domain, and
+  canonical/og/sitemap point at it, until jorge buys and attaches his own
+  domain — not jorgeantolin.com, which belongs to someone else (§8.11).

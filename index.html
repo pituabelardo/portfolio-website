@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>jorge antolín — creative director & brand strategist | liga u, acb</title>
-  <meta name="description" content="jorge antolín is a creative director and brand strategist at the acb, leading creative direction, brand and communication for liga u, spain's u22 basketball league. a portfolio you row through: the liga u work, plus two student concepts from utrecht.">
+  <meta name="description" content="jorge antolín leads content and communication for liga u, spain's u22 basketball league, at the acb: creative direction, brand strategy, campaigns like capullos, and community.">
   <meta name="author" content="jorge antolín">
   <meta name="color-scheme" content="light">
   <meta name="format-detection" content="telephone=no">
@@ -22,7 +22,6 @@
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="jorge antolín, creative director and brand strategist — a swimmer in a cap surfacing from an ultramarine sea">
   <meta property="og:locale" content="en_US">
-  <meta property="og:locale:alternate" content="es_ES">
 
   <!-- twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -43,7 +42,7 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=9.0">
+  <link rel="stylesheet" href="css/style.css?v=9.1">
 
   <!-- structured data -->
   <script type="application/ld+json">
@@ -54,19 +53,32 @@
         "@type": "WebSite",
         "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#website",
         "url": "https://portfolio-website-nu-ebon-47.vercel.app/",
-        "name": "jorge antolín",
+        "name": "Jorge Antolín",
         "inLanguage": "en",
         "author": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
         "publisher": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" }
       },
       {
-        "@type": "Organization",
+        "@type": "ProfilePage",
+        "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#profile",
+        "url": "https://portfolio-website-nu-ebon-47.vercel.app/",
+        "name": "jorge antolín — creative director & brand strategist | liga u, acb",
+        "inLanguage": "en",
+        "isPartOf": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#website" },
+        "mainEntity": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
+        "dateModified": "2026-10-25"
+      },
+      {
+        "@type": "SportsOrganization",
         "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#liga-u-org",
         "name": "Liga U",
         "alternateName": "Liga U22",
+        "description": "spain's u22 national basketball league, run by the acb and the spanish basketball federation (feb).",
+        "sport": "Basketball",
         "url": "https://ligau.com",
         "sameAs": [
           "https://en.wikipedia.org/wiki/Liga_U",
+          "https://es.wikipedia.org/wiki/Liga_U",
           "https://x.com/Liga_U22",
           "https://www.youtube.com/@LigaU22"
         ]
@@ -82,10 +94,17 @@
       {
         "@type": "Person",
         "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge",
-        "name": "jorge antolín",
-        "alternateName": "jorge antolín arribas",
-        "jobTitle": "creative director & brand strategist — responsable de comunicación, contenidos y estrategia de marca de liga u",
-        "description": "creative director and brand strategist leading creative direction, brand strategy, communication and community management for liga u, spain's u22 national basketball league, at the acb.",
+        "name": "Jorge Antolín",
+        "givenName": "Jorge",
+        "familyName": "Antolín Arribas",
+        "alternateName": ["Jorge Antolín Arribas", "Jorge Antolin", "Jorge Antolin Arribas"],
+        "jobTitle": "Head of Content & Communication, Liga U",
+        "hasOccupation": [
+          { "@type": "Occupation", "name": "Creative Director" },
+          { "@type": "Occupation", "name": "Brand Strategist" }
+        ],
+        "description": "Jorge Antolín is the head of content and communication at Liga U, Spain's U22 national basketball league, at the ACB (responsable de comunicación y contenidos de la Liga U). A creative director and brand strategist, he leads the league's creative direction, brand and communication strategy, content, campaigns such as Capullos, and community management.",
+        "disambiguatingDescription": "Spanish creative director and brand strategist in sports communication (basketball), based in Gijón.",
         "worksFor": [
           { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#liga-u-org" },
           { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#acb-org" }
@@ -94,12 +113,22 @@
           { "@type": "CollegeOrUniversity", "name": "Universidad del País Vasco / Euskal Herriko Unibertsitatea", "alternateName": "UPV/EHU" },
           { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" }
         ],
-        "homeLocation": { "@type": "Place", "name": "Gijón, Asturias, España" },
-        "knowsAbout": ["creative direction", "brand strategy", "brand design", "communication strategy", "community management", "basketball marketing"],
+        "homeLocation": { "@type": "Place", "name": "Gijón, Asturias, Spain" },
+        "knowsLanguage": ["es", "en"],
+        "knowsAbout": ["creative direction", "brand strategy", "brand design", "communication strategy", "content strategy", "community management", "sports marketing", "basketball marketing", "campaign concepting", "ai video direction"],
         "email": "mailto:jorgeantolinarribas@gmail.com",
         "image": "https://portfolio-website-nu-ebon-47.vercel.app/assets/og-v2.jpg",
         "url": "https://portfolio-website-nu-ebon-47.vercel.app/",
-        "sameAs": ["https://www.linkedin.com/in/jorge-antolin/"]
+        "mainEntityOfPage": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#profile" },
+        "sameAs": ["https://www.linkedin.com/in/jorge-antolin/"],
+        "subjectOf": {
+          "@type": "NewsArticle",
+          "headline": "Convertir a los jugadores en capullos: la estrategia para generar notoriedad sobre la nueva Liga U",
+          "url": "https://www.reasonwhy.es/actualidad/acb-estrategia-comunicacion-liga-u-campana-capullos",
+          "datePublished": "2026-07-29",
+          "inLanguage": "es",
+          "publisher": { "@type": "Organization", "name": "Reason Why", "url": "https://www.reasonwhy.es" }
+        }
       },
       {
         "@type": "CreativeWork",
@@ -162,20 +191,18 @@
       },
       {
         "@type": "CreativeWork",
-        "name": "talens x pantone — color is art, not a barrier (student concept)",
+        "name": "talens x pantone — color is art, not a barrier (concept campaign)",
         "creator": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
-        "about": "student concept print campaign imagining royal talens x pantone turning color from a border issue into an art statement. made during a brand design specialization at hogeschool utrecht; not commissioned by either brand.",
-        "genre": "student work",
-        "sourceOrganization": { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" },
+        "about": "concept print campaign imagining royal talens x pantone turning color from a border issue into an art statement. written to a fictional brief; never commissioned by either brand.",
+        "genre": "concept work",
         "url": "https://portfolio-website-nu-ebon-47.vercel.app/#talens-pantone"
       },
       {
         "@type": "CreativeWork",
-        "name": "un-usual suspects — online scam awareness (student concept)",
+        "name": "un-usual suspects — online scam awareness (concept campaign)",
         "creator": { "@id": "https://portfolio-website-nu-ebon-47.vercel.app/#jorge" },
-        "about": "student concept awareness campaign about online scams, written to a fictional brief for the dutch ministerie van justitie en veiligheid: think before you click. made during a brand design specialization at hogeschool utrecht; not commissioned by the ministry.",
-        "genre": "student work",
-        "sourceOrganization": { "@type": "CollegeOrUniversity", "name": "Hogeschool Utrecht" },
+        "about": "concept awareness campaign about online scams, written to a fictional brief for the dutch ministerie van justitie en veiligheid: think before you click. never commissioned by the ministry.",
+        "genre": "concept work",
         "url": "https://portfolio-website-nu-ebon-47.vercel.app/#ministerie"
       }
     ]
@@ -242,8 +269,8 @@
   <main id="content" tabindex="-1">
     <section id="top" class="hero">
       <h1>jorge antolín <span class="h1-role">— creative director & brand strategist</span></h1>
-      <p class="lede">i run creative direction, brand strategy and communication for <strong>liga u</strong> — spain's u22 national basketball league — at the <strong>acb</strong>. i live by the sea in gijón, so this portfolio works like home does: you get in a canoe, you row, you find things.</p>
-      <p class="lede-sub">three islands of liga u work — the league, the campaign that launched it, and the ai video i direct for it. two islands of student concepts from utrecht, labelled as such. no lorem ipsum, no stock handshakes, no clients i never had.</p>
+      <p class="lede">i lead content and communication for <strong>liga u</strong> — spain's u22 national basketball league — at the <strong>acb</strong>: its creative direction, brand strategy, campaigns and community. i live by the sea in gijón, so this portfolio works like home does: you get in a canoe, you row, you find things.</p>
+      <p class="lede-sub">three islands of liga u work — the league, the campaign that launched it, and the ai video i direct for it. two islands of concept work, labelled as such. no lorem ipsum, no stock handshakes, no clients i never had.</p>
       <p class="scroll-hint" aria-hidden="true">or just scroll — the water can wait ↓</p>
     </section>
 
@@ -455,7 +482,7 @@
     <!-- island 4: talens x pantone -->
     <article id="talens-pantone" class="case" aria-labelledby="h-talens-pantone" data-island="talens" data-num="04" style="--dot:#ff5a3c">
       <div class="case-head">
-        <span class="case-tag" style="--tag:#ff5a3c">island 04 · student concept · hogeschool utrecht</span>
+        <span class="case-tag" style="--tag:#ff5a3c">island 04 · concept campaign · never commissioned</span>
         <h2 id="h-talens-pantone">talens x pantone</h2>
         <p class="case-claim">color is art. not a barrier.</p>
       </div>
@@ -466,13 +493,13 @@
           <img src="assets/talens-3.webp" alt="talens x pantone poster: 'colors kill, forget about color' over a black and white photo of migrants by a freight train in the chihuahua desert, framed like a pantone color chip" loading="lazy" width="1000" height="1415">
         </div>
         <div class="case-text">
-          <p>a fictional brief with real homework: the premium end of the art aisle, royal talens x pantone, and no strategy to inherit — so i built one from zero. the closest audience turned out to be young art, fine arts and design students, and i went looking for what worries them beyond the price of a brush: the world they are about to graduate into. the campaign sits exactly where the product's usp meets that worry — color is what talens x pantone sells, and color is also what gets people stopped at a border.</p>
+          <p>a fictional brief, worked like a real one: the premium end of the art aisle, royal talens x pantone, and no strategy to inherit — so i built one from zero. the closest audience turned out to be young art, fine arts and design students, and i went looking for what worries them beyond the price of a brush: the world they are about to graduate into. the campaign sits exactly where the product's usp meets that worry — color is what talens x pantone sells, and color is also what gets people stopped at a border.</p>
           <p>so: two brands that live off color, going black and white on purpose. the campaign takes real border photography — melilla, lampedusa, chihuahua — and strips the color out, because when color means skin, nobody's admiring the palette. the only color left is the pantone chip: <em>color is art. not a barrier.</em></p>
-          <p class="case-honest">student concept, made during my brand design specialization at hogeschool utrecht. royal talens and pantone never commissioned it — the homework was real, the client wasn't.</p>
+          <p class="case-honest">concept work: royal talens and pantone never commissioned it. the brief was fictional — the research, the strategy and the posters are real.</p>
           <ul class="case-meta">
             <li><span>role</span>strategy, concept, art direction, copy</li>
             <li><span>for</span>a fictional brief: royal talens x pantone</li>
-            <li><span>format</span>print / ooh · student work</li>
+            <li><span>format</span>print / ooh · concept work</li>
           </ul>
         </div>
       </div>
@@ -481,7 +508,7 @@
     <!-- island 5: ministerie van justitie -->
     <article id="ministerie" class="case" aria-labelledby="h-ministerie" data-island="ministerie" data-num="05" style="--dot:#2b47d9">
       <div class="case-head">
-        <span class="case-tag" style="--tag:#2b47d9; color:#f6eedd">island 05 · student concept · hogeschool utrecht</span>
+        <span class="case-tag" style="--tag:#2b47d9; color:#f6eedd">island 05 · concept campaign · never commissioned</span>
         <h2 id="h-ministerie">ministerie van justitie</h2>
         <p class="case-claim">un-usual suspects. think before you click.</p>
       </div>
@@ -493,11 +520,11 @@
         </div>
         <div class="case-text">
           <p>online scammers don't look like movie hackers. they look like anyone — even like ruth, 82, asking you to hold her bags. the grandparents under those balaclavas are mine: i photographed them for this campaign, which is the whole point. <em>on the internet, nobody is who they seem</em> — so think before you click.</p>
-          <p class="case-honest">student concept, made during my brand design specialization at hogeschool utrecht, to a fictional brief for the dutch ministerie van justitie en veiligheid. the ministry never commissioned it. my grandparents did sign off on the balaclavas.</p>
+          <p class="case-honest">concept work, written to a fictional brief for the dutch ministerie van justitie en veiligheid — the ministry never commissioned it. my grandparents did sign off on the balaclavas.</p>
           <ul class="case-meta">
             <li><span>role</span>concept, art direction, copy, photography</li>
             <li><span>for</span>a fictional brief: ministerie van justitie en veiligheid</li>
-            <li><span>format</span>print / ooh · student work</li>
+            <li><span>format</span>print / ooh · concept work</li>
           </ul>
         </div>
       </div>
@@ -517,12 +544,13 @@
         </svg>
       </div>
       <h2 id="h-about">about the guy in the canoe</h2>
-      <p>jorge antolín — creative director and brand strategist at the <strong>acb</strong> and <strong>liga u</strong>, spain's u22 national basketball league — where i run communication, strategy and creative: the creative direction of liga u, its brand and communication strategy, and its community management. in spain that job goes by a few names (responsable de comunicación, responsable de contenidos, responsable de liga u) — whichever one brought you here, you found the right guy. yes, all of it. no, i don't sleep much during playoffs.</p>
+      <p>jorge antolín — head of content and communication at <strong>liga u</strong>, spain's u22 national basketball league, at the <strong>acb</strong>. creative director and brand strategist by trade: i run the league's creative direction, its brand and communication strategy, its content and its community management. in spain that job goes by a few names (responsable de comunicación, responsable de contenidos, community manager de la liga u) — whichever one brought you here, you found the right guy. yes, all of it. no, i don't sleep much during playoffs.</p>
       <p>i specialized in <strong>brand design at hogeschool utrecht</strong> (netherlands), and i publish <strong>textball</strong>, my own line of children's books about basketball — because kids should fall in love with the game before the algorithm gets them.</p>
       <p>based in gijón, on spain's northern coast. hence the canoe.</p>
       <div id="social" class="social">
         <a href="https://www.linkedin.com/in/jorge-antolin/" target="_blank" rel="noopener me">linkedin<span class="sr-only"> (opens in a new tab)</span></a>
       </div>
+      <p class="press">in the press: <a href="https://www.reasonwhy.es/actualidad/acb-estrategia-comunicacion-liga-u-campana-capullos" target="_blank" rel="noopener" hreflang="es">reason why on the strategy behind capullos <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab, in spanish)</span></a></p>
       <p class="contact mono">say hi → <a href="mailto:jorgeantolinarribas@gmail.com">jorgeantolinarribas@gmail.com</a></p>
     </section>
   </main>
@@ -536,8 +564,8 @@
   </noscript>
 
   <!-- ?v= must match BUILD in js/main.js — bump both on every js/css deploy -->
-  <script src="js/config.js?v=9.0"></script>
-  <script src="js/main.js?v=9.0"></script>
-  <script src="js/dryland.js?v=9.0" defer></script>
+  <script src="js/config.js?v=9.1"></script>
+  <script src="js/main.js?v=9.1"></script>
+  <script src="js/dryland.js?v=9.1" defer></script>
 </body>
 </html>

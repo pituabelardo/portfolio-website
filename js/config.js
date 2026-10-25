@@ -29,12 +29,12 @@ window.PORTFOLIO_CONFIG = {
      order = importance (liga u first, the main case). the world
      itself only reads positions — seeds and orientation derive from pos, so
      reordering never moves anything. `tag` rides along in the captain's
-     "land ho" so the two student concepts are never mistaken for clients. */
+     "land ho" so the two concept campaigns are never mistaken for clients. */
   ISLANDS: [
     { id: "liga-u-strategy", name: "liga u — strategy", pos: [58, 48], color: 0xffd23f },
     { id: "capullos",  name: "capullos",              pos: [-26, 92],  color: 0x3ec46d, tag: "a liga u campaign" },
     { id: "ai-direction", name: "ai video & art direction", pos: [150, 45], color: 0xa66bff },
-    { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c, tag: "student concept, utrecht" },
-    { id: "ministerie", name: "ministerie van justitie", pos: [108, -96], color: 0x2b47d9, tag: "student concept, utrecht" },
+    { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c, tag: "concept campaign" },
+    { id: "ministerie", name: "ministerie van justitie", pos: [108, -96], color: 0x2b47d9, tag: "concept campaign" },
   ],
 };

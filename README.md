@@ -2,7 +2,7 @@
 
 web 3d navegable: remas en canoa, descubres 5 islas, cada isla abre un case.
 las tres primeras son trabajo real en liga u (la liga, capullos y la dirección
-de vídeo con ia); talens y ministerie son conceptos de estudiante (hogeschool utrecht) y el copy lo dice en cada sitio — mantenlo así.
+de vídeo con ia); talens y ministerie son campañas concepto (brief ficticio, nunca encargadas) y el copy lo dice en cada sitio sin la palabra "student" — mantenlo así (AGENTS §8.11).
 todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, vercel, github pages…).
 
 > para modelos/agentes: lee `AGENTS.md` antes de tocar nada — anatomía de una isla, recetas, presupuesto, harness de verificación y política de deploy.
@@ -107,9 +107,9 @@ de aspecto; cambia lo que lo rodea.
 
 - **seo/compartir**: canonical, og, sitemap y robots apuntan al dominio que SÍ
   responde (el de vercel) — `jorgeantolin.com` está en un aparcamiento de ionos
-  y no servía el og:image, así que las previews no salían. cuando adjuntes el
-  dominio en vercel: buscar-y-reemplazar
-  `portfolio-website-nu-ebon-47.vercel.app` → `jorgeantolin.com` en
+  y (v9.1) NO es de jorge. cuando compres y adjuntes tu dominio en vercel:
+  buscar-y-reemplazar
+  `portfolio-website-nu-ebon-47.vercel.app` → `tu-dominio` en
   `index.html`, `sitemap.xml`, `robots.txt`. og nuevo (`assets/og-v2.jpg`, con
   la tilde de "antolín"), apple-touch-icon, favicon png, `manifest.webmanifest`,
   `404.html`. el sitemap ya no lista `#fragmentos` (google los ignora).
@@ -434,8 +434,8 @@ manteniendo three.js r128 sin build: toda la calidad sale del shading, no de la 
 
 ## otras notas
 - dominio: ahora mismo todo apunta a `https://portfolio-website-nu-ebon-47.vercel.app/` (ver v8.7).
-  cuando `jorgeantolin.com` esté adjuntado en vercel, buscar-y-reemplazar en `index.html`,
-  `sitemap.xml` y `robots.txt`.
+  `jorgeantolin.com` no es de jorge (v9.1). cuando su dominio propio esté adjuntado en vercel,
+  buscar-y-reemplazar en `index.html`, `sitemap.xml` y `robots.txt` (pasos en AGENTS §8.11).
 - imágenes de los cases: `assets/*.webp` (ya optimizadas desde los pdfs originales).
 - la versión "dry land" (contenido html) es a la vez el fallback para móviles flojos/sin webgl
   y la capa que leen buscadores e ias. no la borres.
