@@ -107,10 +107,7 @@ de aspecto; cambia lo que lo rodea.
 
 - **seo/compartir**: canonical, og, sitemap y robots apuntan al dominio que SÍ
   responde (el de vercel) — `jorgeantolin.com` está en un aparcamiento de ionos
-  y (v9.1) NO es de jorge. cuando compres y adjuntes tu dominio en vercel:
-  buscar-y-reemplazar
-  `portfolio-website-nu-ebon-47.vercel.app` → `tu-dominio` en
-  `index.html`, `sitemap.xml`, `robots.txt`. og nuevo (`assets/og-v2.jpg`, con
+  y (v9.1) NO es de jorge. (v9.2) hecho: todo apunta a `https://jorge.eus`. og nuevo (`assets/og-v2.jpg`, con
   la tilde de "antolín"), apple-touch-icon, favicon png, `manifest.webmanifest`,
   `404.html`. el sitemap ya no lista `#fragmentos` (google los ignora).
 - **seguridad**: cabeceras en `vercel.json` (csp, nosniff, referrer-policy,
@@ -433,9 +430,9 @@ manteniendo three.js r128 sin build: toda la calidad sale del shading, no de la 
 - contador de progreso bajo la brújula; al cerrar un case se sugiere la siguiente parada.
 
 ## otras notas
-- dominio: ahora mismo todo apunta a `https://portfolio-website-nu-ebon-47.vercel.app/` (ver v8.7).
-  `jorgeantolin.com` no es de jorge (v9.1). cuando su dominio propio esté adjuntado en vercel,
-  buscar-y-reemplazar en `index.html`, `sitemap.xml` y `robots.txt` (pasos en AGENTS §8.11).
+- dominio: `https://jorge.eus` (v9.2), registrado en dinahosting; los dns se tocan en su panel
+  y apuntan a vercel. el antiguo `portfolio-website-nu-ebon-47.vercel.app` redirige (301) a él.
+  `jorgeantolin.com` no es de jorge. en correos y cv, escribirlo con `https://` delante.
 - imágenes de los cases: `assets/*.webp` (ya optimizadas desde los pdfs originales).
 - la versión "dry land" (contenido html) es a la vez el fallback para móviles flojos/sin webgl
   y la capa que leen buscadores e ias. no la borres.

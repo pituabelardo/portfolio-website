@@ -260,9 +260,9 @@ create such a skill, note its name here so the next model finds it.
   full of client assets that must never enter git history.
 - hosting: vercel project `portfolio-website` (team "38-0's projects"),
   auto-deploys `main` on push. production:
-  https://portfolio-website-nu-ebon-47.vercel.app. index.html, sitemap and
-  robots point at THIS url until jorge buys and attaches his own domain
-  (§8.11 — `jorgeantolin.com` is NOT his).
+  https://jorge.eus (v9.2, registered at dinahosting 25 oct 2026; the old
+  https://portfolio-website-nu-ebon-47.vercel.app 301s to it). index.html,
+  sitemap and robots point at jorge.eus (§8.11 — `jorgeantolin.com` is NOT his).
 - `vercel.json` sets cache headers only (immutable assets, 1-day js/css). no
   rewrites: single page, hash-based deep links.
 - **cache busting (v8.2.1, load-bearing)**: js/css are cached for a day on
@@ -553,17 +553,17 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   `sameAs` = profiles that are verifiably his (today: linkedin only; jorge
   will send more). `image` is still the og illustration — swap for a real
   headshot when jorge sends one.
-- **what doesn't move without a reason**: the vercel origin in canonical/og/
-  sitemap/robots (until his domain lands), `meta description` (written for
+- **what doesn't move without a reason**: the `https://jorge.eus` origin in
+  canonical/og/sitemap/robots, `meta description` (written for
   "jorge antolín" + "liga u" + "comunicación"), the h1. bump `dateModified`
   and `sitemap.xml` `lastmod` whenever the page's text changes.
-- **domain**: `jorgeantolin.com` is registered to someone else (ionos, since
-  13 feb 2025). jorge will buy his own (free on 25 oct 2026:
-  jorgeantolinarribas.com, jorgeantolin.net/.co/.me). when it's attached in
-  vercel: replace the vercel origin in index.html (canonical, og, twitter,
-  every JSON-LD `@id`/url), sitemap.xml, robots.txt; make the vercel.app
-  host 301 to it (vercel → domains → redirect); add the domain property in
-  search console and resubmit the sitemap.
+- **domain**: `jorge.eus` (v9.2), registered at dinahosting on 25 oct 2026;
+  dns lives in dinahosting's panel and points at vercel. `jorgeantolin.com`
+  is registered to someone else (ionos, since 13 feb 2025). the vercel.app
+  host 301s to jorge.eus (vercel → domains). pending on jorge's side: add the
+  domain property in search console and submit the sitemap. in emails/cv write
+  it as `https://jorge.eus` — .eus is unfamiliar and some clients won't
+  autolink the bare name.
 - **checks after any change here**: JSON-LD parses (`python3 -c json.loads`
   on the block), `grep -i "student\|homework\|graduat"` over index.html and
   js/ returns nothing public, and the live page answers 200 to googlebot,
