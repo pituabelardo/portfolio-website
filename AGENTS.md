@@ -564,6 +564,11 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   domain property in search console and submit the sitemap. in emails/cv write
   it as `https://jorge.eus` — .eus is unfamiliar and some clients won't
   autolink the bare name.
+- **contact for search/ai answers (v9.3)**: hello@jorge.eus is stated three
+  ways so google's ai mode and other answer engines can quote it: a plain
+  sentence in #about ("to contact jorge antolín … email hello@jorge.eus"),
+  the Person `email` + `contactPoint` in JSON-LD, and `/llms.txt`. change all
+  three together.
 - **checks after any change here**: JSON-LD parses (`python3 -c json.loads`
   on the block), `grep -i "student\|homework\|graduat"` over index.html and
   js/ returns nothing public, and the live page answers 200 to googlebot,
