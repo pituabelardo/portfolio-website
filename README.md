@@ -91,10 +91,10 @@ formato. lo demás está en `<template class="case-draft">` (míralo con
   de la isla es un póster genérico dibujado en canvas.
 
 ### (d) email de contacto
-ahora `jorgeantolinarribas@gmail.com` (v8.7.3, sustituye al del acb). cuando
-tengas el correo del dominio: buscar-y-reemplazar en `index.html` (contacto,
-"ask for the deck", JSON-LD `email`) y `js/world.js` (chip de la isla #6 y el
-último toast del capitán), y bump de `?v=` + `BUILD`.
+`hello@jorge.eus` (v9.3; antes el gmail, y antes el del acb). cuenta gratis de
+dinahosting (100 mb), reenvía a jorgeantolinarribas@gmail.com. si cambia: está en
+`index.html` (contacto, "ask for the deck", JSON-LD `email`) y `js/world.js` (chip
+de la isla #6 y el último toast del capitán), y bump de `?v=` + `BUILD`.
 
 ### (c) redes sociales
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).
@@ -271,7 +271,7 @@ y gijón deja de ser un decorado para ser casa.
   (girado fuera de la ruta de aproximación).
 - **los bordes venden**: al norte, este y oeste, una boya-cartel de madera
   ("island #5 — plot for sale") + toast del capitán con copy propio por rumbo
-  + chip `mailto:jorgeantolinarribas@gmail.com` (asunto "let's build island #5") estilo
+  + chip `mailto:hello@jorge.eus` (asunto "let's build island #5") estilo
   dock-btn. el borde sur es de gijón: morriña, cero marketing.
 - **el menú son las profundidades**: el fondo del contenido es una columna
   de agua cocida a la altura del documento (`#depth-bg`, aria-hidden):
