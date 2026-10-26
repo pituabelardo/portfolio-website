@@ -93,7 +93,14 @@ footer .go b { color: var(--coral-ink); }
 .pitch { max-width: 118mm; margin: 6mm auto 0; font-size: 11pt; line-height: 1.5; text-wrap: balance; }
 .p2 .cta { margin-top: 9mm; font-size: 20pt; padding: 2mm 6mm 2.6mm; box-shadow: 1.2mm 1.2mm 0 var(--ink); }
 .p2 .cta span { font-size: 10.5pt; }
-.qr { margin: 12mm auto 0; width: 24mm; font-family: "Space Mono", monospace; font-size: 6.6pt; color: var(--mute); }
+.extras { margin: 12mm auto 0; display: flex; justify-content: center; align-items: flex-start; gap: 9mm; }
+.film { display: block; width: 58mm; font-family: "Space Mono", monospace; font-size: 7pt; color: var(--ink); }
+.film .thumb { position: relative; display: block; border: .5mm solid var(--ink); border-radius: 2mm; overflow: hidden; box-shadow: 1mm 1mm 0 var(--ink); }
+.film img { display: block; width: 100%; }
+.film i { position: absolute; left: 50%; top: 50%; width: 11mm; height: 11mm; margin: -5.5mm 0 0 -5.5mm; border-radius: 50%; background: var(--coral); border: .5mm solid var(--ink); }
+.film i::after { content: ""; position: absolute; left: 4.2mm; top: 3.1mm; border-left: 3.6mm solid var(--ink); border-top: 2.2mm solid transparent; border-bottom: 2.2mm solid transparent; }
+.film .cap { display: block; margin-top: 2.4mm; font-weight: 700; }
+.qr { margin: 0; width: 24mm; font-family: "Space Mono", monospace; font-size: 6.6pt; color: var(--mute); }
 .qr img { width: 24mm; height: 24mm; display: block; padding: 1.8mm; background: #fff; border: .4mm solid var(--ink); border-radius: 1.6mm; margin-bottom: 1.4mm; }
 .sign { position: absolute; left: 14mm; right: 14mm; bottom: 18mm; text-align: center; }
 .sign .avatar { width: 16mm; height: 16mm; border-width: .8mm; margin: 0 auto 3mm; }
