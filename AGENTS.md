@@ -531,9 +531,15 @@ the head, the JSON-LD, the hero, the about section or any case tag.
 - **the title, said honestly**. his job title is **head of content &
   communication, liga u** (linkedin: "responsable de contenidos y
   comunicación liga u"; the press: "responsable de comunicación de liga u en
-  acb", reason why, 29 jul 2026). "creative director & brand strategist" is
-  the craft/positioning (h1, `<title>`, og, `hasOccupation`), never the
-  `jobTitle`. never inflate (not "head of brand", not "director of").
+  acb", reason why, 29 jul 2026). (v9.4, jorge's ok after the jury exam —
+  three different titles across cv/site/linkedin read as inflation) ONE
+  title everywhere: h1, `<title>`, og, manifest, the brand pill and the cv
+  all say "head of content & communication". "creative director & brand
+  strategist" survives only as craft (`hasOccupation`, the about's "by
+  trade"). never inflate (not "head of brand", not "director of").
+- **where he is**: based in madrid (acb), raised in gijón — the site says
+  both ("grew up by the sea in gijón", "based in madrid, raised in gijón");
+  JSON-LD `homeLocation` is madrid. keep cv, site and linkedin in sync.
 - **query vocabulary lives in visible text**: the about paragraph names the
   spanish job names people search ("responsable de comunicación",
   "responsable de contenidos", "community manager de la liga u") and the
@@ -606,6 +612,21 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   never also leaves the sea. in the sea it pauses the world only if it was
   running (and restarts only what it paused); on ios `#stage` hides while it's
   up (the v8.3 compositing lesson). no-js fallback: the pill links to #about.
+- (v9.4) **jury exam**: 8 recruiter personas reviewed cv + site (report in
+  jorge's folder, not the repo). acted on: sourced league claim (Eurohoops
+  2026-27 ranks Liga Endesa europe's no. 1 domestic league — never "second
+  after the nba", no source says that), the internship on its own line,
+  cities instead of coordinates, a reporting line + stakeholders bullet, a
+  plain one-column ats version (`cv-src/ats.{en,es}.html` →
+  `/cv/*-plain.pdf`, for job portals), one title everywhere, and the
+  dry-land reveal fix below.
+- **dry-land reveal (v9.4)**: `.case/.about` start at opacity 0 and get
+  `.inview` from an IntersectionObserver. a fast fling or a #hash jump could
+  carry a case across the viewport between two samples and leave it
+  invisible; main.js now also reveals anything scrolled past, plus a
+  passive rAF scroll sweep. note for harnesses: full-page screenshots don't
+  scroll, so they still show the unrevealed cases as empty water — that is
+  the capture, not the site.
 - contact data lives in three places + the panel: about/JSON-LD/llms.txt (§8.11)
   and `cfg.CONTACT`. the phone (+34 684 64 10 01) is public by jorge's choice.
 

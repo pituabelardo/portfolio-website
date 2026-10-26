@@ -108,6 +108,10 @@ ejecuta `cv-src/build.sh` → genera `cv/jorge-antolin-cv-en.pdf` y `-es.pdf`
 está llena al milímetro: mira cada página después de cambiar texto. los pdf
 viven en `/cv/` y no en `/assets/` (assets se cachea un año). `cv-src/` no se
 publica. cifras: solo las que des tú, con su fuente (AGENTS §8.12).
+además hay una versión plana (`cv-src/ats.en.html` / `ats.es.html` →
+`cv/jorge-antolin-cv-{en,es}-plain.pdf`): una columna, sin diseño, para
+subirla a portales tipo workday/greenhouse. si cambias un dato, cámbialo en
+los cuatro html.
 
 ### (c) redes sociales
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).

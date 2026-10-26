@@ -15,3 +15,11 @@ for L in ${LANGS:-en es}; do
     "file://$PWD/cv.$L.html" 2>/dev/null
   echo "built cv/jorge-antolin-cv-$L.pdf"
 done
+# plain one-column versions for job portals (workday, greenhouse…)
+for L in ${LANGS:-en es}; do
+  "$CHROME" --headless=new --disable-gpu --no-pdf-header-footer \
+    --virtual-time-budget=4000 \
+    --print-to-pdf="$PWD/../cv/jorge-antolin-cv-$L-plain.pdf" \
+    "file://$PWD/ats.$L.html" 2>/dev/null
+  echo "built cv/jorge-antolin-cv-$L-plain.pdf"
+done

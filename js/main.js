@@ -115,17 +115,40 @@
     }, 500);
   }
 
-  /* scroll reveals on dry land */
+  /* scroll reveals on dry land.
+     v9.4: an element is revealed once it reaches the viewport OR has been
+     scrolled past — a fast fling or a #hash jump can carry a case across the
+     viewport between two observer samples, and it used to stay invisible
+     (opacity 0) until scrolled back. a passive, rAF-throttled sweep catches
+     what the observer misses. */
   if ("IntersectionObserver" in window) {
+    var unrevealed = Array.prototype.slice.call(document.querySelectorAll(".case, .about"));
+    var reveal = function (el) {
+      el.classList.add("inview");
+      io.unobserve(el);
+      var i = unrevealed.indexOf(el);
+      if (i >= 0) unrevealed.splice(i, 1);
+    };
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (en.isIntersecting) {
-          en.target.classList.add("inview");
-          io.unobserve(en.target);
-        }
+        if (en.isIntersecting || en.boundingClientRect.top < 0) reveal(en.target);
       });
     }, { threshold: 0.12 });
-    document.querySelectorAll(".case, .about").forEach(function (el) { io.observe(el); });
+    unrevealed.forEach(function (el) { io.observe(el); });
+    var sweeping = false;
+    var sweep = function () {
+      sweeping = false;
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      unrevealed.slice().forEach(function (el) {
+        if (el.getBoundingClientRect().top < vh) reveal(el);
+      });
+      if (!unrevealed.length) window.removeEventListener("scroll", onRevealScroll);
+    };
+    var onRevealScroll = function () {
+      if (!sweeping) { sweeping = true; requestAnimationFrame(sweep); }
+    };
+    window.addEventListener("scroll", onRevealScroll, { passive: true });
+    window.addEventListener("hashchange", onRevealScroll);
   } else {
     document.querySelectorAll(".case, .about").forEach(function (el) { el.classList.add("inview"); });
   }
