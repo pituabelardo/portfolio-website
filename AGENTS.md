@@ -615,7 +615,8 @@ the head, the JSON-LD, the hero, the about section or any case tag.
 - (v9.4) **jury exam**: 8 recruiter personas reviewed cv + site (report in
   jorge's folder, not the repo). acted on: sourced league claim (Eurohoops
   2026-27 ranks Liga Endesa europe's no. 1 domestic league — never "second
-  after the nba", no source says that), the internship on its own line,
+  after the nba", no source says that), the jun–sep 2025 acb internship is
+  NOT on the cv (jorge's call; the head role starts sep 2025),
   cities instead of coordinates, a reporting line + stakeholders bullet, a
   plain one-column ats version (`cv-src/ats.{en,es}.html` →
   `/cv/*-plain.pdf`, for job portals), one title everywhere, and the
