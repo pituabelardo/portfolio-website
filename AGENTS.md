@@ -592,7 +592,8 @@ the head, the JSON-LD, the hero, the about section or any case tag.
 - concept "bitácora" (logbook), approved by jorge: page 1 = the cv (route of
   legs with coordinates, a 3-stat strip drawn to scale by area — capullos is a
   unit chart: 328 dots × €100 + an area-true coral speck for the €11), page 2 =
-  one centred call to action to jorge.eus (+ qr). the avatar is a render of the
+  one centred call to action to jorge.eus (+ qr and the linked capullos
+  case film, en/es cut per language). the avatar is a render of the
   site's own low-poly paddler (`cv-src/avatar.jpg`), not the flat svg.
 - **every figure is jorge's, sourced** (season 2025-26 panels + the public
   ligau.com note); he ok'd the internal ones (85M ig+tiktok views, er 3.69% vs
@@ -615,8 +616,10 @@ the head, the JSON-LD, the hero, the about section or any case tag.
 - (v9.4) **jury exam**: 8 recruiter personas reviewed cv + site (report in
   jorge's folder, not the repo). acted on: sourced league claim (Eurohoops
   2026-27 ranks Liga Endesa europe's no. 1 domestic league — never "second
-  after the nba", no source says that), the jun–sep 2025 acb internship is
-  NOT on the cv (jorge's call; the head role starts sep 2025),
+  after the nba", no source says that), the acb block runs "jun 2025 –
+  present" with "joined the acb communication department in jun 2025" and
+  the head title "since sep 2025" — the words intern/prácticas never appear
+  (jorge's call),
   cities instead of coordinates, a reporting line + stakeholders bullet, a
   plain one-column ats version (`cv-src/ats.{en,es}.html` →
   `/cv/*-plain.pdf`, for job portals), one title everywhere, and the
