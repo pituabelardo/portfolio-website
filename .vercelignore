@@ -6,3 +6,6 @@ CLAUDE.md
 PROMPT-*.md
 *.md
 .tmp-gen/
+
+# cv source (cv-src/build.sh → /cv/*.pdf) never ships
+cv-src/

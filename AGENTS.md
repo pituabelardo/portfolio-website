@@ -575,6 +575,40 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   gptbot, perplexitybot and claudebot user agents (vercel firewall/bot
   settings must never block them).
 
+## 8.12 · v9.4 notes — the cv and the contact panel (26 oct 2026)
+
+- **the cv** is two pdfs, `/cv/jorge-antolin-cv-en.pdf` and `-es.pdf`, built
+  from `cv-src/` (`cv.{en,es}.html` + `cv.css`, static ttfs in `cv-src/fonts`
+  — variable fonts print as type 3, worse for ats) by `cv-src/build.sh`
+  (headless chrome → print to pdf, no network). `cv-src/` never ships
+  (`.vercelignore`). **not under `/assets/`**: that path is cached immutable
+  for a year and the cv will change; `/cv/` gets vercel's default revalidation.
+- concept "bitácora" (logbook), approved by jorge: page 1 = the cv (route of
+  legs with coordinates, a 3-stat strip drawn to scale by area — capullos is a
+  unit chart: 328 dots × €100 + an area-true coral speck for the €11), page 2 =
+  one centred call to action to jorge.eus (+ qr). the avatar is a render of the
+  site's own low-poly paddler (`cv-src/avatar.jpg`), not the flat svg.
+- **every figure is jorge's, sourced** (season 2025-26 panels + the public
+  ligau.com note); he ok'd the internal ones (85M ig+tiktok views, er 3.69% vs
+  rival iq's 1.3% for sports teams). never add a number he hasn't given. the
+  cv dates education-free on purpose (same "never student" spirit as §8.11),
+  but does carry experience dates (ats needs them).
+- ats rules for any edit: real text, dom order = reading order, standard
+  section names, month-year dates. after building, `pdftotext` both files and
+  read them, and LOOK at every page (pdftoppm) — page 1 is full to the mm.
+- **the contact panel**: the topbar pill ("jorge antolín" + a coral "say hi",
+  "hi" ≤420px; the role text hides ≤1040px to make room) opens `#contact-panel`,
+  built in `js/main.js` from `cfg.CONTACT` (`js/config.js`: email, phone,
+  linkedin, cv links). it is created BEFORE the webgl capability gate, so it
+  works in the sea, on dry land and with no webgl. same dialog contract as the
+  cases: role=dialog + aria-modal, focus to the close button and back to the
+  pill, tab trapped, escape closes — via a capture-phase listener, so escape
+  never also leaves the sea. in the sea it pauses the world only if it was
+  running (and restarts only what it paused); on ios `#stage` hides while it's
+  up (the v8.3 compositing lesson). no-js fallback: the pill links to #about.
+- contact data lives in three places + the panel: about/JSON-LD/llms.txt (§8.11)
+  and `cfg.CONTACT`. the phone (+34 684 64 10 01) is public by jorge's choice.
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts

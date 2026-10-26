@@ -25,6 +25,19 @@ window.PORTFOLIO_CONFIG = {
     // { label: "instagram", url: "https://www.instagram.com/..." },
   ],
 
+  /* (d) contact panel — opens from the "jorge antolín" pill in the topbar.
+     keep email in sync with index.html (about + JSON-LD) and /llms.txt.
+     the cv pdfs are built by cv-src/build.sh into /cv/ (README (f)). */
+  CONTACT: {
+    email: "hello@jorge.eus",
+    phone: "+34 684 64 10 01",
+    linkedin: "https://www.linkedin.com/in/jorge-antolin/",
+    cv: [
+      { lang: "en", label: "english", href: "/cv/jorge-antolin-cv-en.pdf" },
+      { lang: "es", label: "español", href: "/cv/jorge-antolin-cv-es.pdf" },
+    ],
+  },
+
   /* islands in the 3d world: position [x, z], color theme, dom id.
      order = importance (liga u first, the main case). the world
      itself only reads positions — seeds and orientation derive from pos, so

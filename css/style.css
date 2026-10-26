@@ -1633,6 +1633,115 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
 .case-text, .case-head h2 { overflow-wrap: anywhere; }
 .case-text p, .about p { hyphens: manual; }
 
+/* ---------- v9.4 · contact panel (main.js, opens from the brand pill) ----------
+   same paint rules as the cases: the open state IS the final state, the
+   entry animation rides .surfacing on a double rAF, and on ios the webgl
+   layer steps out while the card is up (the world is paused anyway). */
+.brand { white-space: nowrap; }
+@media (max-width: 1040px) { .brand .role { display: none; } }   /* room for "say hi" */
+.brand-hi {
+  display: inline-block;
+  margin-left: 9px;
+  padding: 1px 8px 2px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  vertical-align: 2px;
+}
+/* phones: "say hi" → "hi", so the sea toggle keeps its one line */
+@media (max-width: 420px) {
+  .brand-hi { font-size: 0; margin-left: 7px; padding: 1px 7px 2px; }
+  .brand-hi::after { content: "hi"; font-size: .68rem; }
+}
+#contact-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+#contact-panel[hidden] { display: none; }
+.cp-backdrop { position: absolute; inset: 0; background: rgba(10, 18, 48, .58); }
+.cp-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--cream);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 24px 22px 22px;
+  transform: translateZ(0);
+}
+.cp-card.surfacing { animation: surface .42s cubic-bezier(.2, .9, .3, 1.2); }
+.cp-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--coral);
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.cp-head { display: flex; gap: 14px; align-items: center; padding-right: 46px; }
+.cp-avatar { width: 72px; height: 72px; flex: none; border-radius: 50%; border: 3px solid var(--ink); }
+#cp-title { font-family: var(--font-display); font-weight: 400; font-size: 2.3rem; line-height: 1; }
+.cp-sub { margin-top: 5px; font-size: .88rem; line-height: 1.4; opacity: .8; }
+.cp-list { list-style: none; margin-top: 18px; border-top: 2px solid var(--ink); }
+.cp-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 2px;
+  border-bottom: 1.5px dashed rgba(20, 18, 15, .3);
+}
+.cp-k { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; opacity: .7; }
+.cp-list a { font-family: var(--font-mono); font-size: .92rem; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; text-align: right; }
+@media (hover: hover) { .cp-list a:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.cp-cvk { margin-top: 18px; }
+.cp-cv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.cp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 10px 12px;
+  background: var(--coral);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform .15s, box-shadow .15s;
+}
+@media (hover: hover) { .cp-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); } }
+.cp-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.cp-close:focus-visible, .cp-btn:focus-visible { outline: 3px solid var(--sea); outline-offset: 3px; }
+@supports (-webkit-touch-callout: none) {
+  body.mode-sea.contact-open #stage { visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-card.surfacing { animation: none; }
+  .cp-btn { transition: none; }
+}
+
 /* forced-colors (windows high contrast): borders carry the design */
 @media (forced-colors: active) {
   .chip, .dock, .lang-chip, .yt-facade, .pillar { border: 2px solid CanvasText; }
@@ -1642,7 +1751,8 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
 /* print / save-as-pdf: a recruiter can print the work, no sea required */
 @media print {
   #stage, #hud, #loader, #title-card, #controls-card, #topbar, #flotsam, #depth-bg,
-  #sea-veil, .marquee, .skip-link, .stamp, .hero-field, .close-case, .video-langs { display: none !important; }
+  #sea-veil, .marquee, .skip-link, .stamp, .hero-field, .close-case, .video-langs,
+  #contact-panel, .brand-hi { display: none !important; }
   html, body { background: #fff !important; }
   body.js .case, body.js .about { opacity: 1 !important; transform: none !important; }
   body.js .about, body.js .about h2, body.js footer, body.js .about .contact a { color: #000 !important; }

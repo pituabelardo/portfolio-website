@@ -90,11 +90,24 @@ formato. lo demás está en `<template class="case-draft">` (míralo con
   `CreativeWork` "ai direction". el mundo 3d no se toca: la pantalla 9:16
   de la isla es un póster genérico dibujado en canvas.
 
-### (d) email de contacto
+### (d) email de contacto y panel de contacto
 `hello@jorge.eus` (v9.3; antes el gmail, y antes el del acb). cuenta gratis de
 dinahosting (100 mb), reenvía a jorgeantolinarribas@gmail.com. si cambia: está en
-`index.html` (contacto, "ask for the deck", JSON-LD `email`) y `js/world.js` (chip
-de la isla #6 y el último toast del capitán), y bump de `?v=` + `BUILD`.
+`index.html` (contacto, "ask for the deck", JSON-LD `email`), `js/world.js` (chip
+de la isla #6 y el último toast del capitán), `/llms.txt` y `js/config.js` →
+`CONTACT`, y bump de `?v=` + `BUILD`.
+
+(v9.4) tocar "jorge antolín" arriba a la izquierda abre el panel de contacto:
+email, teléfono, linkedin y los dos cv. todo sale de `js/config.js` → `CONTACT`
+(cambia ahí el teléfono o los enlaces; el panel se monta solo).
+
+### (f) el cv (pdf en inglés y en español)
+fuente en `cv-src/` (`cv.en.html`, `cv.es.html`, `cv.css`). edita el html y
+ejecuta `cv-src/build.sh` → genera `cv/jorge-antolin-cv-en.pdf` y `-es.pdf`
+(chrome en modo headless; las fuentes van dentro de `cv-src/fonts`). la página 1
+está llena al milímetro: mira cada página después de cambiar texto. los pdf
+viven en `/cv/` y no en `/assets/` (assets se cachea un año). `cv-src/` no se
+publica. cifras: solo las que des tú, con su fuente (AGENTS §8.12).
 
 ### (c) redes sociales
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).

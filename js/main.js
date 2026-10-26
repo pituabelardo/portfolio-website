@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "9.2";
+  var BUILD = "9.4";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -288,6 +288,108 @@
       a.rel = "noopener";
       social.appendChild(a);
     });
+  }
+
+  /* ---------- v9.4 · contact panel ----------
+     the "jorge antolín" pill opens a small dialog: email, phone, linkedin
+     and the two cv pdfs (/cv/, built by cv-src/build.sh). it lives here,
+     before the capability gate, so it works in the sea, on dry land and
+     with no webgl at all. no-js: the pill is a plain link to #about. same
+     dialog contract as the cases: role=dialog, focus in on open and back
+     on close, tab trapped, escape closes (and never leaves the sea). */
+  var contact = cfg.CONTACT;
+  var brand = document.querySelector("#topbar .brand");
+  var contactEl = null, contactLast = null, contactPausedWorld = false;
+  if (contact && brand) {
+    var tel = String(contact.phone || "").replace(/[^+\d]/g, "");
+    var cvLinks = (contact.cv || []).map(function (c) {
+      return '<a class="cp-btn" href="' + c.href + '" download hreflang="' + c.lang + '">' +
+        '<span class="sr-only">download the cv in </span>' + c.label + ' <span aria-hidden="true">↓</span></a>';
+    }).join("");
+    contactEl = document.createElement("div");
+    contactEl.id = "contact-panel";
+    contactEl.hidden = true;
+    contactEl.innerHTML =
+      '<div class="cp-backdrop" data-close></div>' +
+      '<div class="cp-card" role="dialog" aria-modal="true" aria-labelledby="cp-title">' +
+        '<button type="button" class="cp-close" data-close aria-label="close contact">×</button>' +
+        '<div class="cp-head"><img class="cp-avatar" src="assets/avatar-canoe.webp" alt="" width="72" height="72">' +
+          '<div><h2 id="cp-title">let\'s talk.</h2>' +
+          '<p class="cp-sub">work, collaborations, press, or anything about liga u — in english or spanish.</p></div></div>' +
+        '<ul class="cp-list">' +
+          '<li><span class="cp-k">email</span><a href="mailto:' + contact.email + '">' + contact.email + '</a></li>' +
+          (tel ? '<li><span class="cp-k">phone</span><a href="tel:' + tel + '">' + contact.phone + '</a></li>' : "") +
+          '<li><span class="cp-k">linkedin</span><a href="' + contact.linkedin + '" target="_blank" rel="noopener me">jorge-antolin <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li>' +
+        '</ul>' +
+        (cvLinks ? '<p class="cp-k cp-cvk">cv · pdf</p><div class="cp-cv">' + cvLinks + '</div>' : "") +
+      '</div>';
+    body.appendChild(contactEl);
+
+    brand.setAttribute("aria-haspopup", "dialog");
+    brand.setAttribute("aria-controls", "contact-panel");
+    var hi = document.createElement("span");
+    hi.className = "brand-hi";
+    hi.setAttribute("aria-hidden", "true");
+    hi.textContent = "say hi";
+    brand.appendChild(hi);
+    brand.addEventListener("click", function (e) { e.preventDefault(); openContact(); });
+    contactEl.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("[data-close]")) closeContact();
+    });
+
+    /* capture phase: runs before the sea's escape (which would leave the
+       sea) and before world.js reads the keys */
+    document.addEventListener("keydown", function (e) {
+      if (contactEl.hidden) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        closeContact();
+      } else if (e.key === "Tab") {
+        var card = contactEl.querySelector(".cp-card");
+        var nodes = card.querySelectorAll("a[href], button");
+        var first = nodes[0], last = nodes[nodes.length - 1];
+        var active = document.activeElement;
+        if (!card.contains(active)) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+      }
+    }, true);
+  }
+
+  function openContact() {
+    if (!contactEl || !contactEl.hidden) return;
+    contactLast = document.activeElement;
+    contactEl.hidden = false;
+    body.classList.add("contact-open");
+    /* sea: freeze the world under the card (and its keyboard), unless it
+       was already paused — then it's not ours to restart on close */
+    contactPausedWorld = false;
+    var W = window.WORLD;
+    if (body.classList.contains("mode-sea") && W && W.setPaused && W.getState && !W.getState().paused) {
+      W.setPaused(true);
+      contactPausedWorld = true;
+    }
+    /* entry animation only after display has committed (ios lesson: the
+       card's visibility never depends on an animation running) */
+    var card = contactEl.querySelector(".cp-card");
+    card.classList.remove("surfacing");
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { if (!contactEl.hidden) card.classList.add("surfacing"); });
+    });
+    var closer = contactEl.querySelector(".cp-close");
+    try { closer.focus({ preventScroll: true }); } catch (e) { closer.focus(); }
+  }
+  function closeContact() {
+    if (!contactEl || contactEl.hidden) return;
+    contactEl.hidden = true;
+    body.classList.remove("contact-open");
+    if (contactPausedWorld && window.WORLD) window.WORLD.setPaused(false);
+    contactPausedWorld = false;
+    if (contactLast && contactLast.focus && document.contains(contactLast) && contactLast.offsetParent !== null) {
+      try { contactLast.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+    }
+    contactLast = null;
   }
 
   /* ---------- capability detection ---------- */
