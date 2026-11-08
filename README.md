@@ -1,6 +1,6 @@
 # portfolio — jorge antolín
 
-web 3d navegable: remas en canoa, descubres 5 islas, cada isla abre un case.
+web 3d navegable: remas en canoa, descubres 6 islas, cada isla abre un case.
 las tres primeras son trabajo real en liga u (la liga, capullos y la dirección
 de vídeo con ia); talens y ministerie son campañas concepto (brief ficticio, nunca encargadas) y el copy lo dice en cada sitio sin la palabra "student" — mantenlo así (AGENTS §8.11).
 todo estático — sirve la carpeta tal cual en cualquier hosting (netlify, vercel, github pages…).
@@ -112,6 +112,50 @@ además hay una versión plana (`cv-src/ats.en.html` / `ats.es.html` →
 `cv/jorge-antolin-cv-{en,es}-plain.pdf`): una columna, sin diseño, para
 subirla a portales tipo workday/greenhouse. si cambias un dato, cámbialo en
 los cuatro html.
+
+### (g) isla 02 · brand partnerships — los pitches (v10, versión "nba")
+`index.html` → `<article id="brand-partnerships">` (el resumen, dos tarjetas) y
+una página larga por pitch: `pitches/chupa-chups-liga-u.html` y
+`pitches/el-ladrillazo.html` (se sirven como `/pitches/chupa-chups-liga-u` y
+`/pitches/el-ladrillazo`). imágenes en `assets/pitches/` (sacadas de los pdfs
+de los decks). estilos en `css/pitch.css`, lightbox y progreso en `js/pitch.js`.
+
+- las páginas de pitch llevan `noindex` (meta + cabecera `X-Robots-Tag` en
+  `vercel.json`): se leen con el enlace, pero no salen en google, porque las
+  dos propuestas siguen vivas en el pipeline comercial de la acb.
+- en el mar es la isla del micro-piruleta y el ladrillo bajo el foco, justo
+  delante de la salida (0, -45). arriba hay un atajo "the pitches" que abre el
+  case encima del mar sin tener que remar.
+- para añadir un tercer pitch: copia un `<article class="pitch">` dentro de
+  `.pitches` y una de las páginas de `pitches/`.
+
+### (h) visitas: quién ha entrado (v9.5)
+la web cuenta visitas de forma anónima (país/ciudad por la red, nunca la ip;
+sin cookies): `js/track.js` → `api/v.js` (función de vercel) → supabase
+(proyecto `38-0`, esquema `portfolio`, tablas `sessions` y `events`).
+
+- **verlas**: `https://jorge.eus/stats` con la clave privada (te la paso
+  aparte; NO está en el repo — en la base de datos solo vive su hash). marca
+  en rojo lo que viene de ee. uu.; dice cuánto tiempo estuvo cada visita con
+  la pestaña en uso, hasta dónde bajó, qué cases y pitches abrió, si
+  descargó el cv o pulsó el email.
+- **tus propias visitas**: abre una vez `https://jorge.eus/?me=1` en cada
+  dispositivo tuyo y quedan marcadas como "you" (y ocultas por defecto).
+  `?me=0` lo deshace. abrir `/stats` ya marca ese dispositivo.
+- para cambiar la clave: `insert into portfolio.keys(hash) values
+  (encode(extensions.digest('NUEVA-CLAVE','sha256'),'hex'));` y borra la fila vieja.
+
+### (i) volver a la versión anterior (antes de la candidatura nba)
+la web de antes está guardada en la etiqueta git `portfolio-base-v9.4`. todo
+lo de la candidatura vive en la rama `nba-creative-strategist`. para volver:
+
+```bash
+git push --force-with-lease origin portfolio-base-v9.4:main
+```
+
+eso vuelve a publicar exactamente la v9.4 (sin isla 02, sin pitches, sin
+contador de visitas). si quieres conservar el contador de visitas, mejor
+`git revert` solo de los commits de contenido (v10.x) y deja el de v9.5.
 
 ### (c) redes sociales
 `js/config.js` → `SOCIAL_LINKS` (descomenta y rellena).

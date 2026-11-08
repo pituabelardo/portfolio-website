@@ -8,7 +8,7 @@
   /* v8.2.1 · BUILD stamps every js/css url (?v=) so browsers can cache hard
      but can never serve a stale bundle after a deploy. bump it on EVERY
      deploy that touches js or css (index.html tags + this constant). */
-  var BUILD = "9.5";
+  var BUILD = "10.0";
 
   var cfg = window.PORTFOLIO_CONFIG || {};
   var body = document.body;
@@ -549,6 +549,29 @@
   }
   window.openCase = openCase;
   window.closeCase = closeCase;
+
+  /* v10 · "the pitches" (topbar) and the hero's start-here doors. on dry
+     land they're plain anchors; in the sea the case surfaces over the water
+     right where you are — no rowing required (a recruiter in a hurry
+     shouldn't have to learn to paddle). while the sea is still loading,
+     they take the dry-land way out instead. */
+  document.querySelectorAll("#pitches-chip, .start-here a").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      if (!body.classList.contains("mode-sea")) return;
+      var id = (a.getAttribute("href") || "").slice(1);
+      var target = id && document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      if (e.detail) a.blur();
+      if (!worldReady) {
+        abandonLoad();
+        requestAnimationFrame(function () { target.scrollIntoView(); });
+        return;
+      }
+      if (diving) return;
+      openCase(id);
+    });
+  });
 
   /* v8.7: Tab never leaves an open case card (focus trap, wraps both ways) */
   document.addEventListener("keydown", function (e) {

@@ -436,6 +436,8 @@ body:not(.mode-sea) #hud { display: none; }
   margin-left: auto;
   margin-right: auto;
 }
+.controls-alt + .controls-alt { margin-top: 6px; opacity: .8; }
+.controls-alt b { color: #ff8cc0; font-weight: 700; }
 .touch-icon {
   width: 54px;
   height: 54px;
@@ -843,7 +845,7 @@ h1 {
   margin-top: .5em;
 }
 .lede { font-size: clamp(1.05rem, 2.4vw, 1.35rem); max-width: 46ch; margin-top: 1.4em; }
-.lede-sub { font-size: clamp(1rem, 2vw, 1.15rem); margin-top: .8em; color: var(--sea); font-weight: 600; }
+.lede-sub { font-size: clamp(1rem, 2vw, 1.15rem); margin-top: 1.2em; color: var(--sea); font-weight: 600; max-width: 62ch; }
 .scroll-hint { margin-top: 3em; font-family: var(--font-mono); font-size: .8rem; opacity: .74; }
 
 /* ---------- marquee ---------- */
@@ -1741,6 +1743,171 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .cp-card.surfacing { animation: none; }
   .cp-btn { transition: none; }
+}
+
+/* ---------- v10 · start here (hero) ----------
+   three doors for a visitor in a hurry, the pitches first. same card
+   language as the cases: ink border, hard offset shadow, anton title. */
+.start-here { margin-top: 1.6em; max-width: 62rem; }
+.start-k { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; color: var(--coral-ink); margin-bottom: .6em; }
+.start-here ol {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+.start-here a {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+  padding: 12px 16px 14px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: #fffdf6;
+  box-shadow: 4px 4px 0 var(--ink);
+  text-decoration: none;
+  transition: transform .15s, box-shadow .15s;
+}
+.start-here li:first-child a { background: #ff5fa2; }
+@media (hover: hover) { .start-here a:hover { transform: translate(-2px, -2px) rotate(-.4deg); box-shadow: 6px 6px 0 var(--ink); } }
+.start-here a:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+.start-here a:focus-visible { outline: 3px solid var(--sea); outline-offset: 3px; }
+.sh-n { font-family: var(--font-mono); font-size: .7rem; opacity: .7; }
+.sh-t { font-family: var(--font-display); font-size: clamp(1.45rem, 3.4vw, 1.8rem); line-height: 1.05; }
+.sh-d { font-size: .9rem; line-height: 1.35; }
+
+/* ---------- v10 · topbar shortcut to the pitches ----------
+   works in the sea too: main.js opens the case over the water instead of
+   following the anchor. phones stack it under the sea toggle. */
+#topbar nav { display: flex; align-items: center; gap: 8px; }
+.pitches-chip { text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+.pitches-chip::before {
+  content: "";
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #ff5fa2;
+  box-shadow: 0 0 0 2px rgba(255, 95, 162, .35);
+}
+@media (max-width: 640px) {
+  #topbar { align-items: flex-start; }
+  #topbar nav { flex-direction: column; align-items: flex-end; }
+}
+body.diving .pitches-chip, body.boarding .pitches-chip { visibility: hidden; }
+
+/* ---------- v10 · island 02, brand partnerships ---------- */
+.pitches { display: grid; gap: 34px; }
+.pitch {
+  --pitch-ink: var(--coral-ink);
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  border-top: 3px solid var(--ink);
+  padding-top: 24px;
+}
+.pitch[aria-labelledby="h-pitch-lz"] { --pitch-ink: #2238b8; --pitch-text: var(--cream); }
+@media (min-width: 900px) {
+  .pitch { grid-template-columns: minmax(260px, 40%) minmax(0, 1fr); align-items: start; }
+  .pitch-media { position: sticky; top: 84px; }
+}
+/* in the sea the card scrolls inside itself: sticky would pin to nothing useful */
+body.mode-sea .pitch-media { position: static; }
+.pitch-media { display: block; text-decoration: none; }
+.pitch-media img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  transition: transform .25s;
+}
+@media (hover: hover) { .pitch-media:hover img { transform: rotate(-1deg) scale(1.02); } }
+.pitch-credit { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: .66rem; opacity: .62; }
+.pitch-kicker { font-family: var(--font-mono); font-size: .76rem; opacity: .85; margin-bottom: .45em; }
+.pitch-kicker span { color: var(--pitch-ink); font-weight: 700; }
+.pitch h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3.6vw, 2.15rem);
+  line-height: 1.06;
+  margin-bottom: .5em;
+}
+.pitch-line { display: block; color: var(--pitch-ink); }
+.pitch-text > p { max-width: 62ch; margin-bottom: 1em; }
+.pitch-points { list-style: none; display: grid; gap: 10px; margin: 0 0 1.2em; max-width: 62ch; }
+.pitch-points li { border-left: 4px solid var(--pitch, var(--ink)); padding-left: 12px; }
+.pitch-points b { display: block; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .06em; color: var(--pitch-ink); }
+.pitch-move {
+  display: inline-block;
+  max-width: 34ch;
+  margin: .2em 0 1.2em;
+  padding: 10px 16px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: var(--pitch, var(--coral));
+  color: var(--pitch-text, var(--ink));
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+  line-height: 1.12;
+  transform: rotate(-.6deg);
+}
+.pitch-method-h {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3.4vw, 1.9rem);
+  line-height: 1.05;
+  margin-bottom: .6em;
+}
+.pitch-method {
+  list-style: none;
+  counter-reset: pm;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+@media (min-width: 640px) { .pitch-method { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .pitch-method { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.pitch-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--pitch, var(--coral));
+  color: var(--pitch-text, var(--ink));
+  box-shadow: 4px 4px 0 var(--ink);
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s, box-shadow .15s;
+}
+@media (hover: hover) { .pitch-cta:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); } }
+.pitch-cta:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+.pitch-cta:focus-visible { outline: 3px solid var(--sea); outline-offset: 3px; }
+.pitch-cta-row { margin: 0 0 .4em; }
+.pitch-method li {
+  counter-increment: pm;
+  position: relative;
+  padding: 14px 16px 16px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: var(--cream);
+  font-size: .95rem;
+}
+.pitch-method li::before {
+  content: "0" counter(pm);
+  display: block;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  opacity: .6;
+  margin-bottom: 4px;
+}
+.pitch-method b { display: block; font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; line-height: 1.1; margin-bottom: .3em; }
+@media (prefers-reduced-motion: reduce) {
+  .start-here a, .pitch-media img { transition: none; }
+  .start-here a:hover, .pitch-media:hover img { transform: none; }
+  .pitch-move { transform: none; }
 }
 
 /* forced-colors (windows high contrast): borders carry the design */

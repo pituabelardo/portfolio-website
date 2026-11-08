@@ -1,4 +1,4 @@
-/* world.js — the sea, the canoe, the five islands. v3 "painted gold"
+/* world.js — the sea, the canoe, the six islands. v3 "painted gold"
    three.js r128 (global THREE), loaded lazily by main.js.
 
    ============================================================
@@ -3281,6 +3281,253 @@
       isl.props.power = 0.35;
       screen.material.color.setScalar(0.35);
       isl.props.boardY = 24;
+
+    } else if (id === "brand-partnerships") {
+      /* -- v10: brand partnerships — the pitch room. the two pre-sale
+         pitches as objects, never logos: a giant lollipop microphone on a
+         studio stand (chupa chups × liga u: the brand becomes the tool the
+         content is made with) and a brick on a half-court under a single
+         spotlight, the hoop it never touched behind it (el ladrillazo).
+         a half-built first flat at the back: where the bricks end up.
+         8 draw calls with the name board: terrain, props, lit bits, the
+         spotlight cone, its floor pool, the sound rings, pebbles, board.
+         everything stays on the plaza → no rocks[] entry. -- */
+      var hFn6 = beachify(function (r01, x, z) {
+        var e = edgeMask(r01);
+        var rr7 = r01 * ISLAND_R;
+        var h = (1.4 + gauss(x, z, 0, 0, 14) * 3.2 + fbm2(x * 0.15 + seed, z * 0.15, 2) * 1.0) * e - (1 - e) * 3.5;
+        return lerp(h, 3.2, smoothstep(19.5, 18, rr7));   // the paved plaza, wall to wall
+      });
+      /* sand → clay → brick paving: the island is made of the material
+         of its own idea. deep on purpose — golden-hour rim light lifts a
+         flat top a lot, and a lighter clay read as plain sand */
+      var ramp6 = [
+        [0.4, COL.sand], [1.5, 0xd99068], [2.4, 0xb4532f],
+        [3.1, 0x9e4027], [5, 0x8c3822],
+      ];
+      g.add(buildTerrain(hFn6, rampFn(ramp6, COL.sandWet, 1.0), true));
+      isl.props.heightFn = hFn6;
+
+      var pY = 3.2;
+      var bpA = Math.atan2(0 - isl.def.pos[0], SPAWN_Z - isl.def.pos[1]);   // local +z faces the spawn
+      var bpG = new THREE.Group();
+      bpG.rotation.y = bpA;
+      bpG.scale.setScalar(1.3);            // built at 1:1, shown at hero size
+      bpG.position.y = pY * (1 - 1.3);     // …with the plaza level pinned
+      g.add(bpG);
+
+      var pp = [];    // everything toon → ONE mesh
+      var pl = [];    // everything that glows → ONE unlit mesh
+      var BRICK = 0xe0602f, BRICK_HI = 0xf2875a, MORTAR = 0xf6e6cc;
+
+      /* ---- the lollipop mic, left of the approach ---- */
+      var MX = -6.4, MZ = 1.2;
+      [0, 1, 2].forEach(function (k) {                      // tripod legs
+        var a = k / 3 * Math.PI * 2 + 0.4;
+        var leg = new THREE.CylinderGeometry(0.11, 0.14, 3.4, 5);
+        tint(leg, COL.ink);
+        leg.translate(0, -1.7, 0);                         // hub at the top, feet splayed out
+        leg.applyMatrix4(new THREE.Matrix4().makeRotationX(0.62));
+        leg.applyMatrix4(new THREE.Matrix4().makeRotationY(a));
+        pp.push(placed(leg, MX, pY + 2.75, MZ, 0, 1));
+      });
+      var mPole = new THREE.CylinderGeometry(0.16, 0.2, 7.6, 6);
+      tint(mPole, 0x2a2724, 0x4a4540, -3.8, 3.8);
+      pp.push(placed(mPole, MX, pY + 3.8 + 2.4, MZ, 0, 1));
+      var clip = new THREE.BoxGeometry(0.9, 0.7, 0.9);
+      tint(clip, COL.ink);
+      pp.push(placed(clip, MX, pY + 10.1, MZ, 0, 1));
+      /* the lollipop itself, leaning a touch toward whoever rows in */
+      var lol = [];
+      var stick = new THREE.CylinderGeometry(0.34, 0.34, 6.4, 8);
+      tint(stick, 0xfffdf6, COL.cream, -3, 3);
+      lol.push(placed(stick, 0, 3.2, 0, 0, 1));
+      var housing = new THREE.CylinderGeometry(2.55, 2.1, 2.2, 18);   // the white mic body
+      tint(housing, 0xe9e2d4, 0xfffdf6, -1.1, 1.1);
+      lol.push(placed(housing, 0, 7.4, 0, 0, 1));
+      var candy = new THREE.SphereGeometry(2.7, 18, 12);
+      tint(candy, 0xd9203a, 0xff4a5c, -2.7, 2.7);
+      lol.push(placed(candy, 0, 9.2, 0, 0, 1));
+      var lip6 = new THREE.TorusGeometry(2.5, 0.22, 5, 18);
+      lip6.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      tint(lip6, 0xfffdf6);
+      lol.push(placed(lip6, 0, 8.45, 0, 0, 1));
+      var recBtn = new THREE.BoxGeometry(0.9, 0.55, 0.3);   // the record button, facing the approach
+      tint(recBtn, 0xd8d0c2);
+      lol.push(placed(recBtn, 0, 7.6, 2.45, 0, 1));
+      var lolM = new THREE.Matrix4().makeRotationZ(-0.08).premultiply(
+        new THREE.Matrix4().makeRotationX(0.1)).setPosition(MX, pY + 9.6, MZ);
+      lol.forEach(function (p) { p.applyMatrix4(lolM); pp.push(p); });
+      var led = new THREE.SphereGeometry(0.2, 6, 4);       // the red "on air" light
+      tint(led, 0xff2f3c);
+      led.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 7.6, 2.62));
+      led.applyMatrix4(lolM);
+      pl.push(led);
+      var micHead = new THREE.Vector3(0, 9.2, 0).applyMatrix4(lolM);
+
+      /* ---- the half-court, right of the approach ---- */
+      var CX = 5.6, CZ = -0.8, CW = 11, CD = 12;
+      var court = new THREE.BoxGeometry(CW, 0.3, CD);
+      tint(court, 0x3a2418, 0x4f3121, -0.15, 0.15);     // dark parquet: the scene is lit by one lamp
+      pp.push(placed(court, CX, pY + 0.12, CZ, 0, 1));
+      var lineY = pY + 0.3;
+      [[CW, 0.16, 0, CD / 2 - 0.1], [0.16, CD, -CW / 2 + 0.1, 0], [0.16, CD, CW / 2 - 0.1, 0],
+       [3.6, 0.14, 0, -CD / 2 + 5.4], [0.14, 5.0, -1.8, -CD / 2 + 2.9], [0.14, 5.0, 1.8, -CD / 2 + 2.9]].forEach(function (ln) {
+        var lg = new THREE.BoxGeometry(ln[0], 0.06, ln[1]);
+        tint(lg, MORTAR);
+        pp.push(placed(lg, CX + ln[2], lineY, CZ + ln[3], 0, 1));
+      });
+      /* the hoop at the back of the court, board facing the approach */
+      var hz = CZ - CD / 2 - 0.4;
+      var hPole = new THREE.CylinderGeometry(0.22, 0.28, 7.2, 6);
+      tint(hPole, 0x2a2724, 0x4a4540, -3.6, 3.6);
+      pp.push(placed(hPole, CX, pY + 3.6, hz, 0, 1));
+      var arm = new THREE.BoxGeometry(0.3, 0.3, 1.8);
+      tint(arm, 0x2a2724);
+      pp.push(placed(arm, CX, pY + 6.6, hz + 0.9, 0, 1));
+      var bb = new THREE.BoxGeometry(3.6, 2.3, 0.16);
+      tint(bb, COL.cream, 0xfffdf6, -1, 1);
+      pp.push(placed(bb, CX, pY + 7.0, hz + 1.85, 0, 1));
+      var sq = new THREE.BoxGeometry(1.3, 0.1, 0.05);
+      tint(sq, COL.coral);
+      pp.push(placed(sq, CX, pY + 6.55, hz + 1.95, 0, 1));
+      var hRim = new THREE.TorusGeometry(0.66, 0.09, 6, 14);
+      hRim.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+      tint(hRim, COL.coral);
+      pp.push(placed(hRim, CX, pY + 6.1, hz + 2.6, 0, 1));
+      var hNet = new THREE.CylinderGeometry(0.62, 0.36, 1.0, 8, 2, true);
+      hNet.translate(0, -0.52, 0);
+      tint(hNet, 0xfffdf6, COL.cream, -1.1, 0);
+      pp.push(placed(hNet, CX, pY + 6.1, hz + 2.6, 0, 1));
+      /* THE brick: 24 × 11.5 × 7 cm, scaled up 20×, lying where the shot
+         should have landed. one chipped corner so it isn't a box. */
+      var BX = CX - 0.4, BZ = CZ + 1.6;
+      var brk = new THREE.BoxGeometry(4.8, 1.4, 2.3, 3, 1, 2);
+      var bpos = brk.attributes.position;
+      for (var bi6 = 0; bi6 < bpos.count; bi6++) {
+        var vx = bpos.getX(bi6), vy = bpos.getY(bi6), vz = bpos.getZ(bi6);
+        if (vx > 2 && vy > 0.5 && vz > 1) bpos.setXYZ(bi6, vx - 0.35, vy - 0.25, vz - 0.2);
+        else bpos.setXYZ(bi6, vx + (hash2(vx * 3.1 + bi6, vz) - 0.5) * 0.08, vy, vz + (hash2(vz * 2.3, vx + bi6) - 0.5) * 0.08);
+      }
+      brk.computeVertexNormals();
+      tint(brk, BRICK, BRICK_HI, -0.7, 0.7);
+      pp.push(placed(brk, BX, pY + 0.3 + 0.7, BZ, 0.32, 1));
+      /* the spotlight rig: a boom over the court, the can aimed down */
+      var rigX = CX + CW / 2 + 0.6, rigZ = BZ, LAMP_Y = pY + 13.5;
+      var rPole = new THREE.CylinderGeometry(0.16, 0.22, 13.6, 6);
+      tint(rPole, 0x2a2724, 0x4a4540, -6.8, 6.8);
+      pp.push(placed(rPole, rigX, pY + 6.8, rigZ, 0, 1));
+      var boom = new THREE.BoxGeometry(rigX - BX + 0.4, 0.26, 0.26);
+      tint(boom, 0x2a2724);
+      pp.push(placed(boom, (rigX + BX) / 2, LAMP_Y + 0.6, rigZ, 0, 1));
+      var can = new THREE.CylinderGeometry(0.75, 0.95, 1.3, 10);
+      tint(can, COL.ink);
+      pp.push(placed(can, BX, LAMP_Y, BZ, 0, 1));
+      var lens = new THREE.CylinderGeometry(0.8, 0.8, 0.08, 10);
+      tint(lens, 0xfff4dc);
+      pl.push(placed(lens, BX, LAMP_Y - 0.68, BZ, 0, 1));
+
+      /* ---- the first flat, half-built, at the back of the plaza ---- */
+      var HX6 = -4.2, HZ6 = -9.2, course = 0.62, bw = 1.3;
+      for (var row = 0; row < 7; row++) {
+        var off6 = row % 2 ? bw / 2 : 0;
+        for (var col = 0; col < 7; col++) {
+          var bx6 = -4.2 + col * bw + off6;
+          if (bx6 > 4.2) continue;
+          var isDoor = row < 5 && bx6 > -0.9 && bx6 < 0.9;
+          var isWin = row >= 2 && row < 4 && bx6 > 2 && bx6 < 3.8;
+          var gone = row === 6 && col > 3;                  // still building
+          if (isDoor || isWin || gone) continue;
+          var hb = new THREE.BoxGeometry(bw - 0.08, course - 0.08, 0.9);
+          var shade = hash2(row * 7.1 + col, col * 3.3) * 0.5;
+          tint(hb, shade > 0.33 ? BRICK_HI : BRICK);
+          pp.push(placed(hb, HX6 + bx6, pY + 0.31 + row * course, HZ6, 0, 1));
+        }
+      }
+      var side6 = new THREE.BoxGeometry(0.9, course * 5, 4.2);
+      tint(side6, BRICK, BRICK_HI, 0, course * 5);
+      pp.push(placed(side6, HX6 - 4.6, pY + course * 2.5, HZ6 + 2.0, 0, 1));
+      var mort = new THREE.BoxGeometry(9.4, 0.08, 0.95);          // mortar line on the top course
+      tint(mort, MORTAR);
+      pp.push(placed(mort, HX6, pY + 0.31 + 6 * course - course / 2, HZ6, 0, 1));
+      var frame = new THREE.BoxGeometry(0.22, 2.6, 0.22);         // a roof truss waiting for its roof
+      tint(frame, COL.wood, COL.woodLight, -1.3, 1.3);
+      [[-4.2, -0.5], [4.2, 0.5]].forEach(function (fr) {
+        var f6 = frame.clone();
+        f6.applyMatrix4(new THREE.Matrix4().makeRotationZ(fr[1]));
+        pp.push(placed(f6, HX6 + fr[0] * 0.72, pY + 4.4 + 1.15, HZ6, 0, 1));
+      });
+      frame.dispose();
+      var win6 = new THREE.BoxGeometry(1.7, 1.1, 0.2);             // warm light behind the window gap
+      tint(win6, 0xffc77a);
+      pl.push(placed(win6, HX6 + 2.9, pY + 0.31 + 2.5 * course, HZ6 - 0.3, 0, 1));
+      var key6 = new THREE.BoxGeometry(1.7, 3.0, 0.2);             // and through the doorway
+      tint(key6, 0xffd9a0);
+      pl.push(placed(key6, HX6, pY + 1.7, HZ6 - 0.3, 0, 1));
+
+      bpG.add(new THREE.Mesh(mergeGeos(pp), propMat()));
+      bpG.add(new THREE.Mesh(mergeGeos(pl), new THREE.MeshBasicMaterial({ vertexColors: true })));
+
+      /* the spotlight: an open cone (core column of the beam texture, flipped
+         so it is brightest at the lamp) and an additive pool on the parquet */
+      var coneH = LAMP_Y - 0.7 - (pY + 0.3);
+      var coneGeo = new THREE.CylinderGeometry(0.75, 3.6, coneH, 14, 1, true);
+      var cuv = coneGeo.attributes.uv;
+      for (var cu = 0; cu < cuv.count; cu++) cuv.setXY(cu, 0.25, 1 - cuv.getY(cu));
+      var cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({
+        map: makeBeamTexture(), color: 0xfff1d6, transparent: true, opacity: 0.25,
+        depthWrite: false, side: THREE.DoubleSide,
+      }));
+      cone.position.set(BX, pY + 0.3 + coneH / 2, BZ);
+      bpG.add(cone);
+      var pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({
+        map: makeGlowTexture(), color: 0xfff0d2, blending: THREE.AdditiveBlending,
+        transparent: true, opacity: 0.25, depthWrite: false,
+      }));
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(BX, pY + 0.34, BZ);
+      bpG.add(pool);
+
+      /* sound rings out of the mic: three loops in ONE mesh; the vertex
+         shader expands each by its own phase and the fragment fades it */
+      var rPos = [], rPh = [], rIdx = [], rOff = 0;
+      for (var rg = 0; rg < 3; rg++) {
+        var tor = new THREE.TorusGeometry(1, 0.06, 4, 32);
+        var tp = tor.attributes.position;
+        for (var ti = 0; ti < tp.count; ti++) { rPos.push(tp.getX(ti), tp.getY(ti), tp.getZ(ti)); rPh.push(rg / 3); }
+        for (var tj = 0; tj < tor.index.count; tj++) rIdx.push(tor.index.array[tj] + rOff);
+        rOff += tp.count;
+        tor.dispose();
+      }
+      var ringGeo = new THREE.BufferGeometry();
+      ringGeo.setAttribute("position", new THREE.Float32BufferAttribute(rPos, 3));
+      ringGeo.setAttribute("aPh", new THREE.Float32BufferAttribute(rPh, 1));
+      ringGeo.setIndex(rIdx);
+      var ringMat = new THREE.ShaderMaterial({
+        uniforms: { uT: { value: 0.5 }, uOn: { value: 0 } },
+        vertexShader: [
+          "attribute float aPh; uniform float uT; varying float vA;",
+          "void main() {",
+          "  float u = fract(uT + aPh);",
+          "  vA = (1.0 - u) * smoothstep(0.0, 0.12, u);",
+          "  vec3 p = position * (2.9 + u * 7.5);",
+          "  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);",
+          "}",
+        ].join("\n"),
+        fragmentShader: "uniform float uOn; varying float vA; void main() { gl_FragColor = vec4(1.0, 0.93, 0.86, vA * uOn * 0.85); }",
+        transparent: true, depthWrite: false,
+      });
+      var rings = new THREE.Mesh(ringGeo, ringMat);
+      rings.position.copy(micHead);
+      rings.frustumCulled = false;   // the shader grows it past its bounding sphere
+      bpG.add(rings);
+
+      addShorePebbles(g, hFn6, 0xb9603f, 0xe9b98a, seed);
+
+      /* the moment (animateWorld): sail in and the spot finds the brick,
+         the mic goes on air. it starts with the lights down. */
+      isl.props.spot = { cone: cone, pool: pool, rings: ringMat, power: 0.25 };
+      isl.props.boardY = 35.5;   // above the lollipop's head (it tops out ~31)
     }
   }
 
@@ -3695,7 +3942,7 @@
       rocks.push({ x: eb.x, z: eb.z, r: 2.2 });   // solid, like everything now
       // the sign reads from the water: one shared texture, billboarded not —
       // fixed, facing the map center like the planks
-      var board = makeTextBoard("island #6 — plot for sale", COL.yellow);
+      var board = makeTextBoard("island #7 — plot for sale", COL.yellow);
       board.scale.setScalar(0.55);
       board.position.set(eb.x + Math.sin(va) * 0.4, 8.1, eb.z + Math.cos(va) * 0.4);
       board.rotation.y = va;                // text face toward the map
@@ -4539,8 +4786,8 @@
     ctaBtn = document.createElement("a");
     ctaBtn.id = "edge-cta";
     ctaBtn.className = "dock edge-cta";
-    ctaBtn.href = "mailto:hello@jorge.eus?subject=" + encodeURIComponent("let's build island #6");
-    ctaBtn.textContent = "build island #6 with me ✉";
+    ctaBtn.href = "mailto:hello@jorge.eus?subject=" + encodeURIComponent("let's build island #7");
+    ctaBtn.textContent = "build island #7 with me ✉";
     ctaBtn.hidden = true;
     document.getElementById("hud").appendChild(ctaBtn);
 
@@ -4886,7 +5133,7 @@
         if (Math.abs(az) < Math.PI / 4) {
           toast("south of here it's just gijón and my mother's cooking. neither fits in a portfolio.");
         } else if (Math.abs(az) > Math.PI * 0.75) {
-          toast("north edge. the chart stops, the ideas don't — island #6 is unclaimed. want it?");
+          toast("north edge. the chart stops, the ideas don't — island #7 is unclaimed. want it?");
         } else if (az > 0) {
           toast("east of this buoy the map is blank on purpose. that's room for YOUR island.");
         } else {
@@ -5419,6 +5666,28 @@
           }
         }
       }
+
+      /* v10 · brand partnerships: sail in and the spot finds the brick and
+         the lollipop mic goes on air (rings pulse out of it). reduced
+         motion: the spot is simply on, one ring hangs still. */
+      if (id === "brand-partnerships" && pr.spot) {
+        var SP = pr.spot;
+        if (rmQ && rmQ.matches) {
+          if (SP.power !== 1) {
+            SP.power = 1;
+            SP.cone.material.opacity = 0.62; SP.pool.material.opacity = 0.75;
+            SP.rings.uniforms.uOn.value = 1; SP.rings.uniforms.uT.value = 0.45;
+          }
+        } else if (isl.dist < 200) {
+          var spT = isl.dist < 95 ? 1 : 0.25;
+          SP.power += (spT - SP.power) * Math.min(1, dt * 1.6);
+          var buzz = (SP.power > 0.35 && SP.power < 0.7) ? 0.75 + 0.25 * (Math.sin(t * 39) > 0 ? 1 : 0) : 1;
+          SP.cone.material.opacity = 0.62 * SP.power * buzz;
+          SP.pool.material.opacity = 0.75 * SP.power * buzz;
+          SP.rings.uniforms.uOn.value = smoothstep(0.55, 1, SP.power);
+          SP.rings.uniforms.uT.value = t * 0.45;
+        }
+      }
     });
   }
 
@@ -5490,6 +5759,7 @@
     "talens-pantone":  { side: 9,   back: 17, h: 6,   heroY: 14, mix: 0.5 },
     "ministerie":      { side: 6,   back: 14, h: 3.4, heroY: 27, mix: 0.55 },
     "ai-direction":    { side: -9,  back: 17, h: 5,   heroY: 13, mix: 0.5 },
+    "brand-partnerships": { side: 10, back: 18, h: 5.5, heroY: 15, mix: 0.5 },
   };
   function updateLandCamera(dt) {
     var C = LAND_CAMS[land.isl.def.id] || LAND_CAMS["capullos"];

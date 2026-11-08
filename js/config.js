@@ -45,6 +45,9 @@ window.PORTFOLIO_CONFIG = {
      "land ho" so the two concept campaigns are never mistaken for clients. */
   ISLANDS: [
     { id: "liga-u-strategy", name: "liga u — strategy", pos: [58, 48], color: 0xffd23f },
+    /* v10 · the pitch room: two pre-sale partnership pitches for liga u.
+       dead ahead of the spawn, behind the welcome buoy, 110+ from everyone */
+    { id: "brand-partnerships", name: "brand partnerships", pos: [0, -45], color: 0xff5fa2, tag: "two pitches for liga u" },
     { id: "capullos",  name: "capullos",              pos: [-26, 92],  color: 0x3ec46d, tag: "a liga u campaign" },
     { id: "ai-direction", name: "ai video & art direction", pos: [150, 45], color: 0xa66bff },
     { id: "talens-pantone", name: "talens x pantone",  pos: [-118, -52],  color: 0xff5a3c, tag: "concept campaign" },

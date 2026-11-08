@@ -1,7 +1,7 @@
 # AGENTS.md — field guide for models working on this site
 
 you landed on jorge antolín's 3d portfolio: a static site (no build step) where
-you row a toon canoe across a golden-hour sea, discover five islands, and each
+you row a toon canoe across a golden-hour sea, discover six islands, and each
 island opens a case study (liga u first — see §8.8 for the content rules;
 island 03 is the ai video shelf — §8.9). the html menu "lives under the sea" — you dive off
 the canoe to reach it (`WORLD.diveOut`) and climb back aboard to leave
@@ -199,6 +199,23 @@ sea, which is another static scene. if a future feature genuinely needs one
 (contact form, view counter), then: anon/publishable key only in client code,
 RLS on every table, service-role keys never anywhere in this repo, and one
 paragraph here explaining what it's for and how to extend it.
+
+## 5.1 · (v9.5) the one backend: the anonymous visit log
+
+jorge applied for a job (nov 2026) and needed to know whether anyone from the
+usa opened the site and for how long. so there is now exactly ONE write path:
+`js/track.js` (every page) → `POST /api/v` (`api/v.js`, a vercel node
+function that adds `x-vercel-ip-country/region/city` — never the ip) →
+supabase rpc `public.portfolio_track(jsonb)` (security definer) → tables
+`portfolio.sessions` + `portfolio.events` in the `38-0` project (schema
+`portfolio` is NOT exposed to postgrest; rls on, no policies). read path:
+`/stats` (noindex, `stats.html` + `js/stats.js`) → `POST /api/stats` →
+`public.portfolio_stats(key, days)`, which checks the sha-256 of the key
+against `portfolio.keys`. only the publishable key is in the repo; the stats
+key is in jorge's hands, never here. no cookies; the session id lives in
+sessionStorage. `?me=1` flags a device as jorge's (localStorage `ja_me`).
+the footer says all of this in one line — keep it if you touch tracking.
+csp is unchanged (`connect-src 'self'` covers `/api/*`).
 
 ## 6 · verification harness (do not rediscover this)
 
@@ -633,6 +650,46 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   the capture, not the site.
 - contact data lives in three places + the panel: about/JSON-LD/llms.txt (§8.11)
   and `cfg.CONTACT`. the phone (+34 684 64 10 01) is public by jorge's choice.
+
+## 8.13 · v10 notes — the nba creative strategist pass (8–9 nov 2026)
+
+jorge applied to nbat2 (nba × take-two) as **creative strategist, brand &
+partnerships** — ideation, pre-sale pitches, partnership platforms. the site
+was tuned for that reader without touching his title or his cv (§8.11/§8.12
+still hold: honest job title, no availability copy, cv pdfs untouched).
+
+- **rollback**: the pre-nba site is tag `portfolio-base-v9.4`; this work is
+  branch `nba-creative-strategist` (v9.5 tracking, v10 content). README (i).
+- **island 02 · brand partnerships** (`id: "brand-partnerships"`, pos
+  **(0, -45)**, color `0xff5fa2` — ink text 6.7:1). dead ahead of the spawn,
+  behind the welcome buoy; 110 from liga u, 118 from talens, 119 from
+  ministerie, 139 from capullos; r = 45. the other islands renumber 03–06.
+  `themeIsland` branch: a terracotta plaza (deep ramp on purpose — golden rim
+  light washed a lighter clay into "sand"), a giant lollipop microphone on a
+  studio tripod (chupa chups × liga u), a half-court with the hoop and a
+  brick under one spotlight (el ladrillazo), a half-built first flat. the
+  composition is built at 1:1 inside `bpG` and shown at `scale 1.3` with the
+  plaza level pinned (`position.y = pY * (1 - s)`); plaza flat to r = 18.
+  8 draw calls: terrain, props, lit, spot cone, floor pool, sound rings (one
+  `ShaderMaterial`, three torus loops with per-loop phase), pebbles, board.
+  `boardY 35.5` (the lollipop tops out ~31). moment (<95): the spot fades up
+  with a short buzz and the mic goes on air (rings pulse). reduced motion:
+  spot on, one ring hangs still. `LAND_CAMS` entry `side 10, back 18, h 5.5,
+  heroY 15`. sale buoys now sell island #7.
+- **the case** `#brand-partnerships`: two `.pitch` cards (insight, three
+  points, the transferable move, a cta) + "how i build a pitch". the long
+  versions are `/pitches/chupa-chups-liga-u` and `/pitches/el-ladrillazo`
+  (`pitches/*.html`, `css/pitch.css`, `js/pitch.js`), **noindex** (meta +
+  `X-Robots-Tag` in vercel.json): both proposals are still live in the acb's
+  pipeline. their numbers come from jorge's own decks (season one, sourced
+  in place). press images of the lollipop mic carry their credit.
+- **recruiter shortcuts**: hero "start here" (3 doors, pitches first) and a
+  topbar chip "the pitches". in the sea both open the case over the water
+  (main.js) — `worldReady` false → dry land via `abandonLoad`. on ≤640px the
+  topbar nav stacks (toggle, then the chip).
+- verified: spawn → island 02 → case open in ~13s (swiftshader); compass
+  route matrix for every route touching island 02; pitch pages at 375/390
+  webkit and 1440 chromium with no overflow and no js errors.
 
 ## 9 · known deltas
 
