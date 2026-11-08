@@ -85,7 +85,20 @@
       var where = [r.city, r.region && r.country === "US" ? r.region : null, COUNTRY[r.country] || (r.country || "?").toLowerCase()].filter(Boolean).join(", ");
       var badges = (r.country === "US" ? '<span class="st-badge us">usa</span>' : "") +
         (r.is_me ? '<span class="st-badge">you</span>' : "") + (r.is_bot ? '<span class="st-badge">bot</span>' : "");
-      var evs = (r.events || []).filter(function (e) { return ["hide", "back", "mode"].indexOf(e.k) < 0; }).map(function (e) {
+      /* compact: the deepest section read per pitch, and every case that
+         scrolled past folded into one pill */
+      var raw = (r.events || []).filter(function (e) { return ["hide", "back", "mode"].indexOf(e.k) < 0; });
+      var deepest = {}, seenIds = [];
+      raw.forEach(function (e) {
+        if (e.k === "pitch-read" && e.d) deepest[e.d.split(" · ")[0]] = e;
+        if (e.k === "seen" && e.d && seenIds.indexOf(e.d) < 0) seenIds.push(e.d);
+      });
+      var list2 = raw.filter(function (e) {
+        if (e.k === "pitch-read") return deepest[(e.d || "").split(" · ")[0]] === e;
+        return e.k !== "seen";
+      });
+      if (seenIds.length) list2.push({ k: "seen", d: seenIds.join(", ") });
+      var evs = list2.map(function (e) {
         var t = "";
         try { t = new Date(e.at).toLocaleTimeString("en-GB", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit" }); } catch (x) { /* noop */ }
         return '<span class="st-ev k-' + esc(e.k) + '" title="' + esc(t) + '">' + esc(LABEL[e.k] || e.k) + (e.d ? " · " + esc(e.d) : "") + "</span>";

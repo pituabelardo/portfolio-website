@@ -4,6 +4,7 @@
   --card: #1c1a16; --coral: #ff5a3c; --yellow: #ffd23f; --green: #3ec46d; --blue: #6f8cff;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--ink); color: var(--paper); min-height: 100vh;
