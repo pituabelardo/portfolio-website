@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /stats
+Disallow: /api/
 
 Sitemap: https://jorge.eus/sitemap.xml

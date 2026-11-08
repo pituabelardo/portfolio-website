@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>logbook — jorge.eus</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#14120f">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/stats.css?v=10.0">
+</head>
+<body>
+  <header class="st-head">
+    <p class="st-kicker">jorge.eus · private</p>
+    <h1>the logbook</h1>
+    <p class="st-sub">who rowed by. anonymous: country and city from the network, never the ip; no cookies. times in madrid.</p>
+  </header>
+
+  <form id="st-login" class="st-login" hidden>
+    <label for="st-key">key</label>
+    <input id="st-key" type="password" autocomplete="current-password" spellcheck="false">
+    <button type="submit">open</button>
+    <p id="st-err" class="st-err" role="alert"></p>
+  </form>
+
+  <main id="st-main" hidden>
+    <section class="st-kpis" id="st-kpis" aria-label="summary"></section>
+    <div class="st-filters" role="group" aria-label="filters">
+      <label><input type="checkbox" id="f-me" checked> hide my visits</label>
+      <label><input type="checkbox" id="f-bot" checked> hide bots</label>
+      <label><input type="checkbox" id="f-us"> only usa</label>
+      <label><input type="checkbox" id="f-short"> hide &lt;5s</label>
+      <select id="f-days" aria-label="period">
+        <option value="7">7 days</option>
+        <option value="30" selected>30 days</option>
+        <option value="90">90 days</option>
+        <option value="365">a year</option>
+      </select>
+      <button type="button" id="f-refresh">refresh</button>
+    </div>
+    <ol class="st-list" id="st-list"></ol>
+    <p class="st-foot">updated <span id="st-at">—</span> · <button type="button" id="st-forget" class="st-link">forget key on this device</button></p>
+  </main>
+
+  <script src="/js/stats.js?v=10.0"></script>
+</body>
+</html>

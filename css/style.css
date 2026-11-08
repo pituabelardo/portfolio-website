@@ -1137,6 +1137,7 @@ footer {
   font-size: .75rem;
   opacity: .65;
 }
+footer .footer-privacy { margin-top: .5em; font-size: .68rem; opacity: .8; }
 
 /* ---------- case overlay (3d mode) ----------
    v8.2.2 · ios paint hardening. jorge's iphone showed the open case IN
