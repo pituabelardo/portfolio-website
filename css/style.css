@@ -1620,6 +1620,295 @@ body.js .about a:focus-visible, body.js footer a:focus-visible {
 .ai-media { display: grid; gap: 14px; justify-items: start; }
 .ai-pending-master { max-width: 250px; margin: 0; }
 
+/* v10.2 · island 01, liga u: the proof, drawn. a scoreboard in the island
+   colour (0 → 85m + six tiles that each carry a tiny chart or one number),
+   a beeswarm of every reel on the account (static svg, built once from the
+   public counters — dots are aria-hidden, the numbers live in the text), and
+   three formats on the ai shelf's poster/facts grid. only hover lifts move,
+   and reduced motion drops them. */
+.lu-kicker {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3.4vw, 1.9rem);
+  line-height: 1.05;
+  margin-bottom: .5em;
+}
+.lu-board {
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--dot, var(--yellow));
+  color: var(--dot-text, var(--ink));
+  padding: clamp(16px, 3vw, 26px);
+}
+.lu-hero {
+  display: flex;
+  align-items: baseline;
+  gap: .12em;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 15vw, 7.4rem);
+  line-height: .9;
+  font-variant-numeric: tabular-nums;
+}
+.lu-hero strong { font-weight: 400; }
+.lu-hero-from { color: transparent; -webkit-text-stroke: 3px var(--dot-text, var(--ink)); }
+.lu-hero-arrow { font-size: .5em; transform: translateY(-.25em); }
+.lu-hero-label { font-weight: 600; max-width: 44ch; margin: .5em 0 1.1em; }
+.lu-tiles {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 700px) { .lu-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lu-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fffdf6;
+  color: var(--ink);
+}
+.lu-tile strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 4.4vw, 2.1rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.lu-tile-label { font-family: var(--font-mono); font-size: .7rem; line-height: 1.45; }
+.lu-tile .nowrap { white-space: nowrap; }
+.lu-people { display: flex; gap: 4px; }
+.lu-people i {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+}
+.lu-people i.on { background: var(--ink); }
+.lu-bars { display: grid; gap: 4px; }
+.lu-bars i {
+  width: var(--w);
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  line-height: 1;
+  padding: 3px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  white-space: nowrap;
+  min-width: max-content;
+}
+.lu-bars i.on { background: var(--ink); color: #fffdf6; }
+.lu-source { font-family: var(--font-mono); font-size: .64rem; line-height: 1.5; opacity: .75; margin-top: 12px; max-width: 80ch; }
+
+.lu-swarm-lede { max-width: 58ch; margin-bottom: 14px; }
+.lu-swarm-lede strong { font-family: var(--font-display); font-weight: 400; font-size: 1.35em; }
+.lu-swarm-fig { margin: 0; }
+.lu-swarm-plot { position: relative; padding-top: 34px; }
+.lu-swarm-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.lu-swarm-dots circle { fill: var(--ink); fill-opacity: .3; }
+.lu-hot { fill: var(--coral); stroke: var(--ink); stroke-width: 1.6; }
+.lu-swarm-ref { stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 3 3; opacity: .7; }
+.lu-ref {
+  position: absolute;
+  top: 2px;
+  transform: translateX(calc(-100% - 5px));
+  font-family: var(--font-mono);
+  font-size: .64rem;
+  line-height: 1.25;
+  text-align: right;
+  white-space: nowrap;
+}
+.lu-call {
+  position: absolute;
+  top: 0;
+  bottom: calc(50% - 17px);
+  width: 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+.lu-call::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 26px;
+  bottom: 6px;
+  border-left: 2px solid var(--ink);
+}
+.lu-call b {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  width: 26px; height: 26px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--yellow);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: .95rem;
+  line-height: 1;
+}
+.lu-call-top b { transform: translateX(-76%); }
+.lu-call em {
+  display: none;
+  position: absolute;
+  top: 5px;
+  left: 18px;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  white-space: nowrap;
+  background: #fffdf6;
+  padding: 0 4px;
+}
+.lu-call-top em { left: auto; right: 14px; }
+@media (min-width: 760px) { .lu-call em { display: block; } }
+.lu-call:focus-visible b { outline: 3px solid var(--sea); outline-offset: 2px; }
+.lu-axis { position: relative; height: 1.6em; border-top: 2px solid var(--ink); margin-top: 4px; }
+.lu-axis span {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  white-space: nowrap;
+}
+.lu-axis span::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  height: 6px;
+  border-left: 2px solid var(--ink);
+}
+.lu-swarm-fig figcaption { font-family: var(--font-mono); font-size: .66rem; line-height: 1.5; opacity: .75; margin-top: 8px; max-width: 80ch; }
+
+.lu-formats { display: grid; gap: 28px; }
+.lu-formats > .lu-kicker { margin-bottom: -6px; }
+.lu-format { scroll-margin-top: 90px; }
+.lu-format h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3.6vw, 2rem);
+  line-height: 1.05;
+  margin-bottom: .45em;
+}
+.lu-nums {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 0 0 1em;
+  padding: 12px 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  max-width: 62ch;
+}
+.lu-nums strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 4vw, 1.9rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.lu-nums span { font-family: var(--font-mono); font-size: .68rem; opacity: .8; }
+.lu-comment p + p { margin-top: .2em; }
+.lu-follow { margin: 0; }
+
+/* what liga u is, before any number: one sentence + four facts */
+.lu-what p { max-width: 62ch; font-size: clamp(1rem, 2.1vw, 1.12rem); }
+.lu-what-facts {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin-top: 14px;
+  max-width: 62ch;
+}
+@media (min-width: 640px) { .lu-what-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.lu-what-facts li { border-left: 4px solid var(--dot, var(--ink)); padding-left: 10px; }
+.lu-what-facts strong { display: block; font-family: var(--font-display); font-weight: 400; font-size: 1.7rem; line-height: 1; }
+.lu-what-facts span { font-family: var(--font-mono); font-size: .68rem; opacity: .8; }
+
+/* the reels: a real frame of each one (captured from the post, without
+   instagram's ui), linking out. same box as the ai shelf's poster. */
+.lu-shot {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 250px;
+  aspect-ratio: 9 / 16;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #14120f;
+  box-shadow: 5px 5px 0 rgba(20, 18, 15, .14);
+  transition: transform .25s;
+}
+.lu-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lu-shot .ai-poster-cta { position: absolute; left: 12px; bottom: 12px; }
+@media (hover: hover) { .lu-shot:hover { transform: rotate(-1.2deg) scale(1.02); } }
+.lu-shot:focus-visible { outline: 3px solid var(--sea); outline-offset: 3px; }
+
+/* cámara u: the flip, said as a before/after in two lines */
+.lu-flip {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: baseline;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.8vw, 1.4rem);
+  line-height: 1.15;
+}
+.lu-flip span {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  padding: 2px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+}
+.lu-flip span + span, .lu-flip span:nth-of-type(2) { background: var(--dot, var(--yellow)); }
+.lu-flip { max-width: 62ch; }
+.lu-eps-title { font-family: var(--font-mono); font-size: .74rem; margin: 1.2em 0 .6em; }
+.lu-eps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+  gap: 12px;
+  max-width: 62ch;
+}
+.lu-eps a {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffdf6;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform .2s;
+}
+.lu-eps img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 2px solid var(--ink); background: #14120f; }
+.lu-eps a > span:not(.sr-only) { padding: 8px 10px 10px; font-weight: 600; font-size: .86rem; line-height: 1.3; }
+.lu-eps i { display: block; font-style: normal; font-family: var(--font-mono); font-weight: 400; font-size: .66rem; opacity: .75; margin-top: 3px; }
+@media (hover: hover) { .lu-eps a:hover { transform: translateY(-2px); } }
+@media (max-width: 559px) {
+  .lu-eps { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .lu-eps a { flex-direction: row; align-items: center; }
+  .lu-eps img { width: 132px; flex: none; border-bottom: 0; border-right: 2px solid var(--ink); }
+}
+.lu-eps a:focus-visible { outline: 3px solid var(--sea); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .lu-shot, .lu-eps a { transition: none; }
+  .lu-shot:hover, .lu-eps a:hover { transform: none; }
+}
+
 /* ?draft=1 only: the holes. loud on purpose — never meant for the public */
 .case-pending {
   margin-top: 12px;

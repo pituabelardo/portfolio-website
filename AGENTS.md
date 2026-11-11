@@ -698,6 +698,68 @@ still hold: honest job title, no availability copy, cv pdfs untouched).
   route matrix for every route touching island 02; pitch pages at 375/390
   webkit and 1440 chromium with no overflow and no js errors.
 
+## 8.14 · v10.2 notes — liga u, the numbers up front (11 nov 2026)
+
+jorge applied for a head-of-content role at an nba team (dallas mavericks:
+content & social strategy, youth/international fans, creator programs,
+short-form, youtube, team leadership) and asked for proof on island 01
+without writing the case study yet: numbers, drawn, little text, and a way
+out to the league's instagram. no 3d change — it's all inside
+`#liga-u-strategy`, before the chapters.
+
+- **the scoreboard** `.lu-board` (island yellow): "0 → 85m" (the outlined
+  zero uses `-webkit-text-stroke` with `--dot-text`, NOT currentColor — the
+  fill is transparent) + six `.lu-tile`s: 1 in 2 ≤24 (ten dots), ×2.8 er
+  (two bars to scale), 0 → 31.7k ig followers (+19.2k tiktok), 205 games
+  streamed, 1.63m tv (145k one game), 37 nationalities · 8 countries. all
+  season figures are the cv's / pitch pages' (jorge's, sourced there).
+- **the swarm** `.lu-swarm`: every reel on @liga_u22 (521, 31 jul 2025 →
+  11 nov 2026) as one dot on a log axis, a dashed follower line, and three
+  numbered callouts linking to the formats. a STATIC inline svg (~20 kb,
+  aria-hidden; the facts are in the lede, the figcaption and the callouts'
+  aria-labels). it was built from the public view counters scraped off the
+  reels grid in jorge's logged-in chrome (scroll the grid in 500px steps —
+  it virtualizes — collecting `a[href*="/reel/"]` innerText; "1,8 M" /
+  "65,6 mil" are es-ES) and a node beeswarm (W 600, r 2.6, hot dots placed
+  first on the centre line). to rebuild: same scrape → sorted values →
+  same script; then re-measure the `left:%` of `.lu-ref`, `.lu-call` and the
+  `.lu-axis` ticks (log10 position of 31.7k, each reel, 10k/100k/1m inside
+  8k–2m). shortcodes decode to post dates (base64 id >> 23 + 1314220021721 ms)
+  — that's how "since jul 2025" was checked. a monthly-views chart was
+  considered and rejected on purpose: launch month (oct 2025, 7.2m) is the
+  peak and season two runs lower — it would argue against him.
+- **the formats** `.lu-formats`: three `ai-piece lu-format` cards (same
+  poster/facts grid as island 04). (v10.2.1, jorge: the css posters "quedan
+  cutres") each card shows a REAL frame of its reel: `assets/liga-u/*-reel.webp`,
+  540×960, ~30-45 kb, captured from the post in chrome with instagram's ui
+  hidden (every element overlapping the `<video>` set to visibility:hidden,
+  then a zoom screenshot of the video rect), linked to the post.
+  el narradol (creator series: 1.8m ig = no. 1 of 521; +1.73m over 13 tiktok
+  episodes; 35.4k shares; collab with @elnarradol_, 137k followers), cámara u
+  (269k, ×8.5 followers, top 21), una historia de traición (71.3k, ×1.65 the
+  median; the comments credit the cm — only "aumento de sueldo al cm": jorge
+  had the "put this cm on the acb" one removed, keep it out). one real fan
+  comment each, quoted short with a translation. then chips to @liga_u22 on
+  instagram + tiktok.
+- (v10.2.1) the narradol copy says why: top 5s go out mute or with a flat
+  call; we found a voice. cámara u carries the argument jorge cares most
+  about — it FLIPS the player–fan relationship (`.lu-flip`: "the usual deal /
+  cámara u" before/after) — plus three season-one youtube episodes (`.lu-eps`,
+  i.ytimg.com hqdefault thumbs cropped to 16:9, rows on phones). the series is
+  12 episodes on liga u's youtube (4-15k views each, so no view counts shown).
+- (v10.2.1) the four text chapters (problem · positioning · identity &
+  voice · community engine) and their draft holes are GONE, by jorge's call.
+  what liga u is now comes first, in one sentence + four facts (`.lu-what`:
+  14 clubs · 28 matchdays · u22 · 2025). the hero-media draft is the only
+  `case-draft` left in this case.
+- the hero door for liga u now reads "0 → 85m organic views in season one,
+  €0 paid". case-meta gained a team line (the cv's: four people + the
+  audiovisual unit + filmmakers).
+- the old "headline numbers" draft holes are gone (filled). nothing moves,
+  so reduced motion has nothing to skip (hover lifts are dropped). build 10.2.1.
+- every count here is a dated snapshot. don't "refresh" one number alone:
+  re-read them all, change the date in `.lu-source` + the figcaption.
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts

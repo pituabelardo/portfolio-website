@@ -28,11 +28,12 @@ ojo: los ids viven en tres sitios y tienen que ir a la vez → `js/config.js`
 crawlers y quien no tenga js) y los nodos `VideoObject` del JSON-LD.
 
 ### (b) case de liga u — la pieza central (isla 01)
-`index.html` → `<article id="liga-u-strategy">`. desde v8.8 es el primer case
-y tiene la estructura de un case estratégico: cuatro capítulos públicos
-(`.case-chapter`: the problem · positioning · identity & voice · community
-engine) escritos SOLO con frases tuyas, y los huecos para tu material dentro
-de `<template class="case-draft">`.
+`index.html` → `<article id="liga-u-strategy">`. desde v8.8 es el primer case.
+(v10.2.1) ya NO tiene los cuatro capítulos de texto (problem · positioning ·
+identity & voice · community engine): los quitaste. ahora va: qué es la liga u
+en una frase + 4 datos → marcador → los 521 reels → tres formatos con
+fotogramas reales → link a la cuenta. cuando escribas el case study, los
+capítulos vuelven debajo de los formatos (`.case-chapters`, el css sigue).
 
 - los `<template>` no se pintan ni se indexan: el público nunca ve un hueco.
   abre cualquier deploy con **`?draft=1`** y main.js los estampa en su sitio
@@ -41,12 +42,23 @@ de `<template class="case-draft">`.
   (p. ej. el `<img>` de identidad sustituye a su `.case-slot`; mira los `<img>`
   de talens: `loading="lazy"`, `width`/`height`, `alt`) y borra ese
   `<template>`.
-- qué falta, por capítulo: vídeo/visual de cabecera · 4 cifras de cabecera ·
+- (v10.2) las cifras ya están en público, ANTES de los capítulos: el marcador
+  amarillo (`.lu-board`: 0 → 85m + seis fichas), el campo de puntos de los 521
+  reels (`.lu-swarm`, svg estático) y tres formatos (`.lu-formats`: el
+  narradol, cámara u, una historia de traición) con enlace a @liga_u22. las de
+  temporada son tuyas (las del cv); las de reels/seguidores son contadores
+  públicos leídos el 11 nov 2026 — si las actualizas, vuelve a leerlas en
+  instagram/tiktok y cambia la fecha en `.lu-source` y en el figcaption. el
+  svg se regenera con el script descrito en AGENTS §8.14. un formato nuevo =
+  otro `<article class="ai-piece lu-format">` + su punto en el swarm + su
+  fotograma en `assets/liga-u/` (540×960 webp).
+- qué faltaba, por capítulo (referencia para cuando escribas el case): vídeo/visual de cabecera ·
   brief y punto de partida · statement de posicionamiento · identidad (3
   imágenes) + principios de voz + créditos · pilares/formatos/cadencia/equipo
   + 2-3 piezas héroe · resultados con fuente y fecha · 2-3 aprendizajes.
-- capítulos 05 (results) y 06 (what i learned) son enteros `case-draft`:
-  aparecen en público cuando saques el `<li>` del `<template>`.
+- (v10.2.1) los huecos de capítulos se fueron con los capítulos; el único
+  `case-draft` que queda en este case es el vídeo de cabecera (está en el git
+  de v10.2 si quieres recuperar los demás).
 - ninguna cifra sin fuente; nada que el acb no haya aprobado publicar.
 no hay nada que tocar en el mundo 3d: la isla ya es la cancha.
 
