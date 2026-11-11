@@ -72,6 +72,28 @@
     if (h <= 0) return 100;
     return Math.max(0, Math.min(100, Math.round((window.scrollY || d.scrollTop) / h * 100)));
   }
+  /* (v10.1) proof of a person: the first real gesture — a tap, a click, a
+     key, a wheel, or ~80px of pointer travel. link scanners and preview
+     bots load the page and sit still, so a visit without this is a robot
+     until proven otherwise. only the kind of gesture is sent, once. */
+  var gestured = false, travel = 0, lastPX = null, lastPY = null;
+  function gesture(kind) {
+    if (gestured) return;
+    gestured = true;
+    track("human", kind, true);
+    send(false, false);
+  }
+  ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (ev) {
+    window.addEventListener(ev, function (e) { if (e.isTrusted !== false) gesture(ev === "pointerdown" ? (e.pointerType || "pointer") : ev); },
+      { passive: true, capture: true });
+  });
+  window.addEventListener("pointermove", function (e) {
+    if (gestured || e.isTrusted === false || e.pointerType !== "mouse") return;
+    if (lastPX !== null) travel += Math.abs(e.clientX - lastPX) + Math.abs(e.clientY - lastPY);
+    lastPX = e.clientX; lastPY = e.clientY;
+    if (travel > 80) gesture("mouse");
+  }, { passive: true, capture: true });
+
   window.addEventListener("scroll", function () {
     var p = scrollPct();
     if (p > maxScroll) maxScroll = p;

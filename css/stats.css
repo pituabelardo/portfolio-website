@@ -50,3 +50,18 @@ button { font: inherit; cursor: pointer; }
 .st-foot { margin-top: 26px; color: var(--muted); font-size: 12px; }
 .st-link { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; }
 :focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+/* (v10.1) nba watch */
+.st-nba { margin: 28px 0 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.st-nba.warm { border-color: var(--yellow); }
+.st-nba.hot { border-color: var(--coral); box-shadow: 0 0 0 1px var(--coral) inset; }
+.st-nba-k { font: 700 12px "Space Mono", monospace; letter-spacing: .08em; color: var(--muted); }
+.st-nba.warm .st-nba-k { color: var(--yellow); }
+.st-nba.hot .st-nba-k { color: var(--coral); }
+.st-nba-h { font-size: 18px; font-weight: 700; margin-top: 4px; }
+.st-nba-h strong { font: 400 30px/1 Anton, Impact, sans-serif; margin-right: 4px; }
+.st-nba-list { list-style: none; margin-top: 10px; display: grid; gap: 8px; font-size: 14px; }
+.st-nba-list span, .st-nba-bots, .st-nba-note { color: var(--muted); font: 12px/1.5 "Space Mono", monospace; }
+.st-nba-bots, .st-nba-note { margin-top: 10px; }
+.st-badge.nba { background: var(--yellow); color: var(--ink); }
+.st-badge.person { background: var(--green); color: var(--ink); }
+.st-row.nba { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset; }

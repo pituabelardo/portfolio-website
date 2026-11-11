@@ -8,7 +8,7 @@
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#14120f">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/stats.css?v=10.0.1">
+  <link rel="stylesheet" href="/css/stats.css?v=10.1">
 </head>
 <body>
   <header class="st-head">
@@ -25,10 +25,11 @@
   </form>
 
   <main id="st-main" hidden>
+    <section class="st-nba" id="st-nba" aria-label="nba watch" aria-live="polite"></section>
     <section class="st-kpis" id="st-kpis" aria-label="summary"></section>
     <div class="st-filters" role="group" aria-label="filters">
       <label><input type="checkbox" id="f-me" checked> hide my visits</label>
-      <label><input type="checkbox" id="f-bot" checked> hide bots</label>
+      <label><input type="checkbox" id="f-bot" checked> hide robots</label>
       <label><input type="checkbox" id="f-us"> only usa</label>
       <label><input type="checkbox" id="f-short"> hide &lt;5s</label>
       <select id="f-days" aria-label="period">
@@ -43,6 +44,6 @@
     <p class="st-foot">updated <span id="st-at">—</span> · <button type="button" id="st-forget" class="st-link">forget key on this device</button></p>
   </main>
 
-  <script src="/js/stats.js?v=10.0.1"></script>
+  <script src="/js/stats.js?v=10.1"></script>
 </body>
 </html>

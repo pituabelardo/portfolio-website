@@ -216,6 +216,13 @@ key is in jorge's hands, never here. no cookies; the session id lives in
 sessionStorage. `?me=1` flags a device as jorge's (localStorage `ja_me`).
 the footer says all of this in one line — keep it if you touch tracking.
 csp is unchanged (`connect-src 'self'` covers `/api/*`).
+(v10.1) track.js sends one `human` event on the first real gesture (trusted
+tap/click/key/wheel or ~80px of mouse travel). /stats reads it in its "nba
+watch" box: robot = tracker flag, or a datacenter trace (tz utc/etc/*, no
+lang, 800×600, server-farm city); person = `human` or a click event; nba =
+a person from the usa / an `America/*` clock / en-us / an ats or nba
+referrer. us robots are counted apart — they are link scanners, not readers.
+a pdf opened straight from `/cv/` never reaches this log.
 
 ## 6 · verification harness (do not rediscover this)
 

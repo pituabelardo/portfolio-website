@@ -24,7 +24,7 @@
     view: "landed", case: "opened case", seen: "scrolled past", pitch: "pitch", contact: "contact panel",
     cv: "cv", mail: "email", phone: "phone", linkedin: "linkedin", out: "link", nav: "page", anchor: "jump",
     "skip-sea": "skipped the sea", toggle: "toggle", mode: "mode", video: "played video", "video-lang": "video lang",
-    dock: "docked", hide: "left tab", back: "came back", "pitch-read": "read pitch to", "pitch-section": "pitch section"
+    dock: "docked", hide: "left tab", back: "came back", "pitch-read": "read pitch to", "pitch-section": "pitch section", human: "real gesture"
   };
 
   function fmtDur(ms) {
@@ -48,10 +48,88 @@
     try { var u = new URL(r); return u.host + (u.pathname.length > 1 ? u.pathname.slice(0, 40) : ""); } catch (e) { return r.slice(0, 60); }
   }
 
+  /* ---- (v10.1) robot or person, and could it be the nba process? ----
+     the tracker can't see the ip, so this reads the traces a visit leaves.
+     robot: flagged by the tracker, or the fingerprints of a datacenter
+     browser (clock set to utc/unknown, no language, the 800×600 default
+     window, a city that is a google/meta/aws server farm). person: a real
+     gesture (the "human" event, from 11 nov 2026) or a click that only a
+     hand makes. nba: a person, from the usa / an american clock / american
+     english, or arriving from a job platform or an nba / take-two host. */
+  var DC_CITIES = /^(council bluffs|prineville|the dalles|boardman|ashburn|quincy|forest city|altoona|lenoir|moncks corner|mayes county|pryor|eemshaven|st\. ghislain|hamina|mountain view)$/i;
+  var ATS = /greenhouse|lever\.co|workday|myworkdayjobs|ashbyhq|smartrecruiters|icims|taleo|successfactors|jobvite|bamboohr|linkedin|indeed|teamtailor|nba\.com|take2|2k\.com|nbat2/i;
+  var HAND = ["human", "anchor", "nav", "cv", "mail", "phone", "linkedin", "out", "dock", "video", "video-lang", "toggle", "skip-sea", "contact"];
+
+  function robotWhy(r) {
+    var why = [];
+    if (r.is_bot) why.push("flagged by the tracker");
+    if (!r.tz || r.tz === "UTC" || r.tz === "Etc/Unknown" || /^Etc\//.test(r.tz)) why.push("clock " + (r.tz || "missing"));
+    if (!r.lang) why.push("no language");
+    if (r.viewport === "800x600") why.push("800×600 default window");
+    if (r.city && DC_CITIES.test(r.city)) why.push(r.city.toLowerCase() + " is a server farm");
+    return why;
+  }
+  function handWhy(r) {
+    var ks = [];
+    (r.events || []).forEach(function (e) {
+      if (HAND.indexOf(e.k) >= 0) {
+        var lbl = e.k === "human" ? "real " + (e.d || "gesture") : (LABEL[e.k] || e.k);
+        if (ks.indexOf(lbl) < 0) ks.push(lbl);
+      }
+    });
+    return ks;
+  }
+  function nbaWhy(r) {
+    var why = [];
+    if (r.country === "US") why.push("usa" + (r.region ? " (" + r.region.toLowerCase() + ")" : ""));
+    if (r.tz && /^America\//.test(r.tz)) why.push("american clock " + r.tz.slice(8).toLowerCase());
+    if (r.lang && /^en-us/.test(r.lang) && r.country !== "ES") why.push("american english");
+    if (r.referrer && ATS.test(r.referrer)) why.push("came from " + shortRef(r.referrer));
+    if (r.utm && ATS.test(r.utm)) why.push("tagged " + r.utm);
+    return why;
+  }
+  function classify(r) {
+    if (r.__c) return r.__c;
+    var rob = robotWhy(r), hand = handWhy(r), nba = nbaWhy(r);
+    var robot = rob.length > 0 && !(hand.length && !r.is_bot && rob.length === 1);
+    var level = "none";
+    if (!r.is_me && !robot && nba.length) level = hand.length ? "likely" : "maybe";
+    r.__c = { robot: robot, rob: rob, hand: hand, nba: nba, level: level };
+    return r.__c;
+  }
+
+  function renderNba() {
+    var others = rows.filter(function (r) { return !r.is_me; });
+    var hits = others.filter(function (r) { return classify(r).level !== "none"; });
+    var likely = hits.filter(function (r) { return classify(r).level === "likely"; });
+    var usBots = others.filter(function (r) { return classify(r).robot && (r.country === "US" || nbaWhy(r).length); });
+    var box = $("st-nba");
+    box.className = "st-nba" + (likely.length ? " hot" : hits.length ? " warm" : "");
+    var head;
+    if (likely.length) head = "<strong>" + likely.length + "</strong> possible nba visit" + (likely.length > 1 ? "s" : "") + " — a person, from the usa side, who did something with the page.";
+    else if (hits.length) head = "<strong>" + hits.length + "</strong> visit" + (hits.length > 1 ? "s" : "") + " from the usa side that don't look like robots, but never touched the page. could be someone glancing — can't be sure.";
+    else head = "no sign of anyone from the nba process yet.";
+    var list = hits.map(function (r) {
+      var c = classify(r);
+      return "<li><b>" + (c.level === "likely" ? "likely a person" : "maybe") + "</b> · " + esc(fmtWhen(r.first_seen)) +
+        " · " + esc([r.city, r.country].filter(Boolean).join(", ")) + " · " + fmtDur(r.active_ms) +
+        "<br><span>why: " + esc(c.nba.concat(c.hand).join(" · ")) + "</span></li>";
+    }).join("");
+    var bots = usBots.length
+      ? '<p class="st-nba-bots">+ ' + usBots.length + " robot check" + (usBots.length > 1 ? "s" : "") +
+        " from the usa (link scanners / previews: a company's system opened your link — it can mean the link is moving, never that someone read it). " +
+        "their time and 0% scroll mean nothing.</p>"
+      : "";
+    box.innerHTML = '<p class="st-nba-k">nba watch</p><p class="st-nba-h">' + head + "</p>" +
+      (list ? '<ul class="st-nba-list">' + list + "</ul>" : "") + bots +
+      '<p class="st-nba-note">person = a real gesture (tracked since 11 nov) or a click on something. ' +
+      "a pdf opened straight from /cv/ is invisible to this log.</p>";
+  }
+
   function filtered() {
     return rows.filter(function (r) {
       if ($("f-me").checked && r.is_me) return false;
-      if ($("f-bot").checked && r.is_bot) return false;
+      if ($("f-bot").checked && classify(r).robot) return false;
       if ($("f-us").checked && r.country !== "US") return false;
       if ($("f-short").checked && (r.active_ms || 0) < 5000) return false;
       return true;
@@ -59,8 +137,9 @@
   }
 
   function render() {
+    renderNba();
     var list = filtered();
-    var real = rows.filter(function (r) { return !r.is_me && !r.is_bot; });
+    var real = rows.filter(function (r) { return !r.is_me && !classify(r).robot; });
     var us = real.filter(function (r) { return r.country === "US"; });
     var usTime = us.reduce(function (a, r) { return a + (r.active_ms || 0); }, 0);
     var countries = {};
@@ -81,10 +160,13 @@
       return;
     }
     $("st-list").innerHTML = list.map(function (r) {
-      var cls = "st-row" + (r.country === "US" ? " us" : "") + (r.is_me ? " me" : "") + (r.is_bot ? " bot" : "");
+      var c = classify(r);
+      var cls = "st-row" + (r.country === "US" && !c.robot ? " us" : "") + (r.is_me ? " me" : "") + (c.robot ? " bot" : "") + (c.level !== "none" ? " nba" : "");
       var where = [r.city, r.region && r.country === "US" ? r.region : null, COUNTRY[r.country] || (r.country || "?").toLowerCase()].filter(Boolean).join(", ");
       var badges = (r.country === "US" ? '<span class="st-badge us">usa</span>' : "") +
-        (r.is_me ? '<span class="st-badge">you</span>' : "") + (r.is_bot ? '<span class="st-badge">bot</span>' : "");
+        (c.level === "likely" ? '<span class="st-badge nba">possible nba</span>' : c.level === "maybe" ? '<span class="st-badge nba">nba?</span>' : "") +
+        (r.is_me ? '<span class="st-badge">you</span>' : "") +
+        (c.robot ? '<span class="st-badge" title="' + esc(c.rob.join(" · ")) + '">robot</span>' : c.hand.length && !r.is_me ? '<span class="st-badge person">person</span>' : "");
       /* compact: the deepest section read per pitch, and every case that
          scrolled past folded into one pill */
       var raw = (r.events || []).filter(function (e) { return ["hide", "back", "mode"].indexOf(e.k) < 0; });
@@ -110,7 +192,8 @@
         '<p class="st-meta">from ' + esc(shortRef(r.referrer)) + " · landed on " + esc(r.landing || "/") +
         (r.utm ? " · " + esc(r.utm) : "") + " · " + esc([r.device, r.browser, r.viewport].filter(Boolean).join(" · ")) +
         " · scrolled " + (r.max_scroll || 0) + "%" + (r.pages && r.pages.length > 1 ? " · pages: " + esc(r.pages.join(", ")) : "") +
-        (r.lang ? " · " + esc(r.lang) : "") + (r.tz ? " · " + esc(r.tz) : "") + "</p>" +
+        (r.lang ? " · " + esc(r.lang) : "") + (r.tz ? " · " + esc(r.tz) : "") +
+        (c.robot ? " · <b>robot because: " + esc(c.rob.join(", ")) + "</b>" : "") + "</p>" +
         (evs ? '<div class="st-evs">' + evs + "</div>" : "") +
         "</li>";
     }).join("");
