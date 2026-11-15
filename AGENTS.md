@@ -577,8 +577,12 @@ the head, the JSON-LD, the hero, the about section or any case tag.
   `SportsOrganization` liga u, `Organization` acb, `Person` `#jorge`, one
   `CreativeWork` per case. the Person is in proper case ("Jorge Antolín") on
   purpose — visible copy stays lowercase, entity data matches how the name is
-  written everywhere else. `alternateName` carries the full name and both
-  no-tilde spellings. `subjectOf` lists press that NAMES him (only real,
+  written everywhere else. (v10.2.2) the Person `name` is the full name
+  "Jorge Antolín Arribas", and "jorge antolín arribas" is visible in the
+  `<title>`, h1, meta description, og/twitter titles, the about opener and the
+  footer: recruiters search both surnames, and a name that only lives in
+  JSON-LD doesn't rank. `alternateName` carries the short name and both
+  no-tilde spellings. brand pill and title card stay short. `subjectOf` lists press that NAMES him (only real,
   linkable articles; add new ones there and in the about's `.press` line).
   `sameAs` = profiles that are verifiably his (today: linkedin only; jorge
   will send more). `image` is still the og illustration — swap for a real
