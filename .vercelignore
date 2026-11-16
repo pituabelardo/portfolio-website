@@ -9,3 +9,6 @@ PROMPT-*.md
 
 # cv source (cv-src/build.sh → /cv/*.pdf) never ships
 cv-src/
+
+# maintenance scripts never ship
+tools/

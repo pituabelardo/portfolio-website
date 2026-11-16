@@ -300,6 +300,10 @@ create such a skill, note its name here so the next model finds it.
   ask for a screenshot of it before guessing at device-only bugs.
 - after any deploy: cold smoke test the LIVE url (title, robots, sitemap,
   og image, one js file's cache header) — see §6 last bullet.
+- **indexnow (v10.2.4)**: `/9a264740fa38bdfa50f70a43ba8c9518.txt` is the
+  indexnow key file (bing webmaster → "url submission api"). never delete or
+  rename it. after a deploy that changes page text, run `tools/indexnow.sh`
+  (pings every sitemap url; `tools/` doesn't ship). expect HTTP 200 or 202.
 
 ## 8.5 · ios safari field lessons (v8.1 — real-device bugs headless never saw)
 
