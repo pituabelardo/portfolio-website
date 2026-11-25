@@ -768,6 +768,34 @@ out to the league's instagram. no 3d change — it's all inside
 - every count here is a dated snapshot. don't "refresh" one number alone:
   re-read them all, change the date in `.lu-source` + the figcaption.
 
+## 8.15 · v10.3 notes — the ai studio, said the right way (25 nov 2026)
+
+jorge wanted his ai work far more visible. the evidence (his work-pc inventory,
+pasted 25 nov): a 12-agent creative studio in claude code (director +
+specialists + critics, shared memory, his sign-off on every piece), generative
+image/video for the league's channels, automated leadership reporting with
+evidence-graded conclusions, a daily trend brief, three teammates trained.
+three blind recruiter personas (us in-house sport/ent, dubai, nl/ch brand-side)
+agreed: an ai-first headline reads as "drifting into ai ops". so:
+
+- **creative proof first, ai as leverage.** the title never changes (§8.11).
+  cv role line: "· creative direction · AI studio" (es: "· dirección creativa
+  · IA" — "estudio de ia" broke the line). one ai bullet under liga u, not a
+  separate skills block. site: hero lede ends "a team of four, with an ai
+  studio i built behind it: nothing ships without my sign-off" + one about
+  paragraph ("designed and directed by me, built with ai agents").
+- **never**: "ai expert", "top x%", "prompt engineer", "my team runs on" (the
+  teammates were trained on claude, not on his studio), effort metrics
+  (sessions, hand-offs, report counts), jargon on public copy (hooks, mcp,
+  human-in-the-loop, subagents). jorge has NO published-pieces or hours-saved
+  figures and refuses estimates — don't invent them. ats versions may carry
+  keywords ("multi-agent ai workflows", "generative ai").
+- internal-only (never public): budget tracking, the voting app, player
+  tracking, partnership decks. player caricatures involve minors — no images
+  without the acb's image-rights ok. 38-0.es and his other side apps stay off.
+- next, not built: island "the machine room" (orchestration diagram, the
+  case-film blind-critic story as process, zampo). sketch it for jorge first.
+
 ## 9 · known deltas
 
 - (v7) the elogio is a low-poly approximation: the legs' curved inner cutouts

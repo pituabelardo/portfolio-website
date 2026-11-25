@@ -14,4 +14,5 @@
 - Brand partnerships: proactive partnership and sponsorship platform pitches written for Liga U — concept, creative strategy, narrative and decks (https://jorge.eus/#brand-partnerships)
 - Capullos: Liga U's launch video campaign (https://jorge.eus/#capullos)
 - AI video direction for Liga U's social channels (https://jorge.eus/#ai-direction)
+- AI creative studio: he built and directs the multi-agent AI studio behind his team at Liga U (agents draft scripts, art direction and edits; critic agents review them; automated performance reporting with evidence-graded conclusions). Human sign-off on every piece.
 - Concept work, labelled as such: Royal Talens x Pantone (https://jorge.eus/#talens-pantone), Ministerie van Justitie en Veiligheid (https://jorge.eus/#ministerie)
